@@ -1,7 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-
-const STORAGE_KEY = 'tracker_categories'
-const SEQ_KEY = 'tracker_categories_seq'
+import { nk } from '../lib/accountStorage'
 
 export const TCAT_COLORS = [
   { name: 'indigo', hex: '#4F46E5' },
@@ -14,12 +12,14 @@ export const TCAT_COLORS = [
   { name: 'pink',   hex: '#f06595' },
 ]
 
-function loadSeq(categories) {
+function loadSeq(categories, SEQ_KEY) {
   if (categories.length === 0) return 0
   return parseInt(localStorage.getItem(SEQ_KEY) ?? '0', 10)
 }
 
 export function useTrackerCategories() {
+  const STORAGE_KEY = nk('tracker_categories')
+  const SEQ_KEY = nk('tracker_categories_seq')
   const [categories, setCategories] = useState(() => {
     try {
       const raw = localStorage.getItem(STORAGE_KEY)
@@ -29,7 +29,7 @@ export function useTrackerCategories() {
 
   const seqRef = useRef(null)
   if (seqRef.current === null) {
-    seqRef.current = loadSeq(categories)
+    seqRef.current = loadSeq(categories, SEQ_KEY)
     localStorage.setItem(SEQ_KEY, String(seqRef.current))
   }
 

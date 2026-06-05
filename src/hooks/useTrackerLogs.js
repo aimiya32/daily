@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react'
-
-const STORAGE_KEY = 'tracker_logs'
+import { nk } from '../lib/accountStorage'
 
 // 로그 1건: { id, categoryId, date(YYYY-MM-DD), planned, actual, updatedAt }
 export function useTrackerLogs() {
+  const STORAGE_KEY = nk('tracker_logs')
   const [logs, setLogs] = useState(() => {
     try {
       const raw = localStorage.getItem(STORAGE_KEY)

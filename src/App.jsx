@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { AppShell, Group, Text, Button, ActionIcon } from '@mantine/core'
 import { useDisclosure, useMediaQuery } from '@mantine/hooks'
 import { IconCategory, IconHome, IconList, IconCalendar, IconChartBar } from '@tabler/icons-react'
@@ -25,8 +25,29 @@ import { useRoutineChecks } from './hooks/useRoutineChecks'
 import { useTrackerCategories } from './hooks/useTrackerCategories'
 import { useTrackerLogs } from './hooks/useTrackerLogs'
 import { useGoogleDrive } from './hooks/useGoogleDrive'
+import { setAccountPrefix, isInitialized, markInitialized } from './lib/accountStorage'
 
+// ── 로그인 게이트 ─────────────────────────────────────────
+// 로그인 전에는 데이터 훅을 마운트하지 않고, 로그인 후 계정별 네임스페이스를
+// 설정한 뒤 계정 키로 Workspace를 마운트한다. 계정이 바뀌면 remount되어
+// 그 계정의 데이터로 새로 뜬다.
 export default function App() {
+  const drive = useGoogleDrive()
+
+  if (!drive.isSignedIn) {
+    return <LoginScreen onLogin={() => drive.pull()} />
+  }
+
+  const accountKey = drive.user?.email || drive.user?.name || 'user'
+  setAccountPrefix(accountKey)
+
+  return <Workspace key={accountKey} drive={drive} />
+}
+
+// ── 실제 앱 (로그인된 계정 기준) ──────────────────────────
+function Workspace({ drive }) {
+  const { status: driveStatus, pull, push, signOut } = drive
+
   const [view, setView] = useState('home')
   const [selectedEntry, setSelectedEntry] = useState(null)
   const [selectedSchedule, setSelectedSchedule] = useState(null)
@@ -44,21 +65,33 @@ export default function App() {
   const { checks: routineChecks, isChecked, toggle: toggleCheck, getCheckedRoutineIds, mergeChecks } = useRoutineChecks()
   const { categories: trackerCategories, addCategory: addTrackerCategory, deleteCategory: deleteTrackerCategory, setAll: setAllTrackerCategories } = useTrackerCategories()
   const { logs: trackerLogs, getLog: getTrackerLog, setLog: setTrackerLog, deleteLogsByCategory: deleteTrackerLogsByCategory, bulkSetPlanned: bulkSetTrackerPlanned, mergeLogs: mergeTrackerLogs } = useTrackerLogs()
-  const { isSignedIn, status: driveStatus, pull, push, signOut } = useGoogleDrive()
 
-  async function handleLogin() {
-    const data = await pull()
-    if (data?.entries) mergeEntries(data.entries)
-    if (data?.categories) setAllCategories(data.categories)
-    if (data?.schedules) mergeSchedules(data.schedules)
-    if (data?.scheduleCategories) setAllScatCategories(data.scheduleCategories)
-    if (data?.routines) setAllRoutines(data.routines)
-    if (data?.routineChecks) mergeChecks(data.routineChecks)
-    if (data?.trackerCategories) setAllTrackerCategories(data.trackerCategories)
-    if (data?.trackerLogs) mergeTrackerLogs(data.trackerLogs)
+  function applyDriveData(data) {
+    if (!data) return
+    if (data.entries) mergeEntries(data.entries)
+    if (data.categories) setAllCategories(data.categories)
+    if (data.schedules) mergeSchedules(data.schedules)
+    if (data.scheduleCategories) setAllScatCategories(data.scheduleCategories)
+    if (data.routines) setAllRoutines(data.routines)
+    if (data.routineChecks) mergeChecks(data.routineChecks)
+    if (data.trackerCategories) setAllTrackerCategories(data.trackerCategories)
+    if (data.trackerLogs) mergeTrackerLogs(data.trackerLogs)
   }
 
-  if (!isSignedIn) return <LoginScreen onLogin={handleLogin} />
+  async function handleDrivePull() {
+    applyDriveData(await pull())
+  }
+
+  // 이 계정/브라우저에서 처음이면 Drive에서 1회 자동 로드
+  const initRef = useRef(false)
+  useEffect(() => {
+    if (initRef.current || isInitialized()) return
+    initRef.current = true
+    ;(async () => {
+      await handleDrivePull()
+      markInitialized()
+    })()
+  }, [])
 
   function handleHomeOpen(id) {
     if (id === 'diary') setView('list')
@@ -84,20 +117,8 @@ export default function App() {
     setSelectedSchedule(null)
   }
 
-  async function handleDrivePull() {
-    const data = await pull()
-    if (data?.entries) mergeEntries(data.entries)
-    if (data?.categories) setAllCategories(data.categories)
-    if (data?.schedules) mergeSchedules(data.schedules)
-    if (data?.scheduleCategories) setAllScatCategories(data.scheduleCategories)
-    if (data?.trackerCategories) setAllTrackerCategories(data.trackerCategories)
-    if (data?.trackerLogs) mergeTrackerLogs(data.trackerLogs)
-  }
-
   const isDiary = ['list', 'detail', 'editor'].includes(view)
   const isSchedule = ['schedule', 'schedule-detail', 'schedule-editor'].includes(view)
-  const isRoutine = view === 'routine'
-  const isTracker = view === 'tracker'
 
   const headerTitle = {
     home: '',
@@ -177,7 +198,7 @@ export default function App() {
                 </ActionIcon>
               )}
               <DriveSync
-                isSignedIn={isSignedIn}
+                isSignedIn
                 status={driveStatus}
                 onPull={handleDrivePull}
                 onPush={() => push({ entries, categories, schedules, scheduleCategories, routines, routineChecks, trackerCategories, trackerLogs })}

@@ -1,14 +1,14 @@
 import { useState, useEffect, useRef } from 'react'
+import { nk } from '../lib/accountStorage'
 
-const STORAGE_KEY = 'routine_list'
-const SEQ_KEY = 'routine_list_seq'
-
-function loadSeq(routines) {
+function loadSeq(routines, SEQ_KEY) {
   if (routines.length === 0) return 0
   return parseInt(localStorage.getItem(SEQ_KEY) ?? '0', 10)
 }
 
 export function useRoutines() {
+  const STORAGE_KEY = nk('routine_list')
+  const SEQ_KEY = nk('routine_list_seq')
   const [routines, setRoutines] = useState(() => {
     try {
       const raw = localStorage.getItem(STORAGE_KEY)
@@ -18,7 +18,7 @@ export function useRoutines() {
 
   const seqRef = useRef(null)
   if (seqRef.current === null) {
-    seqRef.current = loadSeq(routines)
+    seqRef.current = loadSeq(routines, SEQ_KEY)
     localStorage.setItem(SEQ_KEY, String(seqRef.current))
   }
 

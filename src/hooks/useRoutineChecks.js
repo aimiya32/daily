@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react'
-
-const STORAGE_KEY = 'routine_checks'
+import { nk } from '../lib/accountStorage'
 
 export function useRoutineChecks() {
+  const STORAGE_KEY = nk('routine_checks')
   const [checks, setChecks] = useState(() => {
     try {
       const raw = localStorage.getItem(STORAGE_KEY)

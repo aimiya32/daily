@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react'
-
-const STORAGE_KEY = 'diary_entries'
+import { nk } from '../lib/accountStorage'
 
 export function useEntries() {
+  const STORAGE_KEY = nk('diary_entries')
   const [entries, setEntries] = useState(() => {
     try {
       const raw = localStorage.getItem(STORAGE_KEY)
