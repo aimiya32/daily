@@ -13,6 +13,7 @@ export default function CalendarGrid({
   onSelectDate,
   dayCellStyle,
   renderDayContent,
+  hideToday = false,
 }) {
   const firstDay = current.startOf('month')
   const startOffset = firstDay.day()
@@ -64,7 +65,7 @@ export default function CalendarGrid({
             }
 
             const dateStr = day.format('YYYY-MM-DD')
-            const isToday = dateStr === today
+            const isToday = !hideToday && dateStr === today
             const isSelected = selectedDate ? dateStr === selectedDate : false
 
             return (

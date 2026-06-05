@@ -1,11 +1,11 @@
 import { Stack, Text, Group, Badge, ActionIcon, Paper, Divider } from '@mantine/core'
-import { IconPencil } from '@tabler/icons-react'
+import { IconPencil, IconTrash } from '@tabler/icons-react'
 import dayjs from 'dayjs'
 import 'dayjs/locale/ko'
 
 dayjs.locale('ko')
 
-export default function EntryDetail({ entry, categories, onEdit }) {
+export default function EntryDetail({ entry, categories, onEdit, onDelete }) {
   const cat = categories.find(c => c.id === entry.categoryId)
 
   return (
@@ -23,9 +23,15 @@ export default function EntryDetail({ entry, categories, onEdit }) {
               )}
             </Group>
           </Stack>
-          <ActionIcon variant="light" color="indigo" radius="xl" size="lg" onClick={onEdit}>
-            <IconPencil size={16} />
-          </ActionIcon>
+          <Group gap="xs">
+            <ActionIcon variant="light" color="indigo" radius="xl" size="lg" onClick={onEdit}>
+              <IconPencil size={16} />
+            </ActionIcon>
+            <ActionIcon variant="light" color="red" radius="xl" size="lg"
+              onClick={() => { if (confirm('삭제할까요?')) onDelete() }}>
+              <IconTrash size={16} />
+            </ActionIcon>
+          </Group>
         </Group>
 
         <Divider color="gray.1" />

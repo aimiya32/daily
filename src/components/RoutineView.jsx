@@ -1,9 +1,11 @@
 import { useState, useEffect, useRef } from 'react'
 import {
   Paper, Stack, Group, Text, Box, ActionIcon,
-  Button, Checkbox, TextInput, Switch, SegmentedControl, Badge, Drawer,
+  Button, Checkbox, TextInput, Switch, SegmentedControl, Badge, Drawer, Popover,
 } from '@mantine/core'
+import { DatePicker } from '@mantine/dates'
 import { useDisclosure } from '@mantine/hooks'
+import { IconChevronDown } from '@tabler/icons-react'
 import { useCalendarMaxItems } from '../hooks/useCalendarMaxItems'
 import { IconPlus, IconCheck } from '@tabler/icons-react'
 import CalendarGrid from './CalendarGrid'
@@ -26,6 +28,7 @@ export default function RoutineView({ routines, isChecked, toggle, getCheckedRou
   const [newName, setNewName] = useState('')
   const [editNames, setEditNames] = useState({})
   const [drawerOpened, { open: openDrawer, close: closeDrawer }] = useDisclosure(false)
+  const [datePickerOpened, { toggle: toggleDatePicker, close: closeDatePicker }] = useDisclosure(false)
 
   useEffect(() => {
     onExposeOpen?.(openDrawer)
@@ -237,7 +240,42 @@ export default function RoutineView({ routines, isChecked, toggle, getCheckedRou
         opened={drawerOpened}
         onClose={closeDrawer}
         position="right"
-        title={dayjs(selectedDate).format('M월 D일 (ddd)')}
+        overlayProps={{ backgroundOpacity: 0 }}
+        title={
+          <Popover
+            opened={datePickerOpened}
+            onChange={(o) => !o && closeDatePicker()}
+            position="bottom-start"
+            shadow="md"
+            withArrow
+          >
+            <Popover.Target>
+              <Group
+                gap={4}
+                align="center"
+                style={{ cursor: 'pointer' }}
+                onClick={toggleDatePicker}
+              >
+                <Text fw={600}>{dayjs(selectedDate).format('M월 D일 (ddd)')}</Text>
+                <IconChevronDown size={16} color="var(--mantine-color-gray-6)" />
+              </Group>
+            </Popover.Target>
+            <Popover.Dropdown>
+              <DatePicker
+                value={dayjs(selectedDate).toDate()}
+                onChange={(value) => {
+                  if (!value) return
+                  const d = dayjs(value)
+                  setSelectedDate(d.format('YYYY-MM-DD'))
+                  setCurrent(d.startOf('month'))
+                  setCurrentWeek(d.startOf('week'))
+                  closeDatePicker()
+                }}
+                locale="ko"
+              />
+            </Popover.Dropdown>
+          </Popover>
+        }
         size="sm"
       >
         {RoutinePanel()}

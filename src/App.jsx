@@ -1,7 +1,7 @@
 import { useState, useRef } from 'react'
 import { AppShell, Group, Text, Button, ActionIcon } from '@mantine/core'
 import { useDisclosure } from '@mantine/hooks'
-import { IconPencilPlus, IconCategory, IconHome, IconList, IconCalendar, IconPlus } from '@tabler/icons-react'
+import { IconPencilPlus, IconCategory, IconHome, IconList, IconCalendar, IconPlus, IconChartBar } from '@tabler/icons-react'
 import EntryEditor from './components/EntryEditor'
 import EntryList from './components/EntryList'
 import EntryDetail from './components/EntryDetail'
@@ -10,6 +10,8 @@ import ScheduleEditor from './components/ScheduleEditor'
 import ScheduleDetail from './components/ScheduleDetail'
 import ScheduleCategoryManager from './components/ScheduleCategoryManager'
 import RoutineView from './components/RoutineView'
+import TrackerView from './components/TrackerView'
+import TrackerCategoryManager from './components/TrackerCategoryManager'
 import HomeScreen from './components/HomeScreen'
 import LoginScreen from './components/LoginScreen'
 import DriveSync from './components/DriveSync'
@@ -20,6 +22,8 @@ import { useSchedules } from './hooks/useSchedules'
 import { useScheduleCategories } from './hooks/useScheduleCategories'
 import { useRoutines } from './hooks/useRoutines'
 import { useRoutineChecks } from './hooks/useRoutineChecks'
+import { useTrackerCategories } from './hooks/useTrackerCategories'
+import { useTrackerLogs } from './hooks/useTrackerLogs'
 import { useGoogleDrive } from './hooks/useGoogleDrive'
 
 export default function App() {
@@ -29,6 +33,7 @@ export default function App() {
   const [scheduleInitialDate, setScheduleInitialDate] = useState(null)
   const [catModalOpened, { open: openCatModal, close: closeCatModal }] = useDisclosure(false)
   const [scatModalOpened, { open: openScatModal, close: closeScatModal }] = useDisclosure(false)
+  const [tcatModalOpened, { open: openTcatModal, close: closeTcatModal }] = useDisclosure(false)
   const openRoutineDrawerRef = useRef(null)
 
   const { entries, saveEntry, deleteEntry, mergeEntries } = useEntries()
@@ -37,6 +42,8 @@ export default function App() {
   const { categories: scheduleCategories, addCategory: addScatCategory, deleteCategory: deleteScatCategory, setAll: setAllScatCategories } = useScheduleCategories()
   const { routines, addRoutine, updateRoutine, toggleVisible, setAll: setAllRoutines } = useRoutines()
   const { checks: routineChecks, isChecked, toggle: toggleCheck, getCheckedRoutineIds, mergeChecks } = useRoutineChecks()
+  const { categories: trackerCategories, addCategory: addTrackerCategory, deleteCategory: deleteTrackerCategory, setAll: setAllTrackerCategories } = useTrackerCategories()
+  const { logs: trackerLogs, getLog: getTrackerLog, setLog: setTrackerLog, deleteLogsByCategory: deleteTrackerLogsByCategory, bulkSetPlanned: bulkSetTrackerPlanned, mergeLogs: mergeTrackerLogs } = useTrackerLogs()
   const { isSignedIn, status: driveStatus, pull, push, signOut } = useGoogleDrive()
 
   async function handleLogin() {
@@ -47,6 +54,8 @@ export default function App() {
     if (data?.scheduleCategories) setAllScatCategories(data.scheduleCategories)
     if (data?.routines) setAllRoutines(data.routines)
     if (data?.routineChecks) mergeChecks(data.routineChecks)
+    if (data?.trackerCategories) setAllTrackerCategories(data.trackerCategories)
+    if (data?.trackerLogs) mergeTrackerLogs(data.trackerLogs)
   }
 
   if (!isSignedIn) return <LoginScreen onLogin={handleLogin} />
@@ -55,6 +64,12 @@ export default function App() {
     if (id === 'diary') setView('list')
     if (id === 'schedule') setView('schedule')
     if (id === 'routine') setView('routine')
+    if (id === 'tracker') setView('tracker')
+  }
+
+  function handleDeleteTrackerCategory(id) {
+    deleteTrackerCategory(id)
+    deleteTrackerLogsByCategory(id)
   }
 
   function handleSaveEntry(entry) {
@@ -75,11 +90,14 @@ export default function App() {
     if (data?.categories) setAllCategories(data.categories)
     if (data?.schedules) mergeSchedules(data.schedules)
     if (data?.scheduleCategories) setAllScatCategories(data.scheduleCategories)
+    if (data?.trackerCategories) setAllTrackerCategories(data.trackerCategories)
+    if (data?.trackerLogs) mergeTrackerLogs(data.trackerLogs)
   }
 
   const isDiary = ['list', 'detail', 'editor'].includes(view)
   const isSchedule = ['schedule', 'schedule-detail', 'schedule-editor'].includes(view)
   const isRoutine = view === 'routine'
+  const isTracker = view === 'tracker'
 
   const headerTitle = {
     home: '',
@@ -90,6 +108,7 @@ export default function App() {
     'schedule-detail': '일정',
     'schedule-editor': selectedSchedule ? '일정 수정' : '새 일정',
     routine: '루틴',
+    tracker: '목표',
   }[view] ?? ''
 
   return (
@@ -164,11 +183,16 @@ export default function App() {
                   <IconList size={18} />
                 </ActionIcon>
               )}
+              {view === 'tracker' && (
+                <ActionIcon variant="subtle" color="gray" radius="xl" onClick={openTcatModal}>
+                  <IconCategory size={18} />
+                </ActionIcon>
+              )}
               <DriveSync
                 isSignedIn={isSignedIn}
                 status={driveStatus}
                 onPull={handleDrivePull}
-                onPush={() => push({ entries, categories, schedules, scheduleCategories, routines, routineChecks })}
+                onPush={() => push({ entries, categories, schedules, scheduleCategories, routines, routineChecks, trackerCategories, trackerLogs })}
                 onSignOut={signOut}
                 compact
               />
@@ -194,6 +218,7 @@ export default function App() {
               entry={selectedEntry}
               categories={categories}
               onEdit={() => setView('editor')}
+              onDelete={() => { deleteEntry(selectedEntry.id); setView('list'); setSelectedEntry(null) }}
             />
           )}
           {view === 'editor' && (
@@ -246,6 +271,17 @@ export default function App() {
               onExposeOpen={fn => { openRoutineDrawerRef.current = fn }}
             />
           )}
+
+          {/* 트래커 */}
+          {view === 'tracker' && (
+            <TrackerView
+              categories={trackerCategories}
+              logs={trackerLogs}
+              getLog={getTrackerLog}
+              setLog={setTrackerLog}
+              bulkSetPlanned={bulkSetTrackerPlanned}
+            />
+          )}
         </AppShell.Main>
       </AppShell>
 
@@ -262,6 +298,13 @@ export default function App() {
         categories={scheduleCategories}
         onAdd={addScatCategory}
         onDelete={deleteScatCategory}
+      />
+      <TrackerCategoryManager
+        opened={tcatModalOpened}
+        onClose={closeTcatModal}
+        categories={trackerCategories}
+        onAdd={addTrackerCategory}
+        onDelete={handleDeleteTrackerCategory}
       />
     </>
   )

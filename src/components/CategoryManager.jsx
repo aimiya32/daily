@@ -12,7 +12,7 @@ export default function CategoryManager({ opened, onClose, categories, onAdd, on
   }
 
   return (
-    <Drawer opened={opened} onClose={onClose} title="카테고리 관리" position="right" size="sm">
+    <Drawer opened={opened} onClose={onClose} title="카테고리 관리" position="right" size="sm" overlayProps={{ backgroundOpacity: 0 }}>
       <Stack gap="md">
         <Group gap="xs">
           <TextInput
