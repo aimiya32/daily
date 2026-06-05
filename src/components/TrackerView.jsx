@@ -148,25 +148,23 @@ function DailyView({ categories, day, setDay, getLog, setLog, selectedId, setCat
           boxShadow: '0 -1px 0 #E2E8F0 inset', border: '1px solid #E2E8F0', borderBottom: 'none',
         }}
       >
-        <Box style={{ position: 'relative', display: 'flex', alignItems: 'center', minHeight: 30 }}>
-          {/* 날짜: 화면 가운데 */}
-          <Box style={{ position: 'absolute', left: '50%', transform: 'translateX(-50%)' }}>
-            <Popover opened={picker} onChange={(o) => !o && closePicker()} position="bottom" shadow="md" withArrow>
-              <Popover.Target>
-                <Group gap={4} align="center" style={{ cursor: 'pointer' }} onClick={togglePicker}>
-                  <Text fw={700} size="md">{day.format('YYYY년 M월 D일 (ddd)')}</Text>
-                  <IconChevronDown size={15} color="var(--mantine-color-gray-6)" />
-                </Group>
-              </Popover.Target>
-              <Popover.Dropdown>
-                <DatePicker
-                  value={day.toDate()}
-                  onChange={(v) => { if (v) { setDay(dayjs(v)); closePicker() } }}
-                  locale="ko"
-                />
-              </Popover.Dropdown>
-            </Popover>
-          </Box>
+        <Box style={{ display: 'flex', alignItems: 'center', minHeight: 30 }}>
+          {/* 날짜: 좌측 정렬, 화살표(▾)와 한 줄 */}
+          <Popover opened={picker} onChange={(o) => !o && closePicker()} position="bottom-start" shadow="md" withArrow>
+            <Popover.Target>
+              <Group gap={4} align="center" wrap="nowrap" style={{ cursor: 'pointer' }} onClick={togglePicker}>
+                <Text fw={700} size="md" style={{ whiteSpace: 'nowrap' }}>{day.format('YYYY년 M월 D일 (ddd)')}</Text>
+                <IconChevronDown size={15} color="var(--mantine-color-gray-6)" />
+              </Group>
+            </Popover.Target>
+            <Popover.Dropdown>
+              <DatePicker
+                value={day.toDate()}
+                onChange={(v) => { if (v) { setDay(dayjs(v)); closePicker() } }}
+                locale="ko"
+              />
+            </Popover.Dropdown>
+          </Popover>
           {/* 오늘: 최우측 */}
           <Group gap="xs" wrap="nowrap" style={{ marginLeft: 'auto', zIndex: 1 }}>
             <Button size="xs" variant="light" color="indigo" radius="xl" onClick={() => setDay(dayjs())}>오늘</Button>

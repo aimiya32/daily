@@ -1,7 +1,7 @@
 import { useState, useRef } from 'react'
 import { AppShell, Group, Text, Button, ActionIcon } from '@mantine/core'
 import { useDisclosure, useMediaQuery } from '@mantine/hooks'
-import { IconPencilPlus, IconCategory, IconHome, IconList, IconCalendar, IconPlus, IconChartBar } from '@tabler/icons-react'
+import { IconCategory, IconHome, IconList, IconCalendar, IconChartBar } from '@tabler/icons-react'
 import EntryEditor from './components/EntryEditor'
 import EntryList from './components/EntryList'
 import EntryDetail from './components/EntryDetail'
@@ -156,28 +156,14 @@ export default function App() {
 
             <Group gap="xs">
               {view === 'list' && (
-                <>
-                  <ActionIcon variant="subtle" color="gray" radius="xl" onClick={openCatModal}>
-                    <IconCategory size={18} />
-                  </ActionIcon>
-                  <Button size="xs" variant="gradient" gradient={{ from: 'indigo', to: 'violet' }} radius="xl"
-                    leftSection={<IconPencilPlus size={13} />}
-                    onClick={() => { setSelectedEntry(null); setView('editor') }}>
-                    새 일기
-                  </Button>
-                </>
+                <ActionIcon variant="subtle" color="gray" radius="xl" onClick={openCatModal}>
+                  <IconCategory size={18} />
+                </ActionIcon>
               )}
               {view === 'schedule' && (
-                <>
-                  <ActionIcon variant="subtle" color="gray" radius="xl" onClick={openScatModal}>
-                    <IconCategory size={18} />
-                  </ActionIcon>
-                  <Button size="xs" variant="gradient" gradient={{ from: 'violet', to: 'grape' }} radius="xl"
-                    leftSection={<IconPlus size={13} />}
-                    onClick={() => { setSelectedSchedule(null); setScheduleInitialDate(null); setView('schedule-editor') }}>
-                    일정 추가
-                  </Button>
-                </>
+                <ActionIcon variant="subtle" color="gray" radius="xl" onClick={openScatModal}>
+                  <IconCategory size={18} />
+                </ActionIcon>
               )}
               {view === 'routine' && (
                 <ActionIcon variant="light" color="indigo" radius="xl"
@@ -213,6 +199,7 @@ export default function App() {
               onView={entry => { setSelectedEntry(entry); setView('detail') }}
               onEdit={entry => { setSelectedEntry(entry); setView('editor') }}
               onDelete={deleteEntry}
+              onNew={() => { setSelectedEntry(null); setView('editor') }}
             />
           )}
           {view === 'detail' && selectedEntry && (

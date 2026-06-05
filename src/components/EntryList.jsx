@@ -1,6 +1,7 @@
 import { useState } from 'react'
-import { Stack, Paper, Text, Group, ActionIcon, Center, Chip, Badge, Box, SegmentedControl } from '@mantine/core'
-import { IconPencil, IconTrash } from '@tabler/icons-react'
+import { Stack, Paper, Text, Group, ActionIcon, Center, Chip, Badge, Box, SegmentedControl, Button } from '@mantine/core'
+import { useMediaQuery } from '@mantine/hooks'
+import { IconPencil, IconTrash, IconPencilPlus } from '@tabler/icons-react'
 import CalendarGrid from './CalendarGrid'
 import WeekGrid from './WeekGrid'
 import CalendarNav from './CalendarNav'
@@ -9,11 +10,13 @@ import 'dayjs/locale/ko'
 
 dayjs.locale('ko')
 
-export default function EntryList({ entries, categories, onEdit, onDelete, onView }) {
+export default function EntryList({ entries, categories, onEdit, onDelete, onView, onNew }) {
   const [filterCat, setFilterCat] = useState('all')
   const [calView, setCalView] = useState('month') // list | month | week
   const [current, setCurrent] = useState(dayjs().startOf('month'))
   const [currentWeek, setCurrentWeek] = useState(dayjs().startOf('week'))
+  const isNarrow = useMediaQuery('(max-width: 500px)')
+  const cardRadius = isNarrow ? 'md' : 'xl'
 
   const today = dayjs().format('YYYY-MM-DD')
 
@@ -68,18 +71,24 @@ export default function EntryList({ entries, categories, onEdit, onDelete, onVie
 
   return (
     <Stack maw={800} mx="auto" gap="md">
-      <Group justify="space-between" align="center" wrap="wrap">
-        {categories.length > 0 && (
-          <Chip.Group value={filterCat} onChange={setFilterCat}>
-            <Group gap="xs" wrap="wrap">
-              <Chip value="all" variant="light" size="sm" radius="xl">전체</Chip>
-              {categories.map(cat => (
-                <Chip key={cat.id} value={cat.id} variant="light" size="sm" radius="xl">{cat.name}</Chip>
-              ))}
-            </Group>
-          </Chip.Group>
-        )}
-        <SegmentedControl value={calView} onChange={setCalView} data={viewOptions} />
+      <Group justify="space-between" align="center" wrap="wrap" gap="sm">
+        <Group gap="sm" align="center" wrap="wrap">
+          <SegmentedControl value={calView} onChange={setCalView} data={viewOptions} />
+          {categories.length > 0 && (
+            <Chip.Group value={filterCat} onChange={setFilterCat}>
+              <Group gap="xs" wrap="wrap">
+                <Chip value="all" variant="light" size="sm" radius="xl">전체</Chip>
+                {categories.map(cat => (
+                  <Chip key={cat.id} value={cat.id} variant="light" size="sm" radius="xl">{cat.name}</Chip>
+                ))}
+              </Group>
+            </Chip.Group>
+          )}
+        </Group>
+        <Button size="xs" variant="gradient" gradient={{ from: 'indigo', to: 'violet' }} radius="xl"
+          leftSection={<IconPencilPlus size={13} />} onClick={onNew}>
+          새 일기
+        </Button>
       </Group>
 
       {calView === 'list' && (
@@ -87,7 +96,7 @@ export default function EntryList({ entries, categories, onEdit, onDelete, onVie
           <Center mt="xl"><Text c="dimmed" size="sm">작성된 일기가 없어요.</Text></Center>
         ) : (
           filtered.map(entry => (
-            <Paper key={entry.id} radius="xl" p="lg" shadow="sm"
+            <Paper key={entry.id} radius={cardRadius} p="lg" shadow="sm"
               style={{ cursor: 'pointer', background: 'white', transition: 'box-shadow 0.2s ease, transform 0.2s ease' }}
               onMouseEnter={e => { e.currentTarget.style.boxShadow = '0 8px 24px rgba(99,102,241,0.12)'; e.currentTarget.style.transform = 'translateY(-2px)' }}
               onMouseLeave={e => { e.currentTarget.style.boxShadow = ''; e.currentTarget.style.transform = '' }}
