@@ -18,11 +18,14 @@ export default function EntryDetail({ entry, categories, onEdit, onDelete }) {
             <Text fw={800} size="xl" c="#1E293B" style={{ letterSpacing: '-0.5px' }}>
               {dayjs(entry.date).format('YYYY년 M월 D일')}
             </Text>
-            <Group gap={8}>
+            <Group gap={8} wrap="wrap">
               <Text size="sm" c="#94A3B8">{dayjs(entry.date).format('dddd')}</Text>
               {cat && (
                 <Badge size="sm" variant="light" radius="xl" color="indigo">{cat.name}</Badge>
               )}
+              {(entry.tags ?? []).map(t => (
+                <Badge key={t} size="sm" variant="light" radius="xl" color="teal">#{t}</Badge>
+              ))}
             </Group>
           </Stack>
           <Group gap="xs">

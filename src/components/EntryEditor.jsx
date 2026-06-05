@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Stack, Textarea, Button, Group, Select, Paper } from '@mantine/core'
+import { Stack, Textarea, TextInput, Button, Group, Select, Paper } from '@mantine/core'
 import { useMediaQuery } from '@mantine/hooks'
 import { DatePickerInput } from '@mantine/dates'
 import dayjs from 'dayjs'
@@ -8,9 +8,20 @@ export default function EntryEditor({ entry, onSave, onCancel, categories }) {
   const [date, setDate] = useState(entry ? dayjs(entry.date).toDate() : new Date())
   const [content, setContent] = useState(entry?.content ?? '')
   const [categoryId, setCategoryId] = useState(entry?.categoryId ?? null)
+  const [tagsInput, setTagsInput] = useState((entry?.tags ?? []).join(', '))
   const isNarrow = useMediaQuery('(max-width: 500px)')
 
   const catOptions = categories.map(c => ({ value: c.id, label: c.name }))
+
+  function parseTags(str) {
+    const seen = new Set()
+    const out = []
+    for (const t of str.split(',')) {
+      const tag = t.trim()
+      if (tag && !seen.has(tag)) { seen.add(tag); out.push(tag) }
+    }
+    return out
+  }
 
   function handleSave() {
     if (!content.trim()) return
@@ -19,6 +30,7 @@ export default function EntryEditor({ entry, onSave, onCancel, categories }) {
       date: dayjs(date).format('YYYY-MM-DD'),
       content: content.trim(),
       categoryId: categoryId ?? null,
+      tags: parseTags(tagsInput),
       updatedAt: new Date().toISOString(),
     })
   }
@@ -41,6 +53,13 @@ export default function EntryEditor({ entry, onSave, onCancel, categories }) {
           value={categoryId}
           onChange={setCategoryId}
           clearable
+        />
+
+        <TextInput
+          label="태그"
+          placeholder="쉼표로 구분 (예: 여행, 운동, 회고)"
+          value={tagsInput}
+          onChange={e => setTagsInput(e.currentTarget.value)}
         />
 
         <Textarea

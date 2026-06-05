@@ -15,10 +15,17 @@ export default function EntryList({ entries, categories, onEdit, onDelete, onVie
   const [calView, setCalView] = useState('month') // list | month | week
   const [current, setCurrent] = useState(dayjs().startOf('month'))
   const [currentWeek, setCurrentWeek] = useState(dayjs().startOf('week'))
+  const [selectedTag, setSelectedTag] = useState(null)
   const isNarrow = useMediaQuery('(max-width: 500px)')
   const cardRadius = isNarrow ? 'md' : 'xl'
 
   const today = dayjs().format('YYYY-MM-DD')
+
+  // 사용된 모든 태그
+  const allTags = [...new Set(entries.flatMap(e => e.tags ?? []))].sort((a, b) => a.localeCompare(b))
+  const taggedEntries = selectedTag
+    ? entries.filter(e => (e.tags ?? []).includes(selectedTag)).sort((a, b) => (a.date < b.date ? 1 : -1))
+    : []
 
   const filtered = filterCat === 'all'
     ? entries
@@ -67,7 +74,43 @@ export default function EntryList({ entries, categories, onEdit, onDelete, onVie
     )
   }
 
-  const viewOptions = [{ label: '월간', value: 'month' }, { label: '주간', value: 'week' }, { label: '리스트', value: 'list' }]
+  const viewOptions = [{ label: '월간', value: 'month' }, { label: '주간', value: 'week' }, { label: '리스트', value: 'list' }, { label: '태그', value: 'tag' }]
+
+  function renderEntryCard(entry) {
+    return (
+      <Paper key={entry.id} radius={cardRadius} p="lg" shadow="sm"
+        style={{ cursor: 'pointer', background: 'white', transition: 'box-shadow 0.2s ease, transform 0.2s ease' }}
+        onMouseEnter={e => { e.currentTarget.style.boxShadow = '0 8px 24px rgba(99,102,241,0.12)'; e.currentTarget.style.transform = 'translateY(-2px)' }}
+        onMouseLeave={e => { e.currentTarget.style.boxShadow = ''; e.currentTarget.style.transform = '' }}
+        onClick={() => onView(entry)}
+      >
+        <Group justify="space-between" wrap="nowrap" align="flex-start">
+          <Stack gap={6} style={{ minWidth: 0 }}>
+            <Text fw={700} size="sm" c="#1E293B">{dayjs(entry.date).format('YYYY년 M월 D일')}</Text>
+            <Group gap={6} wrap="wrap">
+              <Text size="xs" c="#94A3B8">{dayjs(entry.date).format('dddd')}</Text>
+              {entry.categoryId && catMap[entry.categoryId] && (
+                <Badge size="xs" variant="light" radius="xl" color="indigo">{catMap[entry.categoryId]}</Badge>
+              )}
+              {(entry.tags ?? []).map(t => (
+                <Badge key={t} size="xs" variant="light" radius="xl" color="teal">#{t}</Badge>
+              ))}
+            </Group>
+          </Stack>
+          <Group gap={4} wrap="nowrap">
+            <ActionIcon variant="subtle" color="gray" size="sm"
+              onClick={e => { e.stopPropagation(); onEdit(entry) }}>
+              <IconPencil size={15} />
+            </ActionIcon>
+            <ActionIcon variant="subtle" color="red" size="sm"
+              onClick={e => { e.stopPropagation(); if (confirm('삭제할까요?')) onDelete(entry.id) }}>
+              <IconTrash size={15} />
+            </ActionIcon>
+          </Group>
+        </Group>
+      </Paper>
+    )
+  }
 
   return (
     <Stack maw={800} mx="auto" gap="md">
@@ -95,37 +138,39 @@ export default function EntryList({ entries, categories, onEdit, onDelete, onVie
         filtered.length === 0 ? (
           <Center mt="xl"><Text c="dimmed" size="sm">작성된 일기가 없어요.</Text></Center>
         ) : (
-          filtered.map(entry => (
-            <Paper key={entry.id} radius={cardRadius} p="lg" shadow="sm"
-              style={{ cursor: 'pointer', background: 'white', transition: 'box-shadow 0.2s ease, transform 0.2s ease' }}
-              onMouseEnter={e => { e.currentTarget.style.boxShadow = '0 8px 24px rgba(99,102,241,0.12)'; e.currentTarget.style.transform = 'translateY(-2px)' }}
-              onMouseLeave={e => { e.currentTarget.style.boxShadow = ''; e.currentTarget.style.transform = '' }}
-              onClick={() => onView(entry)}
-            >
-              <Group justify="space-between">
-                <Stack gap={6}>
-                  <Text fw={700} size="sm" c="#1E293B">{dayjs(entry.date).format('YYYY년 M월 D일')}</Text>
-                  <Group gap={6}>
-                    <Text size="xs" c="#94A3B8">{dayjs(entry.date).format('dddd')}</Text>
-                    {entry.categoryId && catMap[entry.categoryId] && (
-                      <Badge size="xs" variant="light" radius="xl" color="indigo">{catMap[entry.categoryId]}</Badge>
-                    )}
-                  </Group>
-                </Stack>
-                <Group gap={4}>
-                  <ActionIcon variant="subtle" color="gray" size="sm"
-                    onClick={e => { e.stopPropagation(); onEdit(entry) }}>
-                    <IconPencil size={15} />
-                  </ActionIcon>
-                  <ActionIcon variant="subtle" color="red" size="sm"
-                    onClick={e => { e.stopPropagation(); if (confirm('삭제할까요?')) onDelete(entry.id) }}>
-                    <IconTrash size={15} />
-                  </ActionIcon>
-                </Group>
-              </Group>
-            </Paper>
-          ))
+          filtered.map(renderEntryCard)
         )
+      )}
+
+      {calView === 'tag' && (
+        <Stack gap="md" mt="md">
+          {allTags.length === 0 ? (
+            <Center mt="xl"><Text c="dimmed" size="sm">사용된 태그가 없어요. 일기를 쓸 때 태그를 입력해보세요.</Text></Center>
+          ) : (
+            <Group gap="xs" wrap="wrap">
+              {(selectedTag ? [selectedTag] : allTags).map(tag => (
+                <Chip
+                  key={tag}
+                  checked={selectedTag === tag}
+                  onChange={() => setSelectedTag(selectedTag === tag ? null : tag)}
+                  variant="light" color="violet" size="md" radius="sm"
+                  styles={{
+                    iconWrapper: { display: 'none' },
+                    label: { background: '#fff', border: 'none', paddingLeft: 16, paddingRight: 16, fontSize: '0.95rem', height: 34, fontWeight: 700 },
+                  }}
+                >
+                  <span style={{ fontSize: '0.72em', fontWeight: 500, opacity: 0.5, marginRight: 5 }}>#</span>
+                  <Text span fw={700} variant="gradient" gradient={{ from: 'indigo', to: 'violet', deg: 45 }}>{tag}</Text>
+                </Chip>
+              ))}
+            </Group>
+          )}
+          {selectedTag && (
+            taggedEntries.length === 0
+              ? <Center mt="md"><Text c="dimmed" size="sm">해당 태그의 일기가 없어요.</Text></Center>
+              : taggedEntries.map(renderEntryCard)
+          )}
+        </Stack>
       )}
 
       {calView === 'month' && (
