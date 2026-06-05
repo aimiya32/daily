@@ -132,7 +132,7 @@ function DailyView({ categories, day, setDay, getLog, setLog, selectedId, setCat
   const dateStr = day.format('YYYY-MM-DD')
   const [picker, { toggle: togglePicker, close: closePicker }] = useDisclosure(false)
   const isNarrow = useMediaQuery('(max-width: 500px)')
-  const radius = isNarrow ? 8 : 16
+  const radius = 14
 
   const cat = categories.find(c => c.id === selectedId)
   const log = cat ? getLog(cat.id, dateStr) : null

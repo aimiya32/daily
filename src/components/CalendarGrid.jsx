@@ -1,5 +1,4 @@
 import { Box, Text, Paper } from '@mantine/core'
-import { useMediaQuery } from '@mantine/hooks'
 import dayjs from 'dayjs'
 import 'dayjs/locale/ko'
 
@@ -31,8 +30,7 @@ export default function CalendarGrid({
 
   const cellStyle = dayCellStyle ?? { minHeight: 72 }
 
-  const isNarrow = useMediaQuery('(max-width: 500px)')
-  const radius = isNarrow ? 8 : 16
+  const radius = 14
 
   return (
     <Paper style={{ borderRadius: `0 0 ${radius}px ${radius}px`, overflow: 'hidden', border: '1px solid #E2E8F0', borderTop: 'none' }}>

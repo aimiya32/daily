@@ -1,6 +1,7 @@
-import { Stack, Text, Group, Badge, ActionIcon, Paper, Divider } from '@mantine/core'
-import { useMediaQuery } from '@mantine/hooks'
+import { useState } from 'react'
+import { Stack, Text, Group, Badge, ActionIcon, Paper, Divider, SimpleGrid, Modal } from '@mantine/core'
 import { IconPencil, IconTrash } from '@tabler/icons-react'
+import StoredImage from './StoredImage'
 import dayjs from 'dayjs'
 import 'dayjs/locale/ko'
 
@@ -8,10 +9,11 @@ dayjs.locale('ko')
 
 export default function EntryDetail({ entry, categories, onEdit, onDelete }) {
   const cat = categories.find(c => c.id === entry.categoryId)
-  const isNarrow = useMediaQuery('(max-width: 500px)')
+  const [viewer, setViewer] = useState(null) // 크게 볼 이미지 id
+  const images = entry.images ?? []
 
   return (
-    <Paper maw={640} mx="auto" radius={isNarrow ? 'md' : 'xl'} shadow="sm" p="xl" style={{ background: 'white' }}>
+    <Paper maw={640} mx="auto" radius={14} shadow="sm" p="xl" style={{ background: 'white' }}>
       <Stack gap="xl">
         <Group justify="space-between" align="flex-start">
           <Stack gap={6}>
@@ -44,7 +46,19 @@ export default function EntryDetail({ entry, categories, onEdit, onDelete }) {
         <Text size="md" lh={2} style={{ whiteSpace: 'pre-wrap', color: '#334155' }}>
           {entry.content}
         </Text>
+
+        {images.length > 0 && (
+          <SimpleGrid cols={{ base: 2, sm: 3 }} spacing="xs">
+            {images.map(id => (
+              <StoredImage key={id} id={id} variant="thumb" height={110} onClick={() => setViewer(id)} />
+            ))}
+          </SimpleGrid>
+        )}
       </Stack>
+
+      <Modal opened={!!viewer} onClose={() => setViewer(null)} size="lg" centered withCloseButton padding="sm">
+        {viewer && <StoredImage id={viewer} variant="original" height="auto" radius={8} style={{ height: 'auto', maxHeight: '80vh', objectFit: 'contain' }} />}
+      </Modal>
     </Paper>
   )
 }

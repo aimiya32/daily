@@ -1,6 +1,5 @@
 import { useState } from 'react'
 import { Stack, Paper, Text, Group, ActionIcon, Center, Chip, Badge, Box, SegmentedControl, Button } from '@mantine/core'
-import { useMediaQuery } from '@mantine/hooks'
 import { IconPencil, IconTrash, IconPencilPlus } from '@tabler/icons-react'
 import CalendarGrid from './CalendarGrid'
 import WeekGrid from './WeekGrid'
@@ -16,8 +15,7 @@ export default function EntryList({ entries, categories, onEdit, onDelete, onVie
   const [current, setCurrent] = useState(dayjs().startOf('month'))
   const [currentWeek, setCurrentWeek] = useState(dayjs().startOf('week'))
   const [selectedTag, setSelectedTag] = useState(null)
-  const isNarrow = useMediaQuery('(max-width: 500px)')
-  const cardRadius = isNarrow ? 'md' : 'xl'
+  const cardRadius = 14
 
   const today = dayjs().format('YYYY-MM-DD')
 

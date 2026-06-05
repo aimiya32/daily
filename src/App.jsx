@@ -26,6 +26,8 @@ import { useTrackerCategories } from './hooks/useTrackerCategories'
 import { useTrackerLogs } from './hooks/useTrackerLogs'
 import { useGoogleDrive } from './hooks/useGoogleDrive'
 import { setAccountPrefix, isInitialized, markInitialized } from './lib/accountStorage'
+import { deleteImages, getImage, putImage } from './lib/imageStore'
+import { setImageTokenProvider, uploadImageRecord } from './lib/driveImages'
 
 // ── 로그인 게이트 ─────────────────────────────────────────
 // 로그인 전에는 데이터 훅을 마운트하지 않고, 로그인 후 계정별 네임스페이스를
@@ -40,6 +42,8 @@ export default function App() {
 
   const accountKey = drive.user?.email || drive.user?.name || 'user'
   setAccountPrefix(accountKey)
+  // 이미지 Drive 업/다운로드용 토큰 공급자 등록 (조용한 토큰)
+  setImageTokenProvider(() => drive.getToken({ silent: true }))
 
   return <Workspace key={accountKey} drive={drive} />
 }
@@ -82,6 +86,23 @@ function Workspace({ drive }) {
     applyDriveData(await pull())
   }
 
+  // 아직 Drive에 안 올라간 이미지들을 업로드 (백그라운드 업로드 실패분 보완)
+  async function syncImagesToDrive() {
+    const ids = [...new Set(entries.flatMap(e => e.images ?? []))]
+    for (const id of ids) {
+      const rec = await getImage(id)
+      if (rec && !rec.uploaded) {
+        const ok = await uploadImageRecord(id, rec)
+        if (ok) await putImage({ ...rec, uploaded: true })
+      }
+    }
+  }
+
+  async function handleDrivePush() {
+    await push({ entries, categories, schedules, scheduleCategories, routines, routineChecks, trackerCategories, trackerLogs })
+    await syncImagesToDrive()
+  }
+
   // 이 계정/브라우저에서 처음이면 Drive에서 1회 자동 로드
   const initRef = useRef(false)
   useEffect(() => {
@@ -109,6 +130,12 @@ function Workspace({ drive }) {
     saveEntry(entry)
     setView('list')
     setSelectedEntry(null)
+  }
+
+  function handleDeleteEntry(id) {
+    const target = entries.find(e => e.id === id)
+    if (target?.images?.length) deleteImages(target.images)
+    deleteEntry(id)
   }
 
   function handleSaveSchedule(schedule) {
@@ -201,7 +228,7 @@ function Workspace({ drive }) {
                 isSignedIn
                 status={driveStatus}
                 onPull={handleDrivePull}
-                onPush={() => push({ entries, categories, schedules, scheduleCategories, routines, routineChecks, trackerCategories, trackerLogs })}
+                onPush={handleDrivePush}
                 onSignOut={signOut}
                 compact
               />
@@ -219,7 +246,7 @@ function Workspace({ drive }) {
               categories={categories}
               onView={entry => { setSelectedEntry(entry); setView('detail') }}
               onEdit={entry => { setSelectedEntry(entry); setView('editor') }}
-              onDelete={deleteEntry}
+              onDelete={handleDeleteEntry}
               onNew={() => { setSelectedEntry(null); setView('editor') }}
             />
           )}
@@ -228,7 +255,7 @@ function Workspace({ drive }) {
               entry={selectedEntry}
               categories={categories}
               onEdit={() => setView('editor')}
-              onDelete={() => { deleteEntry(selectedEntry.id); setView('list'); setSelectedEntry(null) }}
+              onDelete={() => { handleDeleteEntry(selectedEntry.id); setView('list'); setSelectedEntry(null) }}
             />
           )}
           {view === 'editor' && (

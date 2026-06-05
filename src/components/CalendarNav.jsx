@@ -5,7 +5,7 @@ import { IconChevronLeft, IconChevronRight, IconChevronDown } from '@tabler/icon
 
 export default function CalendarNav({ title, onPrev, onNext, onToday, rightSection, monthValue, onMonthSelect }) {
   const isNarrow = useMediaQuery('(max-width: 500px)')
-  const radius = isNarrow ? 8 : 16
+  const radius = 14
   const [picker, { toggle: togglePicker, close: closePicker }] = useDisclosure(false)
   const isMonthPicker = !!onMonthSelect
 

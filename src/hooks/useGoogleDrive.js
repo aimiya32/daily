@@ -146,5 +146,5 @@ export function useGoogleDrive() {
     setStatus('idle')
   }, [])
 
-  return { isSignedIn: !!user, user, status, pull, push, signOut }
+  return { isSignedIn: !!user, user, status, pull, push, signOut, getToken }
 }

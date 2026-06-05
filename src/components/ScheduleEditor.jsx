@@ -1,6 +1,5 @@
 import { useState } from 'react'
 import { Stack, TextInput, Textarea, Button, Group, Select, Paper } from '@mantine/core'
-import { useMediaQuery } from '@mantine/hooks'
 import { DatePickerInput, TimeInput } from '@mantine/dates'
 import dayjs from 'dayjs'
 
@@ -16,7 +15,6 @@ export default function ScheduleEditor({ schedule, categories, initialDate, onSa
   const [categoryId, setCategoryId] = useState(schedule?.categoryId ?? null)
 
   const catOptions = categories.map(c => ({ value: c.id, label: c.name }))
-  const isNarrow = useMediaQuery('(max-width: 500px)')
 
   function handleSave() {
     if (!title.trim()) return
@@ -32,7 +30,7 @@ export default function ScheduleEditor({ schedule, categories, initialDate, onSa
   }
 
   return (
-    <Paper maw={640} mx="auto" radius={isNarrow ? 'md' : 'xl'} shadow="sm" p="xl" style={{ background: 'white' }}>
+    <Paper maw={640} mx="auto" radius={14} shadow="sm" p="xl" style={{ background: 'white' }}>
       <Stack gap="lg">
         <DatePickerInput
           label="날짜"
