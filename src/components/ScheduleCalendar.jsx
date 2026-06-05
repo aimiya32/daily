@@ -77,7 +77,11 @@ export default function ScheduleCalendar({ schedules, categories, onView, onAdd,
 
   return (
     <Stack gap="sm" maw={800} mx="auto">
-      <Group justify="space-between" align="center" wrap="wrap" gap="sm">
+      <Group justify="space-between" align="center" wrap="wrap" gap="sm" style={{ flexDirection: 'row-reverse' }}>
+        <Button size="xs" variant="gradient" gradient={{ from: 'violet', to: 'grape' }} radius="xl"
+                leftSection={<IconPlus size={13} />} onClick={() => onAdd(null)}>
+          일정 추가
+        </Button>
         {categories.length > 0 ? (
           <ScrollArea type="never" scrollbarSize={0}>
             <Chip.Group value={filterCat} onChange={setFilterCat}>
@@ -90,10 +94,6 @@ export default function ScheduleCalendar({ schedules, categories, onView, onAdd,
             </Chip.Group>
           </ScrollArea>
         ) : <Box />}
-        <Button size="xs" variant="gradient" gradient={{ from: 'violet', to: 'grape' }} radius="xl"
-          leftSection={<IconPlus size={13} />} onClick={() => onAdd(null)}>
-          일정 추가
-        </Button>
       </Group>
 
       <Stack gap={0}>
