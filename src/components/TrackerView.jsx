@@ -1,11 +1,11 @@
 import { useState } from 'react'
 import {
   Stack, Group, Text, Box, Paper, NumberInput, Progress, Center,
-  Popover, ActionIcon, Button, Select, SegmentedControl, Chip,
+  Popover, Button, Select, SegmentedControl,
 } from '@mantine/core'
 import { DatePicker } from '@mantine/dates'
-import { useDisclosure } from '@mantine/hooks'
-import { IconChevronLeft, IconChevronRight, IconChevronDown, IconCalendarPlus } from '@tabler/icons-react'
+import { useDisclosure, useMediaQuery } from '@mantine/hooks'
+import { IconChevronDown, IconCalendarPlus } from '@tabler/icons-react'
 import CalendarNav from './CalendarNav'
 import CalendarGrid from './CalendarGrid'
 import TrackerBulkPlan from './TrackerBulkPlan'
@@ -32,6 +32,7 @@ export default function TrackerView({ categories, logs, getLog, setLog, bulkSetP
   const [day, setDay] = useState(dayjs())
   const [month, setMonth] = useState(dayjs().startOf('month'))
   const [catId, setCatId] = useState(categories[0]?.id ?? null)
+  const [calMode, setCalMode] = useState('all') // all | plan | actual (달력 표시 모드)
   const [bulkOpened, { open: openBulk, close: closeBulk }] = useDisclosure(false)
 
   const selectedId = categories.some(c => c.id === catId) ? catId : categories[0]?.id
@@ -88,9 +89,21 @@ export default function TrackerView({ categories, logs, getLog, setLog, bulkSetP
             selectedId={selectedId} setCatId={setCatId}
           />
           <Stack gap="sm">
-            <MonthTotals cat={selectedCat} month={month} sumRange={sumRange} />
+            <Group justify="space-between" align="center" wrap="wrap" gap="sm">
+              <SegmentedControl
+                value={calMode}
+                onChange={(v) => v && setCalMode(v)}
+                data={[
+                  { label: '전체', value: 'all' },
+                  { label: '계획', value: 'plan' },
+                  { label: '실제', value: 'actual' },
+                ]}
+              />
+              <MonthTotals cat={selectedCat} month={month} sumRange={sumRange} />
+            </Group>
             <CalendarView
               cat={selectedCat} logs={logs} month={month} setMonth={setMonth}
+              calMode={calMode}
               onSelectDate={(dateStr) => setDay(dayjs(dateStr))}
             />
           </Stack>
@@ -118,6 +131,8 @@ export default function TrackerView({ categories, logs, getLog, setLog, bulkSetP
 function DailyView({ categories, day, setDay, getLog, setLog, selectedId, setCatId }) {
   const dateStr = day.format('YYYY-MM-DD')
   const [picker, { toggle: togglePicker, close: closePicker }] = useDisclosure(false)
+  const isNarrow = useMediaQuery('(max-width: 500px)')
+  const radius = isNarrow ? 8 : 16
 
   const cat = categories.find(c => c.id === selectedId)
   const log = cat ? getLog(cat.id, dateStr) : null
@@ -127,39 +142,39 @@ function DailyView({ categories, day, setDay, getLog, setLog, selectedId, setCat
   return (
     <Stack gap={0}>
       <Paper
-        px="lg" py="md"
+        px={isNarrow ? 'sm' : 'lg'} py="md"
         style={{
-          borderRadius: '16px 16px 0 0', background: 'white',
+          borderRadius: `${radius}px ${radius}px 0 0`, background: 'white',
           boxShadow: '0 -1px 0 #E2E8F0 inset', border: '1px solid #E2E8F0', borderBottom: 'none',
         }}
       >
-        <Group justify="center" gap={4}>
-          <ActionIcon variant="subtle" color="gray" radius="xl" onClick={() => setDay(d => d.subtract(1, 'day'))}>
-            <IconChevronLeft size={16} />
-          </ActionIcon>
-          <Popover opened={picker} onChange={(o) => !o && closePicker()} position="bottom" shadow="md" withArrow>
-            <Popover.Target>
-              <Group gap={4} align="center" style={{ cursor: 'pointer', minWidth: 180, justifyContent: 'center' }} onClick={togglePicker}>
-                <Text fw={700} size="md">{day.format('YYYY년 M월 D일 (ddd)')}</Text>
-                <IconChevronDown size={15} color="var(--mantine-color-gray-6)" />
-              </Group>
-            </Popover.Target>
-            <Popover.Dropdown>
-              <DatePicker
-                value={day.toDate()}
-                onChange={(v) => { if (v) { setDay(dayjs(v)); closePicker() } }}
-                locale="ko"
-              />
-            </Popover.Dropdown>
-          </Popover>
-          <ActionIcon variant="subtle" color="gray" radius="xl" onClick={() => setDay(d => d.add(1, 'day'))}>
-            <IconChevronRight size={16} />
-          </ActionIcon>
-          <Button size="xs" variant="subtle" color="indigo" radius="xl" onClick={() => setDay(dayjs())}>오늘</Button>
-        </Group>
+        <Box style={{ position: 'relative', display: 'flex', alignItems: 'center', minHeight: 30 }}>
+          {/* 날짜: 화면 가운데 */}
+          <Box style={{ position: 'absolute', left: '50%', transform: 'translateX(-50%)' }}>
+            <Popover opened={picker} onChange={(o) => !o && closePicker()} position="bottom" shadow="md" withArrow>
+              <Popover.Target>
+                <Group gap={4} align="center" style={{ cursor: 'pointer' }} onClick={togglePicker}>
+                  <Text fw={700} size="md">{day.format('YYYY년 M월 D일 (ddd)')}</Text>
+                  <IconChevronDown size={15} color="var(--mantine-color-gray-6)" />
+                </Group>
+              </Popover.Target>
+              <Popover.Dropdown>
+                <DatePicker
+                  value={day.toDate()}
+                  onChange={(v) => { if (v) { setDay(dayjs(v)); closePicker() } }}
+                  locale="ko"
+                />
+              </Popover.Dropdown>
+            </Popover>
+          </Box>
+          {/* 오늘: 최우측 */}
+          <Group gap="xs" wrap="nowrap" style={{ marginLeft: 'auto', zIndex: 1 }}>
+            <Button size="xs" variant="light" color="indigo" radius="xl" onClick={() => setDay(dayjs())}>오늘</Button>
+          </Group>
+        </Box>
       </Paper>
 
-      <Paper p="md" style={{ border: '1px solid #E2E8F0', borderTop: 'none', borderRadius: '0 0 16px 16px', background: 'white' }}>
+      <Paper p="md" style={{ border: '1px solid #E2E8F0', borderTop: 'none', borderRadius: `0 0 ${radius}px ${radius}px`, background: 'white' }}>
         <Stack gap="sm">
           <Select
             label="카테고리"
@@ -268,8 +283,8 @@ function MonthlySummary({ categories, month, setMonth, sumRange }) {
     <Stack gap="md">
       <CalendarNav
         title={month.format('YYYY년 M월')}
-        onPrev={() => setMonth(m => m.subtract(1, 'month'))}
-        onNext={() => setMonth(m => m.add(1, 'month'))}
+        monthValue={month.toDate()}
+        onMonthSelect={(v) => setMonth(dayjs(v).startOf('month'))}
         onToday={() => setMonth(dayjs().startOf('month'))}
       />
       <Stack gap="sm">
@@ -291,7 +306,7 @@ function MonthTotals({ cat, month, sumRange }) {
   const { planned, actual } = sumRange(cat.id, start, end)
   const pct = planned > 0 ? Math.round(actual / planned * 100) : null
   return (
-    <Group gap={6} wrap="nowrap" px="xs" justify="flex-end">
+    <Group gap={6} wrap="wrap">
       <Box style={{ width: 9, height: 9, borderRadius: '50%', background: PLAN_COLOR, flexShrink: 0 }} />
       <Text size="sm" c="dimmed">계획 <Text span fw={700} c="#334155">{fmt(planned)}{cat.unit ? ` ${cat.unit}` : ''}</Text></Text>
       <Text size="sm" c="dimmed">/</Text>
@@ -303,10 +318,10 @@ function MonthTotals({ cat, month, sumRange }) {
 }
 
 // ── 달력 보기 (선택 카테고리, 계획/실제를 칸으로) ──────────
-function CalendarView({ cat, logs, month, setMonth, onSelectDate }) {
+function CalendarView({ cat, logs, month, setMonth, calMode, onSelectDate }) {
   const today = dayjs().format('YYYY-MM-DD')
-  const unit = cat?.unit ? cat.unit : ''
-  const [calMode, setCalMode] = useState('all') // all | plan | actual
+  const isNarrow = useMediaQuery('(max-width: 500px)')
+  const unit = (cat?.unit && !isNarrow) ? cat.unit : ''  // 500px 이하에선 달력 칸 단위 생략
   const showPlan = calMode === 'all' || calMode === 'plan'
   const showActual = calMode === 'all' || calMode === 'actual'
 
@@ -326,7 +341,7 @@ function CalendarView({ cat, logs, month, setMonth, onSelectDate }) {
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         background: color + '22', borderRadius: 5, padding: '2px 4px',
       }}>
-        <Text style={{ fontSize: 12.5, fontWeight: 700, color, lineHeight: 1.2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+        <Text style={{ fontSize: '0.78rem', fontWeight: 700, color, lineHeight: 1.2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
           {fmt(value)}{unit}
         </Text>
       </Box>
@@ -348,21 +363,9 @@ function CalendarView({ cat, logs, month, setMonth, onSelectDate }) {
     <Stack gap={0}>
       <CalendarNav
         title={month.format('YYYY년 M월')}
-        onPrev={() => setMonth(m => m.subtract(1, 'month'))}
-        onNext={() => setMonth(m => m.add(1, 'month'))}
+        monthValue={month.toDate()}
+        onMonthSelect={(v) => setMonth(dayjs(v).startOf('month'))}
         onToday={() => setMonth(dayjs().startOf('month'))}
-        rightSection={
-          <Chip.Group value={calMode} onChange={(v) => v && setCalMode(v)}>
-            <Group gap={6} wrap="nowrap">
-              {[{ v: 'all', l: '전체' }, { v: 'plan', l: '계획' }, { v: 'actual', l: '실제' }].map(c => (
-                <Chip key={c.v} value={c.v} size="xs" radius="xl" variant="light" color="indigo"
-                  styles={{ iconWrapper: { display: 'none' }, label: { paddingLeft: 12, paddingRight: 12 } }}>
-                  {c.l}
-                </Chip>
-              ))}
-            </Group>
-          </Chip.Group>
-        }
       />
       <CalendarGrid
         current={month}

@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react'
 import { AppShell, Group, Text, Button, ActionIcon } from '@mantine/core'
-import { useDisclosure } from '@mantine/hooks'
+import { useDisclosure, useMediaQuery } from '@mantine/hooks'
 import { IconPencilPlus, IconCategory, IconHome, IconList, IconCalendar, IconPlus, IconChartBar } from '@tabler/icons-react'
 import EntryEditor from './components/EntryEditor'
 import EntryList from './components/EntryList'
@@ -111,11 +111,13 @@ export default function App() {
     tracker: '목표',
   }[view] ?? ''
 
+  const isNarrow = useMediaQuery('(max-width: 500px)')
+
   return (
     <>
       <AppShell
         header={{ height: 60 }}
-        padding="md"
+        padding={isNarrow ? 10 : 'md'}
         styles={{
           header: {
             background: 'rgba(255,255,255,0.92)',

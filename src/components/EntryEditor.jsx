@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Stack, Textarea, Button, Group, Select, Paper } from '@mantine/core'
+import { useMediaQuery } from '@mantine/hooks'
 import { DatePickerInput } from '@mantine/dates'
 import dayjs from 'dayjs'
 
@@ -7,6 +8,7 @@ export default function EntryEditor({ entry, onSave, onCancel, categories }) {
   const [date, setDate] = useState(entry ? dayjs(entry.date).toDate() : new Date())
   const [content, setContent] = useState(entry?.content ?? '')
   const [categoryId, setCategoryId] = useState(entry?.categoryId ?? null)
+  const isNarrow = useMediaQuery('(max-width: 500px)')
 
   const catOptions = categories.map(c => ({ value: c.id, label: c.name }))
 
@@ -22,26 +24,24 @@ export default function EntryEditor({ entry, onSave, onCancel, categories }) {
   }
 
   return (
-    <Paper maw={640} mx="auto" radius="xl" shadow="sm" p="xl" style={{ background: 'white' }}>
+    <Paper maw={640} mx="auto" radius={isNarrow ? 'md' : 'xl'} shadow="sm" p="xl" style={{ background: 'white' }}>
       <Stack gap="lg">
-        <Group grow>
-          <DatePickerInput
-            label="날짜"
-            value={date}
-            onChange={setDate}
-            valueFormat="YYYY년 MM월 DD일"
-            maxDate={new Date()}
-            required
-          />
-          <Select
-            label="카테고리"
-            placeholder="선택 안함"
-            data={catOptions}
-            value={categoryId}
-            onChange={setCategoryId}
-            clearable
-          />
-        </Group>
+        <DatePickerInput
+          label="날짜"
+          value={date}
+          onChange={setDate}
+          valueFormat="YYYY년 MM월 DD일"
+          maxDate={new Date()}
+          required
+        />
+        <Select
+          label="카테고리"
+          placeholder="선택 안함"
+          data={catOptions}
+          value={categoryId}
+          onChange={setCategoryId}
+          clearable
+        />
 
         <Textarea
           label="내용"
@@ -51,7 +51,7 @@ export default function EntryEditor({ entry, onSave, onCancel, categories }) {
           autosize
           minRows={12}
           maxRows={30}
-          styles={{ input: { lineHeight: 1.9, fontSize: 15 } }}
+          styles={{ input: { lineHeight: 1.9, fontSize: '0.9375rem' } }}
         />
 
         <Group justify="flex-end">

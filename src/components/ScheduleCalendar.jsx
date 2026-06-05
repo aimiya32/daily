@@ -47,14 +47,14 @@ export default function ScheduleCalendar({ schedules, categories, onView, onAdd,
               cursor: 'pointer',
               width: '100%',
             }}>
-              <Text size="xs" truncate style={{ color: hex, fontWeight: 700, fontSize: 11, lineHeight: 1.4 }}>
+              <Text size="xs" truncate style={{ color: hex, fontWeight: 700, fontSize: '0.6875rem', lineHeight: 1.4 }}>
                 {s.time ? `${s.time} ` : ''}{s.title}
               </Text>
             </Box>
           )
         })}
         {overflow > 0 && (
-          <Text size="xs" c="dimmed" ta="center" style={{ fontSize: 10, lineHeight: 1.4 }}>
+          <Text size="xs" c="dimmed" ta="center" style={{ fontSize: '0.625rem', lineHeight: 1.4 }}>
             +{overflow}
           </Text>
         )}
@@ -78,8 +78,8 @@ export default function ScheduleCalendar({ schedules, categories, onView, onAdd,
       <Stack gap={0}>
         <CalendarNav
           title={current.format('YYYY년 M월')}
-          onPrev={() => setCurrent(c => c.subtract(1, 'month'))}
-          onNext={() => setCurrent(c => c.add(1, 'month'))}
+          monthValue={current.toDate()}
+          onMonthSelect={(v) => setCurrent(dayjs(v).startOf('month'))}
           onToday={() => setCurrent(dayjs().startOf('month'))}
         />
         <CalendarGrid

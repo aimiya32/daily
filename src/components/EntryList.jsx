@@ -43,7 +43,7 @@ export default function EntryList({ entries, categories, onEdit, onDelete, onVie
         textAlign: 'center',
         width: '100%',
       }}>
-        <Text style={{ fontSize: 12, color: '#4F46E5', fontWeight: 700, lineHeight: 1.4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+        <Text style={{ fontSize: '0.75rem', color: '#4F46E5', fontWeight: 700, lineHeight: 1.4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
           {catName ?? '일기'}
         </Text>
       </Box>
@@ -79,7 +79,7 @@ export default function EntryList({ entries, categories, onEdit, onDelete, onVie
             </Group>
           </Chip.Group>
         )}
-        <SegmentedControl size="xs" value={calView} onChange={setCalView} data={viewOptions} />
+        <SegmentedControl value={calView} onChange={setCalView} data={viewOptions} />
       </Group>
 
       {calView === 'list' && (
@@ -123,8 +123,8 @@ export default function EntryList({ entries, categories, onEdit, onDelete, onVie
         <Stack gap={0}>
           <CalendarNav
             title={current.format('YYYY년 M월')}
-            onPrev={() => setCurrent(c => c.subtract(1, 'month'))}
-            onNext={() => setCurrent(c => c.add(1, 'month'))}
+            monthValue={current.toDate()}
+            onMonthSelect={(v) => setCurrent(dayjs(v).startOf('month'))}
             onToday={() => { setCurrent(dayjs().startOf('month')) }}
           />
           <CalendarGrid current={current} today={today} renderDayContent={renderMonthDay} />

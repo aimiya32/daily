@@ -10,7 +10,7 @@ const apps = [
 
 export default function HomeScreen({ onOpen }) {
   return (
-    <Center p="xl">
+    <Center py="xl" px="md">
       <Stack gap="md" w="100%" maw={480}>
         {apps.map(app => (
           <AppRow key={app.id} {...app} onClick={() => onOpen(app.id)} />
@@ -36,7 +36,7 @@ function AppRow({ label, icon: Icon, color = '#4F46E5', onClick }) {
           padding: '16px 20px',
           borderRadius: 20,
           backgroundColor: '#ffffff',
-          boxShadow: `0 2px 12px ${color}12, 0 1px 4px rgba(15,23,42,0.05)`,
+          boxShadow: `0 1px 2px rgba(15,23,42,0.04)`,
           border: `1px solid ${color}18`,
         }}
       >

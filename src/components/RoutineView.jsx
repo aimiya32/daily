@@ -51,6 +51,12 @@ export default function RoutineView({ routines, isChecked, toggle, getCheckedRou
     setSelectedDate(today)
   }
 
+  // 달력에서 날짜 클릭 → 선택 후 우측 드로어 열기
+  function selectAndOpen(dateStr) {
+    setSelectedDate(dateStr)
+    openDrawer()
+  }
+
   // ── 주간 ────────────────────────────────────────────
   const weekDays = Array.from({ length: 7 }, (_, i) => currentWeek.add(i, 'day'))
 
@@ -85,14 +91,14 @@ export default function RoutineView({ routines, isChecked, toggle, getCheckedRou
                 background: ROUTINE_COLOR + '22',
                 borderRadius: 4, padding: '2px 6px', width: '100%',
               }}>
-                <Text style={{ fontSize: 12, color: ROUTINE_COLOR, fontWeight: 700, lineHeight: 1.4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                <Text style={{ fontSize: '0.75rem', color: ROUTINE_COLOR, fontWeight: 700, lineHeight: 1.4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                   {r.name}
                 </Text>
               </Box>
             ) : null
           })}
           {overflow > 0 && (
-            <Text size="xs" c="dimmed" ta="center" style={{ fontSize: 10, lineHeight: 1.4 }}>+{overflow}</Text>
+            <Text size="xs" c="dimmed" ta="center" style={{ fontSize: '0.625rem', lineHeight: 1.4 }}>+{overflow}</Text>
           )}
         </Stack>
       )
@@ -102,14 +108,14 @@ export default function RoutineView({ routines, isChecked, toggle, getCheckedRou
       <Stack gap={0}>
         <CalendarNav
           title={current.format('YYYY년 M월')}
-          onPrev={() => setCurrent(c => c.subtract(1, 'month'))}
-          onNext={() => setCurrent(c => c.add(1, 'month'))}
+          monthValue={current.toDate()}
+          onMonthSelect={(v) => setCurrent(dayjs(v).startOf('month'))}
           onToday={goToday}
         />
         <CalendarGrid
           current={current}
           today={today}
-          onSelectDate={setSelectedDate}
+          onSelectDate={selectAndOpen}
           renderDayContent={renderDayContent}
         />
       </Stack>
@@ -130,7 +136,7 @@ export default function RoutineView({ routines, isChecked, toggle, getCheckedRou
           weekDays={weekDays}
           today={today}
           selectedDate={selectedDate}
-          onSelectDate={setSelectedDate}
+          onSelectDate={selectAndOpen}
           renderDayContent={dateStr => (
             <Group gap={6} wrap="wrap">
               <CheckedBadges dateStr={dateStr} />
@@ -226,7 +232,6 @@ export default function RoutineView({ routines, isChecked, toggle, getCheckedRou
     <Stack maw={1000} mx="auto" gap="md">
       <Group justify="flex-end">
         <SegmentedControl
-          size="xs"
           value={calView}
           onChange={setCalView}
           data={[{ label: '월간', value: 'month' }, { label: '주간', value: 'week' }]}

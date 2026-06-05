@@ -1,3 +1,10 @@
+/* 화면 폭에 따라 루트 폰트 크기를 유동적으로 조절.
+   Mantine은 rem 기반이라 텍스트·간격이 전체적으로 함께 스케일됨.
+   좁은 화면 ~15px → 넓은 화면 최대 18px */
+:root {
+  font-size: clamp(15px, 13.5px + 0.5vw, 18px);
+}
+
 body {
   background-color: #F4F6FB;
   min-height: 100vh;

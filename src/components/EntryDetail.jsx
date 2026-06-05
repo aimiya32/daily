@@ -1,4 +1,5 @@
 import { Stack, Text, Group, Badge, ActionIcon, Paper, Divider } from '@mantine/core'
+import { useMediaQuery } from '@mantine/hooks'
 import { IconPencil, IconTrash } from '@tabler/icons-react'
 import dayjs from 'dayjs'
 import 'dayjs/locale/ko'
@@ -7,9 +8,10 @@ dayjs.locale('ko')
 
 export default function EntryDetail({ entry, categories, onEdit, onDelete }) {
   const cat = categories.find(c => c.id === entry.categoryId)
+  const isNarrow = useMediaQuery('(max-width: 500px)')
 
   return (
-    <Paper maw={640} mx="auto" radius="xl" shadow="sm" p="xl" style={{ background: 'white' }}>
+    <Paper maw={640} mx="auto" radius={isNarrow ? 'md' : 'xl'} shadow="sm" p="xl" style={{ background: 'white' }}>
       <Stack gap="xl">
         <Group justify="space-between" align="flex-start">
           <Stack gap={6}>

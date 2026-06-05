@@ -32,20 +32,18 @@ export default function ScheduleEditor({ schedule, categories, initialDate, onSa
   return (
     <Paper maw={640} mx="auto" radius="xl" shadow="sm" p="xl" style={{ background: 'white' }}>
       <Stack gap="lg">
-        <Group grow>
-          <DatePickerInput
-            label="날짜"
-            value={date}
-            onChange={setDate}
-            valueFormat="YYYY년 MM월 DD일"
-            required
-          />
-          <TimeInput
-            label="시간"
-            value={time}
-            onChange={e => setTime(e.currentTarget.value)}
-          />
-        </Group>
+        <DatePickerInput
+          label="날짜"
+          value={date}
+          onChange={setDate}
+          valueFormat="YYYY년 MM월 DD일"
+          required
+        />
+        <TimeInput
+          label="시간"
+          value={time}
+          onChange={e => setTime(e.currentTarget.value)}
+        />
 
         <TextInput
           label="제목"
