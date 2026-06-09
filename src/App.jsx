@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { AppShell, Group, Text, Button, ActionIcon } from '@mantine/core'
 import { useDisclosure, useMediaQuery } from '@mantine/hooks'
-import { IconCategory, IconHome, IconList, IconCalendar, IconChartBar } from '@tabler/icons-react'
+import { IconCategory, IconHome, IconList, IconCalendar, IconChartBar, IconPencil, IconCheck } from '@tabler/icons-react'
 import RecordEditor from './components/RecordEditor'
 import RecordList from './components/RecordList'
 import RecordDetail from './components/RecordDetail'
@@ -13,6 +13,7 @@ import RoutineView from './components/RoutineView'
 import TrackerView from './components/TrackerView'
 import LedgerView from './components/LedgerView'
 import LedgerCategoryManager from './components/LedgerCategoryManager'
+import ContactsView from './components/ContactsView'
 import TrackerCategoryManager from './components/TrackerCategoryManager'
 import HomeScreen from './components/HomeScreen'
 import LoginScreen from './components/LoginScreen'
@@ -28,6 +29,7 @@ import { useTrackerCategories } from './hooks/useTrackerCategories'
 import { useTrackerLogs } from './hooks/useTrackerLogs'
 import { useLedger } from './hooks/useLedger'
 import { useLedgerCategories } from './hooks/useLedgerCategories'
+import { useContacts } from './hooks/useContacts'
 import { useGoogleDrive } from './hooks/useGoogleDrive'
 import { setAccountPrefix, isInitialized, markInitialized } from './lib/accountStorage'
 import { deleteImages, getImage, putImage } from './lib/imageStore'
@@ -57,6 +59,7 @@ function Workspace({ drive }) {
   const { status: driveStatus, pull, push, signOut } = drive
 
   const [view, setView] = useState('home')
+  const [editingHome, setEditingHome] = useState(false)
   const [selectedRecord, setSelectedRecord] = useState(null)
   const [selectedSchedule, setSelectedSchedule] = useState(null)
   const [scheduleInitialDate, setScheduleInitialDate] = useState(null)
@@ -76,6 +79,7 @@ function Workspace({ drive }) {
   const { logs: trackerLogs, getLog: getTrackerLog, setLog: setTrackerLog, deleteLogsByCategory: deleteTrackerLogsByCategory, bulkSetPlanned: bulkSetTrackerPlanned, mergeLogs: mergeTrackerLogs } = useTrackerLogs()
   const { items: ledgerItems, addItem: addLedgerItem, deleteItem: deleteLedgerItem, mergeItems: mergeLedgerItems } = useLedger()
   const { categories: ledgerCategories, addCategory: addLedgerCategory, deleteCategory: deleteLedgerCategory, setAll: setAllLedgerCategories } = useLedgerCategories()
+  const { items: contactItems, addItem: addContactItem, deleteItem: deleteContactItem, mergeItems: mergeContactItems } = useContacts()
 
   function applyDriveData(data) {
     if (!data) return
@@ -89,6 +93,7 @@ function Workspace({ drive }) {
     if (data.trackerLogs) mergeTrackerLogs(data.trackerLogs)
     if (data.ledger) mergeLedgerItems(data.ledger)
     if (data.ledgerCategories) setAllLedgerCategories(data.ledgerCategories)
+    if (data.contacts) mergeContactItems(data.contacts)
   }
 
   async function handleDrivePull() {
@@ -97,7 +102,7 @@ function Workspace({ drive }) {
 
   // 아직 Drive에 안 올라간 이미지들을 업로드 (백그라운드 업로드 실패분 보완)
   async function syncImagesToDrive() {
-    const ids = [...new Set(records.flatMap(e => e.images ?? []))]
+    const ids = [...new Set([...records, ...contactItems].flatMap(e => e.images ?? []))]
     for (const id of ids) {
       const rec = await getImage(id)
       if (rec && !rec.uploaded) {
@@ -108,7 +113,7 @@ function Workspace({ drive }) {
   }
 
   async function handleDrivePush() {
-    await push({ records, categories, schedules, scheduleCategories, routines, routineChecks, trackerCategories, trackerLogs, ledger: ledgerItems, ledgerCategories })
+    await push({ records, categories, schedules, scheduleCategories, routines, routineChecks, trackerCategories, trackerLogs, ledger: ledgerItems, ledgerCategories, contacts: contactItems })
     await syncImagesToDrive()
   }
 
@@ -129,6 +134,7 @@ function Workspace({ drive }) {
     if (id === 'routine') setView('routine')
     if (id === 'tracker') setView('tracker')
     if (id === 'ledger') setView('ledger')
+    if (id === 'contacts') setView('contacts')
   }
 
   function handleDeleteTrackerCategory(id) {
@@ -146,6 +152,12 @@ function Workspace({ drive }) {
     const target = records.find(e => e.id === id)
     if (target?.images?.length) deleteImages(target.images)
     deleteRecord(id)
+  }
+
+  function handleDeleteContact(id) {
+    const target = contactItems.find(e => e.id === id)
+    if (target?.images?.length) deleteImages(target.images)
+    deleteContactItem(id)
   }
 
   function handleSaveSchedule(schedule) {
@@ -168,6 +180,7 @@ function Workspace({ drive }) {
     routine: '루틴',
     tracker: '목표',
     ledger: '가계부',
+    contacts: '연락처',
   }[view] ?? ''
 
   const isNarrow = useMediaQuery('(max-width: 500px)')
@@ -214,6 +227,12 @@ function Workspace({ drive }) {
             </Group>
 
             <Group gap="xs">
+              {view === 'home' && (
+                <ActionIcon variant={editingHome ? 'light' : 'subtle'} color={editingHome ? 'indigo' : 'gray'}
+                  radius="xl" onClick={() => setEditingHome(e => !e)}>
+                  {editingHome ? <IconCheck size={18} /> : <IconPencil size={18} />}
+                </ActionIcon>
+              )}
               {view === 'list' && (
                 <ActionIcon variant="subtle" color="gray" radius="xl" onClick={openCatModal}>
                   <IconCategory size={18} />
@@ -253,7 +272,7 @@ function Workspace({ drive }) {
         </AppShell.Header>
 
         <AppShell.Main>
-          {view === 'home' && <HomeScreen onOpen={handleHomeOpen} />}
+          {view === 'home' && <HomeScreen onOpen={handleHomeOpen} editing={editingHome} />}
 
           {/* 기록 */}
           {view === 'list' && (
@@ -343,6 +362,15 @@ function Workspace({ drive }) {
               categories={ledgerCategories}
               onAdd={addLedgerItem}
               onDelete={deleteLedgerItem}
+            />
+          )}
+
+          {/* 연락처 */}
+          {view === 'contacts' && (
+            <ContactsView
+              items={contactItems}
+              onAdd={addContactItem}
+              onDelete={handleDeleteContact}
             />
           )}
         </AppShell.Main>
