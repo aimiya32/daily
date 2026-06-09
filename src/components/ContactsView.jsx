@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react'
 import {
-  Stack, Paper, Group, Text, Button, TextInput, Textarea,
-  SegmentedControl, ActionIcon, Center, Chip, Box, FileButton,
+  Stack, Paper, Group, Text, Button, TextInput,
+  SegmentedControl, ActionIcon, Center, Chip, Box, FileButton, SimpleGrid,
 } from '@mantine/core'
 import {
-  IconPlus, IconTrash, IconPhoto, IconX,
+  IconPlus, IconTrash, IconPencil, IconPhoto, IconX,
   IconPhone, IconPrinter, IconMail, IconWorld, IconNote,
 } from '@tabler/icons-react'
 import StoredImage from './StoredImage'
@@ -21,11 +21,24 @@ function parseTags(str) {
   return out
 }
 
-export default function ContactsView({ items, onAdd, onDelete }) {
+// 파일의 원본 가로/세로 크기 읽기
+function readImageSize(file) {
+  return new Promise(resolve => {
+    const url = URL.createObjectURL(file)
+    const img = new Image()
+    img.onload = () => { URL.revokeObjectURL(url); resolve({ w: img.naturalWidth, h: img.naturalHeight }) }
+    img.onerror = () => { URL.revokeObjectURL(url); resolve(null) }
+    img.src = url
+  })
+}
+
+export default function ContactsView({ items, onAdd, onUpdate, onDelete }) {
   const [tab, setTab] = useState('register') // register | list | tag
   const [selectedTag, setSelectedTag] = useState(null)
+  const [expandedId, setExpandedId] = useState(null) // 펼쳐진 카드(하나만)
 
-  // 등록 폼
+  // 등록/수정 폼
+  const [editingId, setEditingId] = useState(null)
   const [name, setName] = useState('')
   const [phone, setPhone] = useState('')
   const [fax, setFax] = useState('')
@@ -33,36 +46,74 @@ export default function ContactsView({ items, onAdd, onDelete }) {
   const [sns, setSns] = useState('')
   const [note, setNote] = useState('')
   const [tagsInput, setTagsInput] = useState('')
-  const [pending, setPending] = useState(null) // 첨부 파일(미저장)
-  const [previewUrl, setPreviewUrl] = useState(null)
+  const [existingIds, setExistingIds] = useState([])   // 수정 시 기존 이미지 id
+  const [existingMeta, setExistingMeta] = useState({})
+  const [removedIds, setRemovedIds] = useState([])     // 저장 시 삭제할 기존 이미지
+  const [pending, setPending] = useState([])           // [{ key, file }]
+  const [previews, setPreviews] = useState({})         // key -> objectURL
   const [saving, setSaving] = useState(false)
 
   useEffect(() => {
-    if (!pending) { setPreviewUrl(null); return }
-    const url = URL.createObjectURL(pending)
-    setPreviewUrl(url)
-    return () => URL.revokeObjectURL(url)
+    const urls = pending.map(p => ({ key: p.key, url: URL.createObjectURL(p.file) }))
+    setPreviews(Object.fromEntries(urls.map(u => [u.key, u.url])))
+    return () => urls.forEach(u => URL.revokeObjectURL(u.url))
   }, [pending])
 
-  const hasContent = [name, phone, fax, email, sns, note, tagsInput].some(v => v.trim()) || !!pending
+  const keptExisting = existingIds.filter(id => !removedIds.includes(id))
+  const hasContent = [name, phone, fax, email, sns, note, tagsInput].some(v => v.trim()) || pending.length > 0 || keptExisting.length > 0
 
   function resetForm() {
-    setName(''); setPhone(''); setFax(''); setEmail(''); setSns(''); setNote(''); setTagsInput(''); setPending(null)
+    setEditingId(null)
+    setName(''); setPhone(''); setFax(''); setEmail(''); setSns(''); setNote(''); setTagsInput('')
+    setExistingIds([]); setExistingMeta({}); setRemovedIds([]); setPending([])
   }
 
-  async function handleAdd() {
+  function startEdit(c) {
+    setEditingId(c.id)
+    setName(c.name ?? ''); setPhone(c.phone ?? ''); setFax(c.fax ?? ''); setEmail(c.email ?? '')
+    setSns(c.sns ?? c.blog ?? ''); setNote(c.note ?? ''); setTagsInput((c.tags ?? []).join(', '))
+    setExistingIds(c.images ?? []); setExistingMeta(c.imageMeta ?? {}); setRemovedIds([]); setPending([])
+    setTab('register')
+    setExpandedId(null)
+  }
+
+  function handleFiles(files) {
+    const list = Array.isArray(files) ? files : files ? [files] : []
+    const imgs = list.filter(f => f.type?.startsWith('image/')).map(f => ({ key: crypto.randomUUID(), file: f }))
+    if (imgs.length) setPending(prev => [...prev, ...imgs])
+  }
+
+  function removePending(key) {
+    setPending(prev => prev.filter(p => p.key !== key))
+  }
+
+  function removeExisting(id) {
+    setRemovedIds(prev => [...prev, id])
+  }
+
+  async function handleSubmit() {
     if (!hasContent || saving) return
     setSaving(true)
     try {
-      const images = []
-      if (pending) {
-        const id = await storeImageFile(pending, false)
-        images.push(id)
+      const newImages = []
+      const newMeta = {}
+      for (const p of pending) {
+        const id = await storeImageFile(p.file, false)
+        newImages.push(id)
+        const size = await readImageSize(p.file)
+        if (size) newMeta[id] = size
         const rec = await getImage(id)
         if (rec) uploadImageRecord(id, rec).then(ok => { if (ok) putImage({ ...rec, uploaded: true }) })
       }
-      onAdd({
-        id: crypto.randomUUID(),
+      for (const id of removedIds) await deleteImage(id)
+
+      const images = [...keptExisting, ...newImages]
+      const imageMeta = {}
+      for (const id of keptExisting) if (existingMeta[id]) imageMeta[id] = existingMeta[id]
+      Object.assign(imageMeta, newMeta)
+
+      const payload = {
+        id: editingId ?? crypto.randomUUID(),
         name: name.trim(),
         phone: phone.trim(),
         fax: fax.trim(),
@@ -71,8 +122,12 @@ export default function ContactsView({ items, onAdd, onDelete }) {
         note: note.trim(),
         tags: parseTags(tagsInput),
         images,
+        imageMeta,
         updatedAt: new Date().toISOString(),
-      })
+      }
+      if (editingId) onUpdate(payload)
+      else onAdd(payload)
+
       resetForm()
       setTab('list')
     } finally {
@@ -90,34 +145,62 @@ export default function ContactsView({ items, onAdd, onDelete }) {
     )
   }
 
-  function renderCard(c) {
-    const imgId = c.images?.[0]
+  function renderImages(c) {
+    const ids = c.images ?? []
+    if (ids.length === 0) return null
+    const meta = c.imageMeta ?? {}
+    const portraits = ids.filter(id => { const m = meta[id]; return m && m.h > m.w })
+    const landscapes = ids.filter(id => !portraits.includes(id)) // 가로 또는 크기 미상
+    const imgStyle = { height: 'auto', objectFit: 'contain' }
     return (
-      <Paper key={c.id} radius={14} p="md" shadow="xs" style={{ background: 'white' }}>
-        <Group justify="space-between" wrap="nowrap" align="flex-start">
-          <Group gap="md" wrap="nowrap" align="flex-start" style={{ minWidth: 0 }}>
-            {imgId && (
-              <Box style={{ width: 72, flexShrink: 0 }}>
-                <StoredImage id={imgId} variant="thumb" height={72} radius={10} />
-              </Box>
-            )}
-            <Stack gap={4} style={{ minWidth: 0 }}>
-              <Text fw={700} size="md" c="#1E293B">{c.name || '(이름 없음)'}</Text>
-              {fieldRow(IconPhone, c.phone)}
-              {fieldRow(IconPrinter, c.fax)}
-              {fieldRow(IconMail, c.email)}
-              {fieldRow(IconWorld, c.sns ?? c.blog)}
-              {fieldRow(IconNote, c.note)}
-              {(c.tags ?? []).length > 0 && (
-                <Text size="xs" c="#94A3B8">{(c.tags ?? []).map(t => `#${t}`).join(' ')}</Text>
-              )}
-            </Stack>
+      <Stack gap="xs">
+        {landscapes.map(id => (
+          <StoredImage key={id} id={id} variant="thumb" height="auto" radius={10} style={imgStyle} />
+        ))}
+        {portraits.length > 0 && (
+          <SimpleGrid cols={2} spacing="xs">
+            {portraits.map(id => (
+              <StoredImage key={id} id={id} variant="thumb" height="auto" radius={10} style={imgStyle} />
+            ))}
+          </SimpleGrid>
+        )}
+      </Stack>
+    )
+  }
+
+  function renderCard(c) {
+    const expanded = expandedId === c.id
+    return (
+      <Paper key={c.id} radius={14} p="md" shadow="xs"
+        style={{ background: 'white', cursor: 'pointer' }}
+        onClick={() => setExpandedId(prev => (prev === c.id ? null : c.id))}>
+        <Stack gap="sm">
+          <Group justify="flex-end" gap="xs" onClick={(e) => e.stopPropagation()}>
+            <ActionIcon variant="subtle" color="gray" size="sm" onClick={() => startEdit(c)}>
+              <IconPencil size={15} />
+            </ActionIcon>
+            <ActionIcon variant="subtle" color="red" size="sm"
+              onClick={() => { if (confirm('삭제할까요?')) onDelete(c.id) }}>
+              <IconTrash size={15} />
+            </ActionIcon>
           </Group>
-          <ActionIcon variant="subtle" color="red" size="sm" style={{ flexShrink: 0 }}
-            onClick={() => { if (confirm('삭제할까요?')) onDelete(c.id) }}>
-            <IconTrash size={15} />
-          </ActionIcon>
-        </Group>
+          {renderImages(c)}
+          <Stack gap={4} style={{ minWidth: 0 }}>
+            <Text fw={700} size="md" c="#1E293B">{c.name || '(이름 없음)'}</Text>
+            {fieldRow(IconPhone, c.phone)}
+            {expanded && (
+              <>
+                {fieldRow(IconPrinter, c.fax)}
+                {fieldRow(IconMail, c.email)}
+                {fieldRow(IconWorld, c.sns ?? c.blog)}
+                {fieldRow(IconNote, c.note)}
+              </>
+            )}
+            {(c.tags ?? []).length > 0 && (
+              <Text size="xs" c="#94A3B8">{(c.tags ?? []).map(t => `#${t}`).join(' ')}</Text>
+            )}
+          </Stack>
+        </Stack>
       </Paper>
     )
   }
@@ -129,37 +212,50 @@ export default function ContactsView({ items, onAdd, onDelete }) {
     <Stack maw={800} mx="auto" gap="md">
       <Group justify="flex-start">
         <SegmentedControl
-          size="sm" value={tab} onChange={setTab}
+          size="sm" value={tab} onChange={(v) => { setTab(v); if (v !== 'register') resetForm() }}
           data={[{ label: '등록', value: 'register' }, { label: '리스트', value: 'list' }, { label: '태그', value: 'tag' }]}
         />
       </Group>
 
-      {/* 등록 */}
+      {/* 등록 / 수정 */}
       {tab === 'register' && (
         <Paper radius={14} shadow="sm" p="lg" style={{ background: 'white' }}>
           <Stack gap="sm">
             {/* 이미지 */}
-            <Group gap="sm" align="center">
-              {previewUrl ? (
-                <Box style={{ position: 'relative', width: 72, flexShrink: 0 }}>
-                  <img src={previewUrl} style={{ width: 72, height: 72, objectFit: 'cover', borderRadius: 10, display: 'block' }} />
-                  <ActionIcon size={18} radius="xl" color="dark" variant="filled"
-                    style={{ position: 'absolute', top: -6, right: -6, opacity: 0.9 }}
-                    onClick={() => setPending(null)}>
-                    <IconX size={11} />
-                  </ActionIcon>
-                </Box>
-              ) : (
-                <FileButton onChange={setPending} accept="image/*">
-                  {(props) => (
-                    <Button {...props} size="xs" variant="light" color="indigo" radius="md"
-                      leftSection={<IconPhoto size={15} />}>
-                      이미지 추가
-                    </Button>
-                  )}
-                </FileButton>
+            <Stack gap="xs">
+              {(keptExisting.length > 0 || pending.length > 0) && (
+                <Group gap="xs" wrap="wrap" align="center">
+                  {keptExisting.map(id => (
+                    <Box key={id} style={{ position: 'relative', width: 72, flexShrink: 0 }}>
+                      <StoredImage id={id} variant="thumb" height={72} radius={10} />
+                      <ActionIcon size={18} radius="xl" color="dark" variant="filled"
+                        style={{ position: 'absolute', top: -6, right: -6, opacity: 0.9 }}
+                        onClick={() => removeExisting(id)}>
+                        <IconX size={11} />
+                      </ActionIcon>
+                    </Box>
+                  ))}
+                  {pending.map(p => (
+                    <Box key={p.key} style={{ position: 'relative', width: 72, flexShrink: 0 }}>
+                      <img src={previews[p.key]} style={{ width: 72, height: 72, objectFit: 'cover', borderRadius: 10, display: 'block' }} />
+                      <ActionIcon size={18} radius="xl" color="dark" variant="filled"
+                        style={{ position: 'absolute', top: -6, right: -6, opacity: 0.9 }}
+                        onClick={() => removePending(p.key)}>
+                        <IconX size={11} />
+                      </ActionIcon>
+                    </Box>
+                  ))}
+                </Group>
               )}
-            </Group>
+              <FileButton onChange={handleFiles} accept="image/*" multiple>
+                {(props) => (
+                  <Button {...props} size="xs" variant="light" color="indigo" radius="md"
+                    leftSection={<IconPhoto size={15} />} style={{ flexShrink: 0, alignSelf: 'flex-start' }}>
+                    이미지 추가
+                  </Button>
+                )}
+              </FileButton>
+            </Stack>
 
             <TextInput label="이름" value={name} onChange={e => setName(e.currentTarget.value)} />
             <TextInput label="전화번호" value={phone} onChange={e => setPhone(e.currentTarget.value)} />
@@ -170,8 +266,11 @@ export default function ContactsView({ items, onAdd, onDelete }) {
             <TextInput label="태그" value={tagsInput} onChange={e => setTagsInput(e.currentTarget.value)} />
 
             <Group justify="flex-end">
-              <Button leftSection={<IconPlus size={14} />} onClick={handleAdd} loading={saving} disabled={!hasContent}>
-                추가
+              {editingId && (
+                <Button variant="subtle" color="gray" onClick={() => { resetForm(); setTab('list') }}>취소</Button>
+              )}
+              <Button leftSection={<IconPlus size={14} />} onClick={handleSubmit} loading={saving} disabled={!hasContent}>
+                {editingId ? '수정 완료' : '추가'}
               </Button>
             </Group>
           </Stack>

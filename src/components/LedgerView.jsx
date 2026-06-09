@@ -23,9 +23,10 @@ function parseTags(str) {
   return out
 }
 
-export default function LedgerView({ items, categories = [], onAdd, onDelete }) {
+export default function LedgerView({ items, categories = [], onAdd, onUpdate, onDelete }) {
   const [month, setMonth] = useState(dayjs().startOf('month'))
   const [tab, setTab] = useState('list') // list | tag | stat
+  const [editingId, setEditingId] = useState(null)
   const [type, setType] = useState('expense')
   const [date, setDate] = useState(new Date())
   const [amount, setAmount] = useState('')
@@ -48,10 +49,32 @@ export default function LedgerView({ items, categories = [], onAdd, onDelete }) 
   const expense = monthItems.filter(i => i.type === 'expense').reduce((s, i) => s + Number(i.amount || 0), 0)
   const balance = income - expense
 
-  function handleAdd() {
+  function resetForm() {
+    setEditingId(null)
+    setType('expense')
+    setDate(new Date())
+    setAmount('')
+    setMemo('')
+    setTagsInput('')
+    setCategoryId(null)
+  }
+
+  function startEdit(i) {
+    setEditingId(i.id)
+    setType(i.type)
+    setDate(dayjs(i.date).toDate())
+    setAmount(i.amount)
+    setMemo(i.memo ?? '')
+    setTagsInput((i.tags ?? []).join(', '))
+    setCategoryId(i.categoryId ?? null)
+    setTab('list')
+    if (typeof window !== 'undefined') window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
+  function handleSubmit() {
     if (amount === '' || Number(amount) <= 0) return
-    onAdd({
-      id: crypto.randomUUID(),
+    const payload = {
+      id: editingId ?? crypto.randomUUID(),
       date: dayjs(date).format('YYYY-MM-DD'),
       type,
       amount: Number(amount),
@@ -59,30 +82,30 @@ export default function LedgerView({ items, categories = [], onAdd, onDelete }) 
       memo: memo.trim(),
       tags: parseTags(tagsInput),
       updatedAt: new Date().toISOString(),
-    })
+    }
+    if (editingId) onUpdate(payload)
+    else onAdd(payload)
     setAmount('')
     setMemo('')
     setTagsInput('')
+    setEditingId(null)
   }
 
   function renderRow(i) {
     return (
-      <Paper key={i.id} radius="md" p="sm" shadow="xs" style={{ background: 'white' }}>
+      <Paper key={i.id} radius="md" p="sm" shadow="xs"
+        style={{ background: 'white', cursor: 'pointer', outline: editingId === i.id ? '2px solid var(--mantine-color-indigo-3)' : 'none' }}
+        onClick={() => startEdit(i)}>
         <Group justify="space-between" wrap="nowrap" align="center">
-          <Group gap="xl" wrap="nowrap" align="center" style={{ minWidth: 0 }}>
-            <Stack gap={0} align="center" style={{ flexShrink: 0 }}>
-              <Text size="xs" c="#94A3B8">{dayjs(i.date).format('YYYY')}</Text>
-              <Text fw={700} size="md" c="#1E293B">{dayjs(i.date).format('MM.DD')}</Text>
-            </Stack>
-            <Stack gap={6} style={{ minWidth: 0 }}>
-              <Group gap={6} wrap="nowrap" style={{ minWidth: 0 }}>
-                {i.categoryId && catMap[i.categoryId] && (
-                  <Box style={{ background: '#F1F5F9', borderRadius: 6, padding: '1px 8px', flexShrink: 0 }}>
-                    <Text size="xs" c="#1E293B">{catMap[i.categoryId]}</Text>
-                  </Box>
-                )}
-                <Text size="sm" c="#1E293B" truncate>{i.memo || (i.type === 'income' ? '수입' : '지출')}</Text>
-              </Group>
+          <Group gap="sm" wrap="nowrap" align="center" style={{ minWidth: 0 }}>
+            <Text fw={700} size="md" c="#1E293B" style={{ flexShrink: 0, width: 50, textAlign: 'center' }}>{dayjs(i.date).format('D')}</Text>
+            <Stack gap={6} style={{ minWidth: 0 }} align="flex-start">
+              {i.categoryId && catMap[i.categoryId] && (
+                <Box style={{ background: '#F1F5F9', borderRadius: 6, padding: '1px 8px' }}>
+                  <Text size="xs" c="#1E293B">{catMap[i.categoryId]}</Text>
+                </Box>
+              )}
+              <Text size="sm" c="#1E293B" truncate>{i.memo || (i.type === 'income' ? '수입' : '지출')}</Text>
               {(i.tags ?? []).length > 0 && (
                 <Text size="xs" c="#94A3B8">{(i.tags ?? []).map(t => `#${t}`).join(' ')}</Text>
               )}
@@ -93,7 +116,7 @@ export default function LedgerView({ items, categories = [], onAdd, onDelete }) 
               {i.type === 'income' ? '+' : '-'}{won(i.amount)}
             </Text>
             <ActionIcon variant="subtle" color="red" size="sm"
-              onClick={() => { if (confirm('삭제할까요?')) onDelete(i.id) }}>
+              onClick={(e) => { e.stopPropagation(); if (confirm('삭제할까요?')) onDelete(i.id) }}>
               <IconTrash size={14} />
             </ActionIcon>
           </Group>
@@ -171,9 +194,12 @@ export default function LedgerView({ items, categories = [], onAdd, onDelete }) 
                 label="태그" value={tagsInput} onChange={e => setTagsInput(e.currentTarget.value)}
               />
               <Group justify="flex-end">
-                <Button leftSection={<IconPlus size={14} />} onClick={handleAdd}
+                {editingId && (
+                  <Button variant="subtle" color="gray" onClick={resetForm}>취소</Button>
+                )}
+                <Button leftSection={<IconPlus size={14} />} onClick={handleSubmit}
                   disabled={amount === '' || Number(amount) <= 0}>
-                  추가
+                  {editingId ? '수정 완료' : '추가'}
                 </Button>
               </Group>
             </Stack>

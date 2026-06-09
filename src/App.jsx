@@ -77,9 +77,9 @@ function Workspace({ drive }) {
   const { checks: routineChecks, isChecked, toggle: toggleCheck, getCheckedRoutineIds, mergeChecks } = useRoutineChecks()
   const { categories: trackerCategories, addCategory: addTrackerCategory, deleteCategory: deleteTrackerCategory, setAll: setAllTrackerCategories } = useTrackerCategories()
   const { logs: trackerLogs, getLog: getTrackerLog, setLog: setTrackerLog, deleteLogsByCategory: deleteTrackerLogsByCategory, bulkSetPlanned: bulkSetTrackerPlanned, mergeLogs: mergeTrackerLogs } = useTrackerLogs()
-  const { items: ledgerItems, addItem: addLedgerItem, deleteItem: deleteLedgerItem, mergeItems: mergeLedgerItems } = useLedger()
+  const { items: ledgerItems, addItem: addLedgerItem, updateItem: updateLedgerItem, deleteItem: deleteLedgerItem, mergeItems: mergeLedgerItems } = useLedger()
   const { categories: ledgerCategories, addCategory: addLedgerCategory, deleteCategory: deleteLedgerCategory, setAll: setAllLedgerCategories } = useLedgerCategories()
-  const { items: contactItems, addItem: addContactItem, deleteItem: deleteContactItem, mergeItems: mergeContactItems } = useContacts()
+  const { items: contactItems, addItem: addContactItem, updateItem: updateContactItem, deleteItem: deleteContactItem, mergeItems: mergeContactItems } = useContacts()
 
   function applyDriveData(data) {
     if (!data) return
@@ -361,6 +361,7 @@ function Workspace({ drive }) {
               items={ledgerItems}
               categories={ledgerCategories}
               onAdd={addLedgerItem}
+              onUpdate={updateLedgerItem}
               onDelete={deleteLedgerItem}
             />
           )}
@@ -370,6 +371,7 @@ function Workspace({ drive }) {
             <ContactsView
               items={contactItems}
               onAdd={addContactItem}
+              onUpdate={updateContactItem}
               onDelete={handleDeleteContact}
             />
           )}

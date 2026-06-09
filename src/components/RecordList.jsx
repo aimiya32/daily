@@ -69,7 +69,7 @@ export default function RecordList({ records, categories, onEdit, onDelete, onVi
     const cat = categories.find(c => c.id === record.categoryId)
     return (
       <Group gap={6} wrap="nowrap" align="center" onClick={e => { e.stopPropagation(); onView(record) }} style={{ cursor: 'pointer', minWidth: 0 }}>
-        {cat && <Badge size="xs" variant="light" radius="xl" style={{ flexShrink: 0 }}>{cat.name}</Badge>}
+        {cat && <Badge size="sm" variant="light" radius="xl" style={{ flexShrink: 0 }}>{cat.name}</Badge>}
         {record.title && (
           <Text fw={700} size="sm" c="#4F46E5" lineClamp={1}>{record.title}</Text>
         )}
@@ -92,7 +92,7 @@ export default function RecordList({ records, categories, onEdit, onDelete, onVi
             {(record.title || (record.categoryId && catMap[record.categoryId])) && (
               <Group gap={6} wrap="nowrap" align="center" style={{ minWidth: 0 }}>
                 {record.categoryId && catMap[record.categoryId] && (
-                  <Badge size="xs" variant="light" radius="xl" color="indigo" style={{ flexShrink: 0 }}>{catMap[record.categoryId]}</Badge>
+                  <Badge size="sm" variant="light" radius="xl" color="indigo" style={{ flexShrink: 0 }}>{catMap[record.categoryId]}</Badge>
                 )}
                 {record.title && (
                   <Text fw={700} size="sm" c="#4F46E5" lineClamp={1}>{record.title}</Text>

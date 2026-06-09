@@ -18,7 +18,7 @@ export default function RecordDetail({ record, categories, onEdit, onDelete }) {
         <Group justify="space-between" align="flex-start">
           <Stack gap={6} style={{ minWidth: 0 }} align="flex-start">
             {cat && (
-              <Badge size="sm" variant="light" radius="xl" color="indigo">{cat.name}</Badge>
+              <Badge size="lg" variant="light" radius="xl" color="indigo">{cat.name}</Badge>
             )}
             {record.title && (
               <Text fw={800} size="xl" c="#1E293B" style={{ letterSpacing: '-0.5px' }}>
@@ -36,7 +36,7 @@ export default function RecordDetail({ record, categories, onEdit, onDelete }) {
             )}
           </Stack>
           <Group gap="xs">
-            <ActionIcon variant="light" color="indigo" radius="xl" size="lg" onClick={onEdit}>
+            <ActionIcon variant="subtle" color="gray" radius="xl" size="lg" onClick={onEdit} style={{ background: '#F8FAFC' }}>
               <IconPencil size={16} />
             </ActionIcon>
             <ActionIcon variant="light" color="red" radius="xl" size="lg"

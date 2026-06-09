@@ -21,6 +21,10 @@ export function useLedger() {
     setItems(prev => [item, ...prev])
   }
 
+  function updateItem(item) {
+    setItems(prev => prev.map(i => (i.id === item.id ? item : i)))
+  }
+
   function deleteItem(id) {
     setItems(prev => prev.filter(i => i.id !== id))
   }
@@ -36,5 +40,5 @@ export function useLedger() {
     })
   }
 
-  return { items, addItem, deleteItem, mergeItems }
+  return { items, addItem, updateItem, deleteItem, mergeItems }
 }

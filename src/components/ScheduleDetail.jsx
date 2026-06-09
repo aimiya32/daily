@@ -40,7 +40,7 @@ export default function ScheduleDetail({ schedule, categories, onEdit, onDelete 
             </Group>
           </Stack>
           <Group gap="xs">
-            <ActionIcon variant="light" color="indigo" radius="xl" size="lg" onClick={onEdit}>
+            <ActionIcon variant="light" color="gray" radius="xl" size="lg" onClick={onEdit}>
               <IconPencil size={16} />
             </ActionIcon>
             <ActionIcon variant="light" color="red" radius="xl" size="lg"
