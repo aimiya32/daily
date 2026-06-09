@@ -38,5 +38,18 @@ export function useHomeMenu(allIds) {
     })
   }
 
-  return { menu, toggleVisible, move }
+  // activeId 항목을 overId 위치로 이동(드래그 정렬)
+  function reorder(activeId, overId) {
+    setMenu(prev => {
+      const from = prev.findIndex(m => m.id === activeId)
+      const to = prev.findIndex(m => m.id === overId)
+      if (from < 0 || to < 0 || from === to) return prev
+      const arr = [...prev]
+      const [moved] = arr.splice(from, 1)
+      arr.splice(to, 0, moved)
+      return arr
+    })
+  }
+
+  return { menu, toggleVisible, move, reorder }
 }
