@@ -230,7 +230,7 @@ export default function RoutineView({ routines, isChecked, toggle, getCheckedRou
   // ── 뷰 전환 컨트롤 ───────────────────────────────────
   return (
     <Stack maw={1000} mx="auto" gap="md">
-      <Group justify="flex-end">
+      <Group justify="flex-start">
         <SegmentedControl
           value={calView}
           onChange={setCalView}

@@ -61,7 +61,7 @@ export default function ScheduleCalendar({ schedules, categories, onView, onAdd,
               width: '100%',
             }}>
               <Text size="xs" truncate style={{ color: hex, fontWeight: 700, fontSize: '0.6875rem', lineHeight: 1.4 }}>
-                {s.time ? `${s.time} ` : ''}{s.title}
+                {s.title}
               </Text>
             </Box>
           )

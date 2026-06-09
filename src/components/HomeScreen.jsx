@@ -1,11 +1,12 @@
 import { UnstyledButton, Stack, Text, Box, Center, Group } from '@mantine/core'
-import { IconBook2, IconCalendar, IconRepeat, IconChartBar, IconChevronRight } from '@tabler/icons-react'
+import { IconBook2, IconCalendar, IconRepeat, IconChartBar, IconWallet, IconChevronRight } from '@tabler/icons-react'
 
 const apps = [
   { id: 'schedule', label: '일정',    icon: IconCalendar, color: '#7C3AED' },
   { id: 'tracker',  label: '목표',  icon: IconChartBar, color: '#059669' },
   { id: 'routine',  label: '루틴',    icon: IconRepeat,   color: '#0EA5E9' },
   { id: 'record',   label: '기록',    icon: IconBook2,    color: '#4F46E5' },
+  { id: 'ledger',   label: '가계부',  icon: IconWallet,   color: '#DB2777' },
 ]
 
 export default function HomeScreen({ onOpen }) {

@@ -11,6 +11,8 @@ import ScheduleDetail from './components/ScheduleDetail'
 import ScheduleCategoryManager from './components/ScheduleCategoryManager'
 import RoutineView from './components/RoutineView'
 import TrackerView from './components/TrackerView'
+import LedgerView from './components/LedgerView'
+import LedgerCategoryManager from './components/LedgerCategoryManager'
 import TrackerCategoryManager from './components/TrackerCategoryManager'
 import HomeScreen from './components/HomeScreen'
 import LoginScreen from './components/LoginScreen'
@@ -24,6 +26,8 @@ import { useRoutines } from './hooks/useRoutines'
 import { useRoutineChecks } from './hooks/useRoutineChecks'
 import { useTrackerCategories } from './hooks/useTrackerCategories'
 import { useTrackerLogs } from './hooks/useTrackerLogs'
+import { useLedger } from './hooks/useLedger'
+import { useLedgerCategories } from './hooks/useLedgerCategories'
 import { useGoogleDrive } from './hooks/useGoogleDrive'
 import { setAccountPrefix, isInitialized, markInitialized } from './lib/accountStorage'
 import { deleteImages, getImage, putImage } from './lib/imageStore'
@@ -59,6 +63,7 @@ function Workspace({ drive }) {
   const [catModalOpened, { open: openCatModal, close: closeCatModal }] = useDisclosure(false)
   const [scatModalOpened, { open: openScatModal, close: closeScatModal }] = useDisclosure(false)
   const [tcatModalOpened, { open: openTcatModal, close: closeTcatModal }] = useDisclosure(false)
+  const [lcatModalOpened, { open: openLcatModal, close: closeLcatModal }] = useDisclosure(false)
   const openRoutineDrawerRef = useRef(null)
 
   const { records, saveRecord, deleteRecord, mergeRecords } = useRecords()
@@ -69,6 +74,8 @@ function Workspace({ drive }) {
   const { checks: routineChecks, isChecked, toggle: toggleCheck, getCheckedRoutineIds, mergeChecks } = useRoutineChecks()
   const { categories: trackerCategories, addCategory: addTrackerCategory, deleteCategory: deleteTrackerCategory, setAll: setAllTrackerCategories } = useTrackerCategories()
   const { logs: trackerLogs, getLog: getTrackerLog, setLog: setTrackerLog, deleteLogsByCategory: deleteTrackerLogsByCategory, bulkSetPlanned: bulkSetTrackerPlanned, mergeLogs: mergeTrackerLogs } = useTrackerLogs()
+  const { items: ledgerItems, addItem: addLedgerItem, deleteItem: deleteLedgerItem, mergeItems: mergeLedgerItems } = useLedger()
+  const { categories: ledgerCategories, addCategory: addLedgerCategory, deleteCategory: deleteLedgerCategory, setAll: setAllLedgerCategories } = useLedgerCategories()
 
   function applyDriveData(data) {
     if (!data) return
@@ -80,6 +87,8 @@ function Workspace({ drive }) {
     if (data.routineChecks) mergeChecks(data.routineChecks)
     if (data.trackerCategories) setAllTrackerCategories(data.trackerCategories)
     if (data.trackerLogs) mergeTrackerLogs(data.trackerLogs)
+    if (data.ledger) mergeLedgerItems(data.ledger)
+    if (data.ledgerCategories) setAllLedgerCategories(data.ledgerCategories)
   }
 
   async function handleDrivePull() {
@@ -99,7 +108,7 @@ function Workspace({ drive }) {
   }
 
   async function handleDrivePush() {
-    await push({ records, categories, schedules, scheduleCategories, routines, routineChecks, trackerCategories, trackerLogs })
+    await push({ records, categories, schedules, scheduleCategories, routines, routineChecks, trackerCategories, trackerLogs, ledger: ledgerItems, ledgerCategories })
     await syncImagesToDrive()
   }
 
@@ -119,6 +128,7 @@ function Workspace({ drive }) {
     if (id === 'schedule') setView('schedule')
     if (id === 'routine') setView('routine')
     if (id === 'tracker') setView('tracker')
+    if (id === 'ledger') setView('ledger')
   }
 
   function handleDeleteTrackerCategory(id) {
@@ -157,6 +167,7 @@ function Workspace({ drive }) {
     'schedule-editor': selectedSchedule ? '일정 수정' : '새 일정',
     routine: '루틴',
     tracker: '목표',
+    ledger: '가계부',
   }[view] ?? ''
 
   const isNarrow = useMediaQuery('(max-width: 500px)')
@@ -221,6 +232,11 @@ function Workspace({ drive }) {
               )}
               {view === 'tracker' && (
                 <ActionIcon variant="subtle" color="gray" radius="xl" onClick={openTcatModal}>
+                  <IconCategory size={18} />
+                </ActionIcon>
+              )}
+              {view === 'ledger' && (
+                <ActionIcon variant="subtle" color="gray" radius="xl" onClick={openLcatModal}>
                   <IconCategory size={18} />
                 </ActionIcon>
               )}
@@ -319,6 +335,16 @@ function Workspace({ drive }) {
               bulkSetPlanned={bulkSetTrackerPlanned}
             />
           )}
+
+          {/* 가계부 */}
+          {view === 'ledger' && (
+            <LedgerView
+              items={ledgerItems}
+              categories={ledgerCategories}
+              onAdd={addLedgerItem}
+              onDelete={deleteLedgerItem}
+            />
+          )}
         </AppShell.Main>
       </AppShell>
 
@@ -343,6 +369,13 @@ function Workspace({ drive }) {
         categories={trackerCategories}
         onAdd={addTrackerCategory}
         onDelete={handleDeleteTrackerCategory}
+      />
+      <LedgerCategoryManager
+        opened={lcatModalOpened}
+        onClose={closeLcatModal}
+        categories={ledgerCategories}
+        onAdd={addLedgerCategory}
+        onDelete={deleteLedgerCategory}
       />
     </>
   )

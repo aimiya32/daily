@@ -290,6 +290,7 @@ function MonthlySummary({ categories, month, setMonth, sumRange }) {
         monthValue={month.toDate()}
         onMonthSelect={(v) => setMonth(dayjs(v).startOf('month'))}
         onToday={() => setMonth(dayjs().startOf('month'))}
+        standalone
       />
       <Stack gap="sm">
         {categories.map(cat => {

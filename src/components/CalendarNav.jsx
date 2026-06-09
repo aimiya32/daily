@@ -1,31 +1,40 @@
 import { Paper, Group, Box, ActionIcon, Text, Button, Popover } from '@mantine/core'
 import { MonthPicker } from '@mantine/dates'
 import { useMediaQuery, useDisclosure } from '@mantine/hooks'
-import { IconChevronLeft, IconChevronRight, IconChevronDown } from '@tabler/icons-react'
+import { IconChevronLeft, IconChevronRight } from '@tabler/icons-react'
+import dayjs from 'dayjs'
 
-export default function CalendarNav({ title, onPrev, onNext, onToday, rightSection, monthValue, onMonthSelect }) {
+export default function CalendarNav({ title, onPrev, onNext, onToday, rightSection, monthValue, onMonthSelect, standalone = false }) {
   const isNarrow = useMediaQuery('(max-width: 500px)')
   const radius = 14
   const [picker, { toggle: togglePicker, close: closePicker }] = useDisclosure(false)
   const isMonthPicker = !!onMonthSelect
 
   const centerDate = isMonthPicker ? (
-    <Popover opened={picker} onChange={(o) => !o && closePicker()} position="bottom" shadow="md" withArrow>
-      <Popover.Target>
-        <Group gap={4} align="center" wrap="nowrap" style={{ cursor: 'pointer' }} onClick={togglePicker}>
-          <Text fw={700} size="md" style={{ whiteSpace: 'nowrap' }}>{title}</Text>
-          <IconChevronDown size={15} color="var(--mantine-color-gray-6)" />
-        </Group>
-      </Popover.Target>
-      <Popover.Dropdown>
-        <MonthPicker
-          value={monthValue}
-          onChange={(v) => { if (v) { onMonthSelect(v); closePicker() } }}
-        />
-      </Popover.Dropdown>
-    </Popover>
+    <Group gap="md" align="center" wrap="nowrap">
+      <ActionIcon variant="subtle" color="gray" radius="xl"
+        onClick={() => onMonthSelect(dayjs(monthValue).subtract(1, 'month').toDate())}>
+        <IconChevronLeft size={16} />
+      </ActionIcon>
+      <Popover opened={picker} onChange={(o) => !o && closePicker()} position="bottom" shadow="md" withArrow>
+        <Popover.Target>
+          <Text fw={700} size="md" style={{ whiteSpace: 'nowrap', cursor: 'pointer' }} onClick={togglePicker}>{title}</Text>
+        </Popover.Target>
+        <Popover.Dropdown>
+          <MonthPicker
+            value={monthValue}
+            monthsListFormat="M월"
+            onChange={(v) => { if (v) { onMonthSelect(v); closePicker() } }}
+          />
+        </Popover.Dropdown>
+      </Popover>
+      <ActionIcon variant="subtle" color="gray" radius="xl"
+        onClick={() => onMonthSelect(dayjs(monthValue).add(1, 'month').toDate())}>
+        <IconChevronRight size={16} />
+      </ActionIcon>
+    </Group>
   ) : (
-    <Group gap={4} align="center" wrap="nowrap">
+    <Group gap="md" align="center" wrap="nowrap">
       <ActionIcon variant="subtle" color="gray" radius="xl" onClick={onPrev}>
         <IconChevronLeft size={16} />
       </ActionIcon>
@@ -50,11 +59,11 @@ export default function CalendarNav({ title, onPrev, onNext, onToday, rightSecti
       px={isNarrow ? 'sm' : 'lg'}
       py="md"
       style={{
-        borderRadius: `${radius}px ${radius}px 0 0`,
+        borderRadius: standalone ? radius : `${radius}px ${radius}px 0 0`,
         background: 'white',
-        boxShadow: '0 -1px 0 #E2E8F0 inset',
+        boxShadow: standalone ? undefined : '0 -1px 0 #E2E8F0 inset',
         border: '1px solid #E2E8F0',
-        borderBottom: 'none',
+        borderBottom: standalone ? '1px solid #E2E8F0' : 'none',
       }}
     >
       <Box style={{ position: 'relative', display: 'flex', alignItems: 'center', minHeight: 30 }}>
