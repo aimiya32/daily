@@ -3,7 +3,7 @@ import {
   IconBook2, IconCalendar, IconRepeat, IconChartBar, IconWallet, IconAddressBook,
   IconEye, IconEyeOff,
 } from '@tabler/icons-react'
-import { DndContext, closestCenter, PointerSensor, useSensor, useSensors } from '@dnd-kit/core'
+import { DndContext, closestCenter, MouseSensor, TouchSensor, useSensor, useSensors } from '@dnd-kit/core'
 import { SortableContext, rectSortingStrategy, useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { useHomeMenu } from '../hooks/useHomeMenu'
@@ -21,7 +21,10 @@ const ALL_IDS = ['schedule', 'tracker', 'routine', 'record', 'ledger', 'contacts
 export default function HomeScreen({ onOpen, editing = false }) {
   const { menu, toggleVisible, reorder } = useHomeMenu(ALL_IDS)
   const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { delay: 200, tolerance: 6 } }),
+    // 데스크톱: 5px 이상 끌면 즉시 드래그
+    useSensor(MouseSensor, { activationConstraint: { distance: 5 } }),
+    // 모바일: 200ms 꾹 누른 뒤 드래그(짧게 누르면 스크롤/탭)
+    useSensor(TouchSensor, { activationConstraint: { delay: 200, tolerance: 6 } }),
   )
 
   const visibleMenu = menu.filter(m => m.visible)
