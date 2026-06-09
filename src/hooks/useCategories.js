@@ -7,8 +7,8 @@ function loadSeq(categories, SEQ_KEY) {
 }
 
 export function useCategories() {
-  const STORAGE_KEY = nk('diary_categories')
-  const SEQ_KEY = nk('diary_categories_seq')
+  const STORAGE_KEY = nk('record_categories')
+  const SEQ_KEY = nk('record_categories_seq')
   const [categories, setCategories] = useState(() => {
     try {
       const raw = localStorage.getItem(STORAGE_KEY)
@@ -39,11 +39,15 @@ export function useCategories() {
     localStorage.setItem(SEQ_KEY, '0')
   }
 
-  function addCategory(name) {
+  function addCategory(name, viewType = 'list') {
     const trimmed = name.trim()
     if (!trimmed) return
     if (categories.some(c => c.name === trimmed)) return
-    setCategories(prev => [...prev, { id: nextId(), name: trimmed }])
+    setCategories(prev => [...prev, { id: nextId(), name: trimmed, viewType }])
+  }
+
+  function updateCategory(id, patch) {
+    setCategories(prev => prev.map(c => (c.id === id ? { ...c, ...patch } : c)))
   }
 
   function deleteCategory(id) {
@@ -69,5 +73,5 @@ export function useCategories() {
     localStorage.setItem(SEQ_KEY, String(max))
   }
 
-  return { categories, addCategory, deleteCategory, setAll }
+  return { categories, addCategory, updateCategory, deleteCategory, setAll }
 }

@@ -5,7 +5,7 @@ const apps = [
   { id: 'schedule', label: '일정',    icon: IconCalendar, color: '#7C3AED' },
   { id: 'tracker',  label: '목표',  icon: IconChartBar, color: '#059669' },
   { id: 'routine',  label: '루틴',    icon: IconRepeat,   color: '#0EA5E9' },
-  { id: 'diary',    label: '일기',    icon: IconBook2,    color: '#4F46E5' },
+  { id: 'record',   label: '기록',    icon: IconBook2,    color: '#4F46E5' },
 ]
 
 export default function HomeScreen({ onOpen }) {

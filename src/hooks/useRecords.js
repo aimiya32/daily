@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react'
 import { nk } from '../lib/accountStorage'
 
-export function useEntries() {
-  const STORAGE_KEY = nk('diary_entries')
-  const [entries, setEntries] = useState(() => {
+export function useRecords() {
+  const STORAGE_KEY = nk('records')
+  const [records, setRecords] = useState(() => {
     try {
       const raw = localStorage.getItem(STORAGE_KEY)
       return raw ? JSON.parse(raw) : []
@@ -13,27 +13,27 @@ export function useEntries() {
   })
 
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(entries))
-  }, [entries])
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(records))
+  }, [records])
 
-  function saveEntry(entry) {
-    setEntries(prev => {
-      const idx = prev.findIndex(e => e.id === entry.id)
+  function saveRecord(record) {
+    setRecords(prev => {
+      const idx = prev.findIndex(e => e.id === record.id)
       if (idx >= 0) {
         const updated = [...prev]
-        updated[idx] = entry
+        updated[idx] = record
         return updated
       }
-      return [entry, ...prev]
+      return [record, ...prev]
     })
   }
 
-  function deleteEntry(id) {
-    setEntries(prev => prev.filter(e => e.id !== id))
+  function deleteRecord(id) {
+    setRecords(prev => prev.filter(e => e.id !== id))
   }
 
-  function mergeEntries(remote) {
-    setEntries(prev => {
+  function mergeRecords(remote) {
+    setRecords(prev => {
       const map = new Map(prev.map(e => [e.id, e]))
       for (const e of remote) {
         const existing = map.get(e.id)
@@ -43,5 +43,5 @@ export function useEntries() {
     })
   }
 
-  return { entries, saveEntry, deleteEntry, mergeEntries }
+  return { records, saveRecord, deleteRecord, mergeRecords }
 }

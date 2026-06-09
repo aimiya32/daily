@@ -10,12 +10,13 @@ import { storeImageFile, deleteImage, getImage, putImage } from '../lib/imageSto
 import { uploadImageRecord } from '../lib/driveImages'
 import dayjs from 'dayjs'
 
-export default function EntryEditor({ entry, onSave, onCancel, categories }) {
-  const [date, setDate] = useState(entry ? dayjs(entry.date).toDate() : new Date())
-  const [content, setContent] = useState(entry?.content ?? '')
-  const [categoryId, setCategoryId] = useState(entry?.categoryId ?? null)
-  const [tagsInput, setTagsInput] = useState((entry?.tags ?? []).join(', '))
-  const [imageIds, setImageIds] = useState(entry?.images ?? [])  // 이미 저장된 이미지
+export default function RecordEditor({ record, onSave, onCancel, categories }) {
+  const [date, setDate] = useState(record ? dayjs(record.date).toDate() : new Date())
+  const [title, setTitle] = useState(record?.title ?? '')
+  const [content, setContent] = useState(record?.content ?? '')
+  const [categoryId, setCategoryId] = useState(record?.categoryId ?? null)
+  const [tagsInput, setTagsInput] = useState((record?.tags ?? []).join(', '))
+  const [imageIds, setImageIds] = useState(record?.images ?? [])  // 이미 저장된 이미지
   const [removedIds, setRemovedIds] = useState([])               // 저장 시 삭제할 기존 이미지
   const [pending, setPending] = useState([])                     // { key, file } 미저장 첨부
   const [keepOriginal, setKeepOriginal] = useState(false)
@@ -67,8 +68,9 @@ export default function EntryEditor({ entry, onSave, onCancel, categories }) {
       for (const id of removedIds) await deleteImage(id)
 
       onSave({
-        id: entry?.id ?? crypto.randomUUID(),
+        id: record?.id ?? crypto.randomUUID(),
         date: dayjs(date).format('YYYY-MM-DD'),
+        title: title.trim() || null,
         content: content.trim(),
         categoryId: categoryId ?? null,
         tags: parseTags(tagsInput),
@@ -98,6 +100,13 @@ export default function EntryEditor({ entry, onSave, onCancel, categories }) {
           value={categoryId}
           onChange={setCategoryId}
           clearable
+        />
+
+        <TextInput
+          label="제목"
+          placeholder="제목 (선택)"
+          value={title}
+          onChange={e => setTitle(e.currentTarget.value)}
         />
 
         <TextInput

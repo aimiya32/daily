@@ -10,9 +10,9 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.svg'],
       manifest: {
-        name: '일기',
-        short_name: '일기',
-        description: '나만의 개인 일기',
+        name: '기록',
+        short_name: '기록',
+        description: '나만의 개인 기록',
         theme_color: '#228be6',
         background_color: '#ffffff',
         display: 'standalone',

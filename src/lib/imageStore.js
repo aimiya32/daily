@@ -2,7 +2,7 @@
 // 레코드: { id, thumb: Blob, original: Blob|null, type, originalType, createdAt }
 // 큰 이미지(원본)는 localStorage 한계를 넘기므로 IndexedDB에 보관한다.
 
-const DB_NAME = 'diary-images'
+const DB_NAME = 'record-images'
 const STORE = 'images'
 const THUMB_MAX = 480       // 썸네일 최대 변 길이(px)
 const THUMB_QUALITY = 0.8

@@ -2,8 +2,8 @@ import { useState, useRef, useCallback, useEffect } from 'react'
 
 const CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID
 const SCOPE = 'https://www.googleapis.com/auth/drive.appdata'
-const FILE_NAME = 'diary.json'
-const USER_KEY = 'diary_guser'
+const FILE_NAME = 'record.json'
+const USER_KEY = 'record_guser'
 
 let gisLoaded = false
 function loadGIS() {
@@ -118,7 +118,7 @@ export function useGoogleDrive() {
       if (!fileId) { setStatus('synced'); return null }
       const data = await downloadFile(token, fileId)
       setStatus('synced')
-      if (Array.isArray(data)) return { entries: data, categories: null }
+      if (Array.isArray(data)) return { records: data, categories: null }
       return data
     } catch {
       setStatus('error')

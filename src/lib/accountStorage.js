@@ -2,9 +2,9 @@
 // 공용 브라우저에서 계정이 달라지면 데이터가 섞이지 않도록.
 
 const LEGACY_BASES = [
-  'diary_entries',
-  'diary_categories', 'diary_categories_seq',
-  'schedule_entries',
+  'records',
+  'record_categories', 'record_categories_seq',
+  'schedule_records',
   'schedule_categories', 'schedule_categories_seq',
   'routine_list', 'routine_list_seq',
   'routine_checks',

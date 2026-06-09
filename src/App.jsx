@@ -2,9 +2,9 @@ import { useState, useRef, useEffect } from 'react'
 import { AppShell, Group, Text, Button, ActionIcon } from '@mantine/core'
 import { useDisclosure, useMediaQuery } from '@mantine/hooks'
 import { IconCategory, IconHome, IconList, IconCalendar, IconChartBar } from '@tabler/icons-react'
-import EntryEditor from './components/EntryEditor'
-import EntryList from './components/EntryList'
-import EntryDetail from './components/EntryDetail'
+import RecordEditor from './components/RecordEditor'
+import RecordList from './components/RecordList'
+import RecordDetail from './components/RecordDetail'
 import ScheduleCalendar from './components/ScheduleCalendar'
 import ScheduleEditor from './components/ScheduleEditor'
 import ScheduleDetail from './components/ScheduleDetail'
@@ -16,7 +16,7 @@ import HomeScreen from './components/HomeScreen'
 import LoginScreen from './components/LoginScreen'
 import DriveSync from './components/DriveSync'
 import CategoryManager from './components/CategoryManager'
-import { useEntries } from './hooks/useEntries'
+import { useRecords } from './hooks/useRecords'
 import { useCategories } from './hooks/useCategories'
 import { useSchedules } from './hooks/useSchedules'
 import { useScheduleCategories } from './hooks/useScheduleCategories'
@@ -53,7 +53,7 @@ function Workspace({ drive }) {
   const { status: driveStatus, pull, push, signOut } = drive
 
   const [view, setView] = useState('home')
-  const [selectedEntry, setSelectedEntry] = useState(null)
+  const [selectedRecord, setSelectedRecord] = useState(null)
   const [selectedSchedule, setSelectedSchedule] = useState(null)
   const [scheduleInitialDate, setScheduleInitialDate] = useState(null)
   const [catModalOpened, { open: openCatModal, close: closeCatModal }] = useDisclosure(false)
@@ -61,8 +61,8 @@ function Workspace({ drive }) {
   const [tcatModalOpened, { open: openTcatModal, close: closeTcatModal }] = useDisclosure(false)
   const openRoutineDrawerRef = useRef(null)
 
-  const { entries, saveEntry, deleteEntry, mergeEntries } = useEntries()
-  const { categories, addCategory, deleteCategory, setAll: setAllCategories } = useCategories()
+  const { records, saveRecord, deleteRecord, mergeRecords } = useRecords()
+  const { categories, addCategory, updateCategory, deleteCategory, setAll: setAllCategories } = useCategories()
   const { schedules, saveSchedule, deleteSchedule, mergeSchedules } = useSchedules()
   const { categories: scheduleCategories, addCategory: addScatCategory, deleteCategory: deleteScatCategory, setAll: setAllScatCategories } = useScheduleCategories()
   const { routines, addRoutine, updateRoutine, toggleVisible, setAll: setAllRoutines } = useRoutines()
@@ -72,7 +72,7 @@ function Workspace({ drive }) {
 
   function applyDriveData(data) {
     if (!data) return
-    if (data.entries) mergeEntries(data.entries)
+    if (data.records) mergeRecords(data.records)
     if (data.categories) setAllCategories(data.categories)
     if (data.schedules) mergeSchedules(data.schedules)
     if (data.scheduleCategories) setAllScatCategories(data.scheduleCategories)
@@ -88,7 +88,7 @@ function Workspace({ drive }) {
 
   // 아직 Drive에 안 올라간 이미지들을 업로드 (백그라운드 업로드 실패분 보완)
   async function syncImagesToDrive() {
-    const ids = [...new Set(entries.flatMap(e => e.images ?? []))]
+    const ids = [...new Set(records.flatMap(e => e.images ?? []))]
     for (const id of ids) {
       const rec = await getImage(id)
       if (rec && !rec.uploaded) {
@@ -99,7 +99,7 @@ function Workspace({ drive }) {
   }
 
   async function handleDrivePush() {
-    await push({ entries, categories, schedules, scheduleCategories, routines, routineChecks, trackerCategories, trackerLogs })
+    await push({ records, categories, schedules, scheduleCategories, routines, routineChecks, trackerCategories, trackerLogs })
     await syncImagesToDrive()
   }
 
@@ -115,7 +115,7 @@ function Workspace({ drive }) {
   }, [])
 
   function handleHomeOpen(id) {
-    if (id === 'diary') setView('list')
+    if (id === 'record') setView('list')
     if (id === 'schedule') setView('schedule')
     if (id === 'routine') setView('routine')
     if (id === 'tracker') setView('tracker')
@@ -126,16 +126,16 @@ function Workspace({ drive }) {
     deleteTrackerLogsByCategory(id)
   }
 
-  function handleSaveEntry(entry) {
-    saveEntry(entry)
+  function handleSaveRecord(record) {
+    saveRecord(record)
     setView('list')
-    setSelectedEntry(null)
+    setSelectedRecord(null)
   }
 
-  function handleDeleteEntry(id) {
-    const target = entries.find(e => e.id === id)
+  function handleDeleteRecord(id) {
+    const target = records.find(e => e.id === id)
     if (target?.images?.length) deleteImages(target.images)
-    deleteEntry(id)
+    deleteRecord(id)
   }
 
   function handleSaveSchedule(schedule) {
@@ -144,14 +144,14 @@ function Workspace({ drive }) {
     setSelectedSchedule(null)
   }
 
-  const isDiary = ['list', 'detail', 'editor'].includes(view)
+  const isRecord = ['list', 'detail', 'editor'].includes(view)
   const isSchedule = ['schedule', 'schedule-detail', 'schedule-editor'].includes(view)
 
   const headerTitle = {
     home: '',
-    list: '일기',
-    detail: '일기',
-    editor: selectedEntry ? '일기 수정' : '새 일기',
+    list: '기록',
+    detail: '기록',
+    editor: selectedRecord ? '기록 수정' : '새 기록',
     schedule: '일정',
     'schedule-detail': '일정',
     'schedule-editor': selectedSchedule ? '일정 수정' : '새 일정',
@@ -182,12 +182,12 @@ function Workspace({ drive }) {
               {view !== 'home' && (
                 <>
                   <ActionIcon variant="subtle" color="gray" radius="xl"
-                    onClick={() => { setView('home'); setSelectedEntry(null); setSelectedSchedule(null) }}>
+                    onClick={() => { setView('home'); setSelectedRecord(null); setSelectedSchedule(null) }}>
                     <IconHome size={18} />
                   </ActionIcon>
-                  {(isDiary && view !== 'list') && (
+                  {(isRecord && view !== 'list') && (
                     <ActionIcon variant="subtle" color="gray" radius="xl"
-                      onClick={() => { setView('list'); setSelectedEntry(null) }}>
+                      onClick={() => { setView('list'); setSelectedRecord(null) }}>
                       <IconList size={18} />
                     </ActionIcon>
                   )}
@@ -239,31 +239,31 @@ function Workspace({ drive }) {
         <AppShell.Main>
           {view === 'home' && <HomeScreen onOpen={handleHomeOpen} />}
 
-          {/* 일기 */}
+          {/* 기록 */}
           {view === 'list' && (
-            <EntryList
-              entries={entries}
+            <RecordList
+              records={records}
               categories={categories}
-              onView={entry => { setSelectedEntry(entry); setView('detail') }}
-              onEdit={entry => { setSelectedEntry(entry); setView('editor') }}
-              onDelete={handleDeleteEntry}
-              onNew={() => { setSelectedEntry(null); setView('editor') }}
+              onView={record => { setSelectedRecord(record); setView('detail') }}
+              onEdit={record => { setSelectedRecord(record); setView('editor') }}
+              onDelete={handleDeleteRecord}
+              onNew={() => { setSelectedRecord(null); setView('editor') }}
             />
           )}
-          {view === 'detail' && selectedEntry && (
-            <EntryDetail
-              entry={selectedEntry}
+          {view === 'detail' && selectedRecord && (
+            <RecordDetail
+              record={selectedRecord}
               categories={categories}
               onEdit={() => setView('editor')}
-              onDelete={() => { handleDeleteEntry(selectedEntry.id); setView('list'); setSelectedEntry(null) }}
+              onDelete={() => { handleDeleteRecord(selectedRecord.id); setView('list'); setSelectedRecord(null) }}
             />
           )}
           {view === 'editor' && (
-            <EntryEditor
-              entry={selectedEntry}
+            <RecordEditor
+              record={selectedRecord}
               categories={categories}
-              onSave={handleSaveEntry}
-              onCancel={() => setView(selectedEntry ? 'detail' : 'list')}
+              onSave={handleSaveRecord}
+              onCancel={() => setView(selectedRecord ? 'detail' : 'list')}
             />
           )}
 
@@ -327,6 +327,7 @@ function Workspace({ drive }) {
         onClose={closeCatModal}
         categories={categories}
         onAdd={addCategory}
+        onUpdate={updateCategory}
         onDelete={deleteCategory}
       />
       <ScheduleCategoryManager

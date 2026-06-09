@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { nk } from '../lib/accountStorage'
 
 export function useSchedules() {
-  const STORAGE_KEY = nk('schedule_entries')
+  const STORAGE_KEY = nk('schedule_records')
   const [schedules, setSchedules] = useState(() => {
     try {
       const raw = localStorage.getItem(STORAGE_KEY)

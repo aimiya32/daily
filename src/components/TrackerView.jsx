@@ -27,6 +27,12 @@ function fmt(n) {
   return Math.round(n * 100) / 100
 }
 
+// 달력 칸 표시용: 소수점 1자리까지 반올림
+function fmt1(n) {
+  if (n === null || n === undefined || n === '') return 0
+  return Math.round(n * 10) / 10
+}
+
 export default function TrackerView({ categories, logs, getLog, setLog, bulkSetPlanned }) {
   const [mode, setMode] = useState('calendar') // calendar | summary
   const [day, setDay] = useState(dayjs())
@@ -340,7 +346,7 @@ function CalendarView({ cat, logs, month, setMonth, calMode, onSelectDate }) {
         background: color + '22', borderRadius: 5, padding: '2px 4px',
       }}>
         <Text style={{ fontSize: '0.78rem', fontWeight: 700, color, lineHeight: 1.2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-          {fmt(value)}{unit}
+          {fmt1(value)}{unit}
         </Text>
       </Box>
     )

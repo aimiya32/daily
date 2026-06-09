@@ -37,6 +37,13 @@ export default function ScheduleEditor({ schedule, categories, initialDate, onSa
           value={date}
           onChange={setDate}
           valueFormat="YYYY년 MM월 DD일"
+          firstDayOfWeek={0}
+          getDayProps={(d) => {
+            const day = d.getDay()
+            if (day === 6) return { style: { color: '#1c7ed6' } }
+            if (day === 0) return { style: { color: '#e03131' } }
+            return {}
+          }}
           required
         />
         <TimeInput
