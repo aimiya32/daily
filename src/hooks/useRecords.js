@@ -1,20 +1,9 @@
-import { useState, useEffect } from 'react'
 import { nk } from '../lib/accountStorage'
+import { mergeById } from '../lib/mergeById'
+import { useLocalStorageState } from './useLocalStorageState'
 
 export function useRecords() {
-  const STORAGE_KEY = nk('records')
-  const [records, setRecords] = useState(() => {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY)
-      return raw ? JSON.parse(raw) : []
-    } catch {
-      return []
-    }
-  })
-
-  useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(records))
-  }, [records])
+  const [records, setRecords] = useLocalStorageState(nk('records'))
 
   function saveRecord(record) {
     setRecords(prev => {
@@ -33,14 +22,7 @@ export function useRecords() {
   }
 
   function mergeRecords(remote) {
-    setRecords(prev => {
-      const map = new Map(prev.map(e => [e.id, e]))
-      for (const e of remote) {
-        const existing = map.get(e.id)
-        if (!existing || e.updatedAt > existing.updatedAt) map.set(e.id, e)
-      }
-      return Array.from(map.values()).sort((a, b) => (a.date < b.date ? 1 : -1))
-    })
+    setRecords(prev => mergeById(prev, remote, (a, b) => (a.date < b.date ? 1 : -1)))
   }
 
   return { records, saveRecord, deleteRecord, mergeRecords }

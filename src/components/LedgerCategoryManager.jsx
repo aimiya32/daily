@@ -1,6 +1,7 @@
 import { useState } from 'react'
-import { Drawer, Stack, Group, TextInput, Button, ActionIcon, Text, SegmentedControl, Divider } from '@mantine/core'
-import { IconTrash, IconPlus } from '@tabler/icons-react'
+import { Drawer, Stack, Group, TextInput, Button, Text, SegmentedControl, Divider } from '@mantine/core'
+import { IconPlus } from '@tabler/icons-react'
+import { CategoryRow, EmptyText } from './CategoryRow'
 
 export default function LedgerCategoryManager({ opened, onClose, categories, onAdd, onDelete }) {
   const [input, setInput] = useState('')
@@ -12,24 +13,17 @@ export default function LedgerCategoryManager({ opened, onClose, categories, onA
     setInput('')
   }
 
-  const expenseCats = categories.filter(c => c.type === 'expense')
-  const incomeCats = categories.filter(c => c.type === 'income')
-
   function renderList(list) {
-    if (list.length === 0) return <Text size="sm" c="dimmed" ta="center">카테고리가 없어요.</Text>
+    if (list.length === 0) return <EmptyText />
     return list.map(cat => (
-      <Group key={cat.id} justify="space-between" px="xs" py={6}
-        style={{ border: '1px solid var(--mantine-color-gray-2)', borderRadius: 8 }}>
+      <CategoryRow key={cat.id} onDelete={() => onDelete(cat.id)}>
         <Text size="sm">{cat.name}</Text>
-        <ActionIcon variant="subtle" color="red" size="sm" onClick={() => onDelete(cat.id)}>
-          <IconTrash size={14} />
-        </ActionIcon>
-      </Group>
+      </CategoryRow>
     ))
   }
 
   return (
-    <Drawer opened={opened} onClose={onClose} title="가계부 카테고리 관리" position="right" size="sm" overlayProps={{ backgroundOpacity: 0 }}>
+    <Drawer opened={opened} onClose={onClose} title="가계부 카테고리 관리">
       <Stack gap="md">
         <Stack gap="xs">
           <SegmentedControl
@@ -52,14 +46,14 @@ export default function LedgerCategoryManager({ opened, onClose, categories, onA
 
         <Stack gap="xs">
           <Text size="xs" fw={700} c="#DC2626">지출</Text>
-          {renderList(expenseCats)}
+          {renderList(categories.filter(c => c.type === 'expense'))}
         </Stack>
 
         <Divider />
 
         <Stack gap="xs">
           <Text size="xs" fw={700} c="#2563EB">수입</Text>
-          {renderList(incomeCats)}
+          {renderList(categories.filter(c => c.type === 'income'))}
         </Stack>
       </Stack>
     </Drawer>

@@ -1,25 +1,17 @@
 import { useState, useEffect } from 'react'
 import {
   Stack, Paper, Group, Text, Button, TextInput,
-  SegmentedControl, ActionIcon, Center, Chip, Box, FileButton, SimpleGrid,
+  SegmentedControl, ActionIcon, Center, Box, FileButton, SimpleGrid,
 } from '@mantine/core'
 import {
   IconPlus, IconTrash, IconPencil, IconPhoto, IconX,
   IconPhone, IconPrinter, IconMail, IconWorld, IconNote,
 } from '@tabler/icons-react'
 import StoredImage from './StoredImage'
+import TagFilter from './TagFilter'
 import { storeImageFile, deleteImage, getImage, putImage } from '../lib/imageStore'
 import { uploadImageRecord } from '../lib/driveImages'
-
-function parseTags(str) {
-  const seen = new Set()
-  const out = []
-  for (const t of str.split(',')) {
-    const tag = t.trim()
-    if (tag && !seen.has(tag)) { seen.add(tag); out.push(tag) }
-  }
-  return out
-}
+import { parseTags, collectTags } from '../lib/tags'
 
 // 파일의 원본 가로/세로 크기 읽기
 function readImageSize(file) {
@@ -205,7 +197,7 @@ export default function ContactsView({ items, onAdd, onUpdate, onDelete }) {
     )
   }
 
-  const allTags = [...new Set(items.flatMap(c => c.tags ?? []))].sort((a, b) => a.localeCompare(b))
+  const allTags = collectTags(items)
   const taggedItems = selectedTag ? items.filter(c => (c.tags ?? []).includes(selectedTag)) : []
 
   return (
@@ -289,19 +281,7 @@ export default function ContactsView({ items, onAdd, onUpdate, onDelete }) {
       {/* 태그 */}
       {tab === 'tag' && (
         <Stack gap="md">
-          {allTags.length === 0 ? (
-            <Center mt="md"><Text c="dimmed" size="sm">사용된 태그가 없어요.</Text></Center>
-          ) : (
-            <Group gap="xs" wrap="wrap">
-              {allTags.map(tag => (
-                <Chip key={tag} checked={selectedTag === tag}
-                  onChange={() => setSelectedTag(selectedTag === tag ? null : tag)}
-                  variant="light" color="grape" size="sm" radius="sm">
-                  #{tag}
-                </Chip>
-              ))}
-            </Group>
-          )}
+          <TagFilter tags={allTags} selected={selectedTag} onSelect={setSelectedTag} />
           {selectedTag && (
             taggedItems.length === 0
               ? <Center mt="md"><Text c="dimmed" size="sm">해당 태그의 연락처가 없어요.</Text></Center>

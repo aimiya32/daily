@@ -5,10 +5,9 @@ import CalendarGrid from './CalendarGrid'
 import WeekGrid from './WeekGrid'
 import CalendarNav from './CalendarNav'
 import StoredImage from './StoredImage'
+import { DayPill } from './DayPill'
+import { collectTags } from '../lib/tags'
 import dayjs from 'dayjs'
-import 'dayjs/locale/ko'
-
-dayjs.locale('ko')
 
 export default function RecordList({ records, categories, onEdit, onDelete, onView, onNew }) {
   const [filterCat, setFilterCat] = useState('all')
@@ -21,7 +20,7 @@ export default function RecordList({ records, categories, onEdit, onDelete, onVi
   const today = dayjs().format('YYYY-MM-DD')
 
   // 사용된 모든 태그
-  const allTags = [...new Set(records.flatMap(e => e.tags ?? []))].sort((a, b) => a.localeCompare(b))
+  const allTags = collectTags(records)
   const taggedRecords = selectedTag
     ? records.filter(e => (e.tags ?? []).includes(selectedTag)).sort((a, b) => (a.date < b.date ? 1 : -1))
     : []
@@ -48,18 +47,9 @@ export default function RecordList({ records, categories, onEdit, onDelete, onVi
     if (!record) return null
     const catName = record.categoryId ? catMap[record.categoryId] : null
     return (
-      <Box onClick={e => { e.stopPropagation(); onView(record) }} style={{
-        background: '#4F46E515',
-        borderRadius: 4,
-        padding: '2px 6px',
-        cursor: 'pointer',
-        textAlign: 'center',
-        width: '100%',
-      }}>
-        <Text style={{ fontSize: '0.75rem', color: '#4F46E5', fontWeight: 700, lineHeight: 1.4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-          {record.title || catName || '기록'}
-        </Text>
-      </Box>
+      <DayPill onClick={e => { e.stopPropagation(); onView(record) }}>
+        {record.title || catName || '기록'}
+      </DayPill>
     )
   }
 

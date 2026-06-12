@@ -35,13 +35,19 @@ export default function CalendarNav({ title, onPrev, onNext, onToday, rightSecti
     </Group>
   ) : (
     <Group gap="md" align="center" wrap="nowrap">
-      <ActionIcon variant="subtle" color="gray" radius="xl" onClick={onPrev}>
-        <IconChevronLeft size={16} />
-      </ActionIcon>
-      <Text fw={700} size="md" style={{ whiteSpace: 'nowrap' }}>{title}</Text>
-      <ActionIcon variant="subtle" color="gray" radius="xl" onClick={onNext}>
-        <IconChevronRight size={16} />
-      </ActionIcon>
+      {onPrev && (
+        <ActionIcon variant="subtle" color="gray" radius="xl" onClick={onPrev}>
+          <IconChevronLeft size={16} />
+        </ActionIcon>
+      )}
+      {typeof title === 'string'
+        ? <Text fw={700} size="md" style={{ whiteSpace: 'nowrap' }}>{title}</Text>
+        : title}
+      {onNext && (
+        <ActionIcon variant="subtle" color="gray" radius="xl" onClick={onNext}>
+          <IconChevronRight size={16} />
+        </ActionIcon>
+      )}
     </Group>
   )
 

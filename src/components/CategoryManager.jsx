@@ -1,6 +1,7 @@
 import { useState } from 'react'
-import { Drawer, Stack, Group, TextInput, Button, ActionIcon, Text, Select } from '@mantine/core'
-import { IconTrash, IconPlus } from '@tabler/icons-react'
+import { Drawer, Stack, Group, TextInput, ActionIcon, Text, Select } from '@mantine/core'
+import { IconPlus } from '@tabler/icons-react'
+import { CategoryRow, EmptyText } from './CategoryRow'
 
 const VIEW_OPTIONS = [
   { label: '목록형', value: 'list' },
@@ -18,7 +19,7 @@ export default function CategoryManager({ opened, onClose, categories, onAdd, on
   }
 
   return (
-    <Drawer opened={opened} onClose={onClose} title="카테고리 관리" position="right" size="sm" overlayProps={{ backgroundOpacity: 0 }}>
+    <Drawer opened={opened} onClose={onClose} title="카테고리 관리">
       <Stack gap="md">
         <Group gap="xs" wrap="nowrap">
           <TextInput
@@ -35,12 +36,9 @@ export default function CategoryManager({ opened, onClose, categories, onAdd, on
         </Group>
 
         <Stack gap="xs">
-          {categories.length === 0 && (
-            <Text size="sm" c="dimmed" ta="center">카테고리가 없어요.</Text>
-          )}
+          {categories.length === 0 && <EmptyText />}
           {categories.map(cat => (
-            <Group key={cat.id} gap="xs" wrap="nowrap" px="xs" py={6}
-              style={{ border: '1px solid var(--mantine-color-gray-2)', borderRadius: 8 }}>
+            <CategoryRow key={cat.id} onDelete={() => onDelete(cat.id)}>
               <Text size="sm" style={{ flex: 1, minWidth: 0 }} truncate>{cat.name}</Text>
               <Select
                 data={VIEW_OPTIONS}
@@ -48,10 +46,7 @@ export default function CategoryManager({ opened, onClose, categories, onAdd, on
                 onChange={v => onUpdate(cat.id, { viewType: v })}
                 w={110} size="xs" allowDeselect={false}
               />
-              <ActionIcon variant="subtle" color="red" size="sm" onClick={() => onDelete(cat.id)}>
-                <IconTrash size={14} />
-              </ActionIcon>
-            </Group>
+            </CategoryRow>
           ))}
         </Stack>
       </Stack>

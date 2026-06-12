@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react'
 import { nk } from '../lib/accountStorage'
+import { useLocalStorageState } from './useLocalStorageState'
 
 // 저장된 메뉴 설정을 현재 앱 목록과 맞춘다.
 // - 사라진 id는 제거, 새로 생긴 id는 뒤에 보이도록 추가
@@ -12,16 +12,10 @@ function reconcile(saved, allIds) {
 }
 
 export function useHomeMenu(allIds) {
-  const STORAGE_KEY = nk('home_menu')
-  const [menu, setMenu] = useState(() => {
-    let saved = []
-    try { saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]') } catch { saved = [] }
-    return reconcile(Array.isArray(saved) ? saved : [], allIds)
-  })
-
-  useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(menu))
-  }, [menu])
+  const [menu, setMenu] = useLocalStorageState(
+    nk('home_menu'), [],
+    saved => reconcile(Array.isArray(saved) ? saved : [], allIds),
+  )
 
   function toggleVisible(id) {
     setMenu(prev => prev.map(m => (m.id === id ? { ...m, visible: !m.visible } : m)))

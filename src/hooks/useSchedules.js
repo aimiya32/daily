@@ -1,18 +1,11 @@
-import { useState, useEffect } from 'react'
 import { nk } from '../lib/accountStorage'
+import { mergeById } from '../lib/mergeById'
+import { useLocalStorageState } from './useLocalStorageState'
+
+const byDateAsc = (a, b) => (a.date < b.date ? -1 : 1)
 
 export function useSchedules() {
-  const STORAGE_KEY = nk('schedule_records')
-  const [schedules, setSchedules] = useState(() => {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY)
-      return raw ? JSON.parse(raw) : []
-    } catch { return [] }
-  })
-
-  useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(schedules))
-  }, [schedules])
+  const [schedules, setSchedules] = useLocalStorageState(nk('schedule_records'))
 
   function saveSchedule(schedule) {
     setSchedules(prev => {
@@ -22,7 +15,7 @@ export function useSchedules() {
         updated[idx] = schedule
         return updated
       }
-      return [...prev, schedule].sort((a, b) => a.date < b.date ? -1 : 1)
+      return [...prev, schedule].sort(byDateAsc)
     })
   }
 
@@ -31,14 +24,7 @@ export function useSchedules() {
   }
 
   function mergeSchedules(remote) {
-    setSchedules(prev => {
-      const map = new Map(prev.map(s => [s.id, s]))
-      for (const s of remote) {
-        const existing = map.get(s.id)
-        if (!existing || s.updatedAt > existing.updatedAt) map.set(s.id, s)
-      }
-      return Array.from(map.values()).sort((a, b) => a.date < b.date ? -1 : 1)
-    })
+    setSchedules(prev => mergeById(prev, remote, byDateAsc))
   }
 
   return { schedules, saveSchedule, deleteSchedule, mergeSchedules }

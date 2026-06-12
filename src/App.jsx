@@ -46,12 +46,25 @@ export default function App() {
     return <LoginScreen onLogin={() => drive.pull()} />
   }
 
+  // 아래 두 호출은 Workspace의 훅들이 첫 렌더에서 nk()로 localStorage를 읽고
+  // 자식 effect가 이미지 다운로드를 시작하기 전에 끝나야 하므로
+  // useEffect로 옮기면 안 된다. (둘 다 멱등)
   const accountKey = drive.user?.email || drive.user?.name || 'user'
   setAccountPrefix(accountKey)
   // 이미지 Drive 업/다운로드용 토큰 공급자 등록 (조용한 토큰)
   setImageTokenProvider(() => drive.getToken({ silent: true }))
 
   return <Workspace key={accountKey} drive={drive} />
+}
+
+// 홈 메뉴 id → 뷰 이름
+const HOME_VIEW_BY_ID = {
+  record: 'list',
+  schedule: 'schedule',
+  routine: 'routine',
+  tracker: 'tracker',
+  ledger: 'ledger',
+  contacts: 'contacts',
 }
 
 // ── 실제 앱 (로그인된 계정 기준) ──────────────────────────
@@ -129,12 +142,8 @@ function Workspace({ drive }) {
   }, [])
 
   function handleHomeOpen(id) {
-    if (id === 'record') setView('list')
-    if (id === 'schedule') setView('schedule')
-    if (id === 'routine') setView('routine')
-    if (id === 'tracker') setView('tracker')
-    if (id === 'ledger') setView('ledger')
-    if (id === 'contacts') setView('contacts')
+    const next = HOME_VIEW_BY_ID[id]
+    if (next) setView(next)
   }
 
   function handleDeleteTrackerCategory(id) {
@@ -260,12 +269,10 @@ function Workspace({ drive }) {
                 </ActionIcon>
               )}
               <DriveSync
-                isSignedIn
                 status={driveStatus}
                 onPull={handleDrivePull}
                 onPush={handleDrivePush}
                 onSignOut={signOut}
-                compact
               />
             </Group>
           </Group>

@@ -9,15 +9,11 @@ import { IconChevronDown, IconCalendarPlus } from '@tabler/icons-react'
 import CalendarNav from './CalendarNav'
 import CalendarGrid from './CalendarGrid'
 import TrackerBulkPlan from './TrackerBulkPlan'
-import { TCAT_COLORS } from '../hooks/useTrackerCategories'
+import { hexOf, DEFAULT_HEX } from '../lib/colors'
 import dayjs from 'dayjs'
 import 'dayjs/locale/ko'
 
 dayjs.locale('ko')
-
-function hexOf(cat) {
-  return TCAT_COLORS.find(c => c.name === cat.color)?.hex ?? '#4F46E5'
-}
 
 const PLAN_COLOR = '#94A3B8'   // 계획
 const ACTUAL_COLOR = '#4F46E5' // 실제
@@ -142,7 +138,7 @@ function DailyView({ categories, day, setDay, getLog, setLog, selectedId, setCat
 
   const cat = categories.find(c => c.id === selectedId)
   const log = cat ? getLog(cat.id, dateStr) : null
-  const hex = cat ? hexOf(cat) : '#4F46E5'
+  const hex = cat ? hexOf(cat.color) : DEFAULT_HEX
   const achieved = log?.planned ? Math.round((Number(log.actual) || 0) / Number(log.planned) * 100) : null
 
   return (
@@ -227,7 +223,7 @@ function DailyView({ categories, day, setDay, getLog, setLog, selectedId, setCat
 
 // ── 카테고리별 합계 카드 ────────────────────────────────
 function StatCard({ cat, planned, actual, breakdown }) {
-  const hex = hexOf(cat)
+  const hex = hexOf(cat.color)
   const pct = planned > 0 ? Math.round(actual / planned * 100) : null
   return (
     <Paper p="md" radius="md" style={{ border: `1px solid ${hex}22`, background: 'white' }}>

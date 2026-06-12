@@ -1,17 +1,15 @@
-import { Stack, Text, Group, Badge, ActionIcon, Paper, Divider } from '@mantine/core'
+import { Stack, Text, Group, Badge, ActionIcon, Divider } from '@mantine/core'
 import { IconPencil, IconTrash, IconClock } from '@tabler/icons-react'
-import { SCAT_COLORS } from '../hooks/useScheduleCategories'
+import { hexOf } from '../lib/colors'
+import ContentCard from './ContentCard'
 import dayjs from 'dayjs'
-import 'dayjs/locale/ko'
-
-dayjs.locale('ko')
 
 export default function ScheduleDetail({ schedule, categories, onEdit, onDelete }) {
   const cat = categories.find(c => c.id === schedule.categoryId)
-  const colorHex = cat ? (SCAT_COLORS.find(sc => sc.name === cat.color)?.hex ?? '#4F46E5') : null
+  const colorHex = cat ? hexOf(cat.color) : null
 
   return (
-    <Paper maw={640} mx="auto" radius={14} shadow="sm" p="xl" style={{ background: 'white' }}>
+    <ContentCard>
       <Stack gap="xl">
         <Group justify="space-between" align="flex-start">
           <Stack gap={8}>
@@ -59,6 +57,6 @@ export default function ScheduleDetail({ schedule, categories, onEdit, onDelete 
           </>
         )}
       </Stack>
-    </Paper>
+    </ContentCard>
   )
 }

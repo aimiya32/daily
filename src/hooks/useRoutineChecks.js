@@ -1,18 +1,8 @@
-import { useState, useEffect } from 'react'
 import { nk } from '../lib/accountStorage'
+import { useLocalStorageState } from './useLocalStorageState'
 
 export function useRoutineChecks() {
-  const STORAGE_KEY = nk('routine_checks')
-  const [checks, setChecks] = useState(() => {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY)
-      return raw ? JSON.parse(raw) : []
-    } catch { return [] }
-  })
-
-  useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(checks))
-  }, [checks])
+  const [checks, setChecks] = useLocalStorageState(nk('routine_checks'))
 
   function isChecked(routineId, date) {
     return checks.some(c => c.routineId === routineId && c.date === date)

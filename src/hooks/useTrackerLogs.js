@@ -1,21 +1,10 @@
-import { useState, useEffect } from 'react'
 import { nk } from '../lib/accountStorage'
+import { mergeById } from '../lib/mergeById'
+import { useLocalStorageState } from './useLocalStorageState'
 
 // 로그 1건: { id, categoryId, date(YYYY-MM-DD), planned, actual, updatedAt }
 export function useTrackerLogs() {
-  const STORAGE_KEY = nk('tracker_logs')
-  const [logs, setLogs] = useState(() => {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY)
-      return raw ? JSON.parse(raw) : []
-    } catch {
-      return []
-    }
-  })
-
-  useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(logs))
-  }, [logs])
+  const [logs, setLogs] = useLocalStorageState(nk('tracker_logs'))
 
   function getLog(categoryId, date) {
     return logs.find(l => l.categoryId === categoryId && l.date === date) ?? null
@@ -77,14 +66,7 @@ export function useTrackerLogs() {
 
   function mergeLogs(remote) {
     if (!Array.isArray(remote)) return
-    setLogs(prev => {
-      const map = new Map(prev.map(l => [l.id, l]))
-      for (const l of remote) {
-        const existing = map.get(l.id)
-        if (!existing || l.updatedAt > existing.updatedAt) map.set(l.id, l)
-      }
-      return Array.from(map.values())
-    })
+    setLogs(prev => mergeById(prev, remote))
   }
 
   return { logs, getLog, setLog, deleteLogsByCategory, bulkSetPlanned, mergeLogs }

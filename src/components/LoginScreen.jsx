@@ -1,4 +1,4 @@
-import { Center, Paper, Stack, Text, Button, ThemeIcon, Box } from '@mantine/core'
+import { Paper, Stack, Text, Button, ThemeIcon, Box } from '@mantine/core'
 import { IconBrandGoogle, IconBook2 } from '@tabler/icons-react'
 
 export default function LoginScreen({ onLogin }) {

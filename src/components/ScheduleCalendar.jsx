@@ -1,15 +1,13 @@
 import { useState } from 'react'
-import {Box, Stack, Text, Chip, Group, Drawer, Paper, Badge, Button, Center, ScrollArea} from '@mantine/core'
+import { Stack, Text, Chip, Group, Drawer, Paper, Badge, Button, Center, ScrollArea } from '@mantine/core'
 import { useDisclosure } from '@mantine/hooks'
 import { IconPlus } from '@tabler/icons-react'
 import { useCalendarMaxItems } from '../hooks/useCalendarMaxItems'
-import { SCAT_COLORS } from '../hooks/useScheduleCategories'
+import { hexOf, DEFAULT_HEX } from '../lib/colors'
 import CalendarGrid from './CalendarGrid'
 import CalendarNav from './CalendarNav'
+import { DayPill, OverflowCount } from './DayPill'
 import dayjs from 'dayjs'
-import 'dayjs/locale/ko'
-
-dayjs.locale('ko')
 
 export default function ScheduleCalendar({ schedules, categories, onView, onAdd, onManageCategories }) {
   const [current, setCurrent] = useState(dayjs().startOf('month'))
@@ -31,9 +29,7 @@ export default function ScheduleCalendar({ schedules, categories, onView, onAdd,
     byDate[s.date].push(s)
   }
 
-  const colorHexMap = Object.fromEntries(
-    categories.map(c => [c.id, SCAT_COLORS.find(sc => sc.name === c.color)?.hex ?? '#4F46E5'])
-  )
+  const colorHexMap = Object.fromEntries(categories.map(c => [c.id, hexOf(c.color)]))
 
   // 드로어에 보여줄 선택 날짜의 일정 (시간순 정렬)
   const drawerSchedules = selectedDate
@@ -51,26 +47,12 @@ export default function ScheduleCalendar({ schedules, categories, onView, onAdd,
     const overflow = daySchedules.length - visible.length
     return (
       <Stack gap={2}>
-        {visible.map(s => {
-          const hex = colorHexMap[s.categoryId] ?? '#4F46E5'
-          return (
-            <Box key={s.id} style={{
-              background: hex + '22',
-              borderRadius: 4,
-              padding: '2px 6px',
-              width: '100%',
-            }}>
-              <Text size="xs" truncate style={{ color: hex, fontWeight: 700, fontSize: '0.6875rem', lineHeight: 1.4 }}>
-                {s.title}
-              </Text>
-            </Box>
-          )
-        })}
-        {overflow > 0 && (
-          <Text size="xs" c="dimmed" ta="center" style={{ fontSize: '0.625rem', lineHeight: 1.4 }}>
-            +{overflow}
-          </Text>
-        )}
+        {visible.map(s => (
+          <DayPill key={s.id} hex={colorHexMap[s.categoryId] ?? DEFAULT_HEX} fontSize="0.6875rem">
+            {s.title}
+          </DayPill>
+        ))}
+        <OverflowCount count={overflow} />
       </Stack>
     )
   }
@@ -116,9 +98,6 @@ export default function ScheduleCalendar({ schedules, categories, onView, onAdd,
       <Drawer
         opened={drawerOpened}
         onClose={closeDrawer}
-        position="right"
-        size="sm"
-        overlayProps={{ backgroundOpacity: 0 }}
         title={selectedDate ? dayjs(selectedDate).format('M월 D일 (ddd)') : ''}
       >
         <Stack gap="sm">
@@ -126,7 +105,7 @@ export default function ScheduleCalendar({ schedules, categories, onView, onAdd,
             <Center py="lg"><Text size="sm" c="dimmed">이 날짜에 일정이 없어요.</Text></Center>
           )}
           {drawerSchedules.map(s => {
-            const hex = colorHexMap[s.categoryId] ?? '#4F46E5'
+            const hex = colorHexMap[s.categoryId] ?? DEFAULT_HEX
             const cat = categories.find(c => c.id === s.categoryId)
             return (
               <Paper

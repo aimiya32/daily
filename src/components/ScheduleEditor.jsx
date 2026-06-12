@@ -1,6 +1,7 @@
 import { useState } from 'react'
-import { Stack, TextInput, Textarea, Button, Group, Select, Paper } from '@mantine/core'
+import { Stack, TextInput, Textarea, Button, Group, Select } from '@mantine/core'
 import { DatePickerInput, TimeInput } from '@mantine/dates'
+import ContentCard from './ContentCard'
 import dayjs from 'dayjs'
 
 export default function ScheduleEditor({ schedule, categories, initialDate, onSave, onCancel }) {
@@ -30,7 +31,7 @@ export default function ScheduleEditor({ schedule, categories, initialDate, onSa
   }
 
   return (
-    <Paper maw={640} mx="auto" radius={14} shadow="sm" p="xl" style={{ background: 'white' }}>
+    <ContentCard>
       <Stack gap="lg">
         <DatePickerInput
           label="날짜"
@@ -90,6 +91,6 @@ export default function ScheduleEditor({ schedule, categories, initialDate, onSa
           </Button>
         </Group>
       </Stack>
-    </Paper>
+    </ContentCard>
   )
 }

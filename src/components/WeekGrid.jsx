@@ -1,10 +1,5 @@
 import { Box, Paper, Stack, Text } from '@mantine/core'
-import dayjs from 'dayjs'
-import 'dayjs/locale/ko'
-
-dayjs.locale('ko')
-
-const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토']
+import { WEEKDAYS_KO } from '../lib/dates'
 
 export default function WeekGrid({ weekDays, today, selectedDate, onSelectDate, renderDayContent }) {
   return (
@@ -31,7 +26,7 @@ export default function WeekGrid({ weekDays, today, selectedDate, onSelectDate, 
             >
               <Stack gap={0} align="center" style={{ width: 48, flexShrink: 0 }}>
                 <Text size="sm" fw={600} c={di === 0 ? 'red.5' : di === 6 ? 'blue.5' : 'gray.5'}>
-                  {WEEKDAYS[di]}
+                  {WEEKDAYS_KO[di]}
                 </Text>
                 <Box style={{
                   width: 34, height: 34, borderRadius: '50%',

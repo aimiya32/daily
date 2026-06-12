@@ -1,21 +1,7 @@
 import { Box, Text, Paper } from '@mantine/core'
-import dayjs from 'dayjs'
-import 'dayjs/locale/ko'
+import { WEEKDAYS_KO } from '../lib/dates'
 
-dayjs.locale('ko')
-
-const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토']
-
-export default function CalendarGrid({
-  current,
-  today,
-  selectedDate,
-  onSelectDate,
-  dayCellStyle,
-  renderDayContent,
-  hideToday = false,
-  stretchCells = true,
-}) {
+export default function CalendarGrid({ current, today, onSelectDate, renderDayContent, hideToday = false }) {
   const firstDay = current.startOf('month')
   const startOffset = firstDay.day()
   const daysInMonth = current.daysInMonth()
@@ -28,14 +14,12 @@ export default function CalendarGrid({
   const weeks = []
   for (let i = 0; i < cells.length; i += 7) weeks.push(cells.slice(i, i + 7))
 
-  const cellStyle = dayCellStyle ?? { minHeight: 72 }
-
   const radius = 14
 
   return (
     <Paper style={{ borderRadius: `0 0 ${radius}px ${radius}px`, overflow: 'hidden', border: '1px solid #E2E8F0', borderTop: 'none' }}>
       <Box style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)' }}>
-        {WEEKDAYS.map((d, i) => (
+        {WEEKDAYS_KO.map((d, i) => (
           <Box key={d} py={8} style={{
             textAlign: 'center',
             background: 'var(--mantine-color-gray-0)',
@@ -49,7 +33,7 @@ export default function CalendarGrid({
       </Box>
 
       {weeks.map((week, wi) => (
-        <Box key={wi} style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', alignItems: stretchCells ? 'stretch' : 'start' }}>
+        <Box key={wi} style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', alignItems: 'stretch' }}>
           {week.map((day, di) => {
             const isLast = wi === weeks.length - 1
             const borderRight = di < 6 ? '1px solid var(--mantine-color-gray-1)' : 'none'
@@ -58,8 +42,7 @@ export default function CalendarGrid({
             if (!day) {
               return (
                 <Box key={di} style={{
-                  ...cellStyle,
-                  alignSelf: stretchCells ? 'stretch' : 'start',
+                  minHeight: 72,
                   background: 'var(--mantine-color-gray-0)',
                   borderRight,
                   borderBottom,
@@ -69,17 +52,15 @@ export default function CalendarGrid({
 
             const dateStr = day.format('YYYY-MM-DD')
             const isToday = !hideToday && dateStr === today
-            const isSelected = selectedDate ? dateStr === selectedDate : false
 
             return (
               <Box
                 key={di}
                 onClick={() => onSelectDate?.(dateStr)}
                 style={{
-                  ...cellStyle,
-                  alignSelf: stretchCells ? 'stretch' : 'start',
+                  minHeight: 72,
                   padding: '6px 4px',
-                  background: isSelected ? '#EEF2FF' : 'white',
+                  background: 'white',
                   cursor: onSelectDate ? 'pointer' : 'default',
                   overflow: 'hidden',
                   borderRight,

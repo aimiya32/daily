@@ -1,11 +1,9 @@
 import { useState } from 'react'
-import { Stack, Text, Group, Badge, ActionIcon, Paper, Divider, Box, Modal } from '@mantine/core'
+import { Stack, Text, Group, Badge, ActionIcon, Divider, Box, Modal } from '@mantine/core'
 import { IconPencil, IconTrash } from '@tabler/icons-react'
 import StoredImage from './StoredImage'
+import ContentCard from './ContentCard'
 import dayjs from 'dayjs'
-import 'dayjs/locale/ko'
-
-dayjs.locale('ko')
 
 export default function RecordDetail({ record, categories, onEdit, onDelete }) {
   const cat = categories.find(c => c.id === record.categoryId)
@@ -13,7 +11,7 @@ export default function RecordDetail({ record, categories, onEdit, onDelete }) {
   const images = record.images ?? []
 
   return (
-    <Paper maw={640} mx="auto" radius={14} shadow="sm" p="xl" style={{ background: 'white' }}>
+    <ContentCard>
       <Stack gap="xl">
         <Group justify="space-between" align="flex-start">
           <Stack gap={6} style={{ minWidth: 0 }} align="flex-start">
@@ -66,6 +64,6 @@ export default function RecordDetail({ record, categories, onEdit, onDelete }) {
       <Modal opened={!!viewer} onClose={() => setViewer(null)} size="lg" centered withCloseButton padding="sm">
         {viewer && <StoredImage id={viewer} variant="original" height="auto" radius={8} style={{ height: 'auto', maxHeight: '80vh', objectFit: 'contain' }} />}
       </Modal>
-    </Paper>
+    </ContentCard>
   )
 }

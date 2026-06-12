@@ -1,4 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from 'react'
+import { findFileId, downloadJson, uploadFile } from '../lib/driveApi'
 
 const CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID
 const SCOPE = 'https://www.googleapis.com/auth/drive.appdata'
@@ -25,36 +26,6 @@ async function fetchUser(token) {
     headers: { Authorization: `Bearer ${token}` },
   })
   return res.json()
-}
-
-async function driveGet(token, path) {
-  const res = await fetch(`https://www.googleapis.com/drive/v3/${path}`, {
-    headers: { Authorization: `Bearer ${token}` },
-  })
-  return res.json()
-}
-
-async function findFileId(token) {
-  const data = await driveGet(token, `files?spaces=appDataFolder&q=name%3D'${FILE_NAME}'&fields=files(id)`)
-  return data.files?.[0]?.id ?? null
-}
-
-async function downloadFile(token, fileId) {
-  const res = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`, {
-    headers: { Authorization: `Bearer ${token}` },
-  })
-  return res.json()
-}
-
-async function uploadFile(token, payload, fileId) {
-  const meta = { name: FILE_NAME, ...(!fileId && { parents: ['appDataFolder'] }) }
-  const form = new FormData()
-  form.append('metadata', new Blob([JSON.stringify(meta)], { type: 'application/json' }))
-  form.append('file', new Blob([JSON.stringify(payload)], { type: 'application/json' }))
-  await fetch(
-    `https://www.googleapis.com/upload/drive/v3/files${fileId ? `/${fileId}` : ''}?uploadType=multipart`,
-    { method: fileId ? 'PATCH' : 'POST', headers: { Authorization: `Bearer ${token}` }, body: form }
-  )
 }
 
 export function useGoogleDrive() {
@@ -114,9 +85,9 @@ export function useGoogleDrive() {
     setStatus('loading')
     try {
       const token = await getToken()
-      const fileId = await findFileId(token)
+      const fileId = await findFileId(token, FILE_NAME)
       if (!fileId) { setStatus('synced'); return null }
-      const data = await downloadFile(token, fileId)
+      const data = await downloadJson(token, fileId)
       setStatus('synced')
       if (Array.isArray(data)) return { records: data, categories: null }
       return data
@@ -130,8 +101,9 @@ export function useGoogleDrive() {
     setStatus('loading')
     try {
       const token = await getToken()
-      const fileId = await findFileId(token)
-      await uploadFile(token, payload, fileId)
+      const fileId = await findFileId(token, FILE_NAME)
+      const blob = new Blob([JSON.stringify(payload)], { type: 'application/json' })
+      await uploadFile(token, FILE_NAME, blob, fileId)
       setStatus('synced')
     } catch {
       setStatus('error')
