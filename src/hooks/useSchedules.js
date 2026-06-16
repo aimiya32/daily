@@ -23,9 +23,13 @@ export function useSchedules() {
     setSchedules(prev => prev.filter(s => s.id !== id))
   }
 
+  function deleteByRecurrenceId(recurrenceId) {
+    setSchedules(prev => prev.filter(s => s.recurrenceId !== recurrenceId))
+  }
+
   function mergeSchedules(remote) {
     setSchedules(prev => mergeById(prev, remote, byDateAsc))
   }
 
-  return { schedules, saveSchedule, deleteSchedule, mergeSchedules }
+  return { schedules, saveSchedule, deleteSchedule, deleteByRecurrenceId, mergeSchedules }
 }

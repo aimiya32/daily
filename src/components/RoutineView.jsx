@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useLocalStorageState } from '../hooks/useLocalStorageState'
 import {
   Stack, Group, Text, ActionIcon, Checkbox, TextInput,
   Switch, SegmentedControl, Badge, Drawer,
@@ -15,9 +16,13 @@ import dayjs from 'dayjs'
 
 export default function RoutineView({ routines, isChecked, toggle, getCheckedRoutineIds, addRoutine, updateRoutine, toggleVisible, onExposeOpen }) {
   const [calView, setCalView] = useState('month') // month | week
-  const [current, setCurrent] = useState(dayjs().startOf('month'))
-  const [currentWeek, setCurrentWeek] = useState(dayjs().startOf('week'))
-  const [selectedDate, setSelectedDate] = useState(dayjs().format('YYYY-MM-DD'))
+  const [_monthStr, _setMonthStr] = useLocalStorageState('ui_routine_month', dayjs().format('YYYY-MM'))
+  const current = dayjs(_monthStr).startOf('month')
+  const setCurrent = (d) => _setMonthStr(d.format('YYYY-MM'))
+  const [_weekStr, _setWeekStr] = useLocalStorageState('ui_routine_week', dayjs().startOf('week').format('YYYY-MM-DD'))
+  const currentWeek = dayjs(_weekStr)
+  const setCurrentWeek = (d) => _setWeekStr(d.format('YYYY-MM-DD'))
+  const [selectedDate, setSelectedDate] = useLocalStorageState('ui_routine_date', dayjs().format('YYYY-MM-DD'))
   const [mode, setMode] = useState('check')
   const [newName, setNewName] = useState('')
   const [editNames, setEditNames] = useState({})

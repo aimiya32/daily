@@ -32,6 +32,7 @@ import { useLedgerCategories } from './hooks/useLedgerCategories'
 import { useContacts } from './hooks/useContacts'
 import { useGoogleDrive } from './hooks/useGoogleDrive'
 import { setAccountPrefix, isInitialized, markInitialized } from './lib/accountStorage'
+import { solarFromLunar } from './lib/lunar'
 import { deleteImages, getImage, putImage } from './lib/imageStore'
 import { setImageTokenProvider, uploadImageRecord } from './lib/driveImages'
 
@@ -84,7 +85,7 @@ function Workspace({ drive }) {
 
   const { records, saveRecord, deleteRecord, mergeRecords } = useRecords()
   const { categories, addCategory, updateCategory, deleteCategory, setAll: setAllCategories } = useCategories()
-  const { schedules, saveSchedule, deleteSchedule, mergeSchedules } = useSchedules()
+  const { schedules, saveSchedule, deleteSchedule, deleteByRecurrenceId, mergeSchedules } = useSchedules()
   const { categories: scheduleCategories, addCategory: addScatCategory, deleteCategory: deleteScatCategory, setAll: setAllScatCategories } = useScheduleCategories()
   const { routines, addRoutine, updateRoutine, toggleVisible, setAll: setAllRoutines } = useRoutines()
   const { checks: routineChecks, isChecked, toggle: toggleCheck, getCheckedRoutineIds, mergeChecks } = useRoutineChecks()
@@ -170,7 +171,27 @@ function Workspace({ drive }) {
   }
 
   function handleSaveSchedule(schedule) {
-    saveSchedule(schedule)
+    const { yearlyRepeat, repeatMode, repeatCount, lunarRecurrence, ...base } = schedule
+    if (yearlyRepeat) {
+      const recurrenceId = crypto.randomUUID()
+      const startYear = parseInt(base.date.slice(0, 4))
+      const endYear = repeatMode === 'count' ? startYear + (repeatCount ?? 10) - 1 : 2050
+      const totalYears = endYear - startYear + 1
+      for (let i = 0; i < totalYears; i++) {
+        const year = startYear + i
+        let date
+        if (lunarRecurrence) {
+          const solar = solarFromLunar(year, lunarRecurrence.month, lunarRecurrence.day)
+          if (!solar) continue
+          date = `${solar.year}-${String(solar.month).padStart(2, '0')}-${String(solar.day).padStart(2, '0')}`
+        } else {
+          date = `${year}${base.date.slice(4)}`
+        }
+        saveSchedule({ ...base, id: crypto.randomUUID(), date, recurrenceId, updatedAt: new Date().toISOString() })
+      }
+    } else {
+      saveSchedule(base)
+    }
     setView('schedule')
     setSelectedSchedule(null)
   }
@@ -325,6 +346,7 @@ function Workspace({ drive }) {
               categories={scheduleCategories}
               onEdit={() => setView('schedule-editor')}
               onDelete={() => { deleteSchedule(selectedSchedule.id); setView('schedule'); setSelectedSchedule(null) }}
+              onDeleteAll={() => { deleteByRecurrenceId(selectedSchedule.recurrenceId); setView('schedule'); setSelectedSchedule(null) }}
             />
           )}
           {view === 'schedule-editor' && (

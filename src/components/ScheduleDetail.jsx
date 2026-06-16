@@ -1,10 +1,10 @@
-import { Stack, Text, Group, Badge, ActionIcon, Divider } from '@mantine/core'
+import { Stack, Text, Group, Badge, ActionIcon, Divider, Button } from '@mantine/core'
 import { IconPencil, IconTrash, IconClock } from '@tabler/icons-react'
 import { hexOf } from '../lib/colors'
 import ContentCard from './ContentCard'
 import dayjs from 'dayjs'
 
-export default function ScheduleDetail({ schedule, categories, onEdit, onDelete }) {
+export default function ScheduleDetail({ schedule, categories, onEdit, onDelete, onDeleteAll }) {
   const cat = categories.find(c => c.id === schedule.categoryId)
   const colorHex = cat ? hexOf(cat.color) : null
 
@@ -42,9 +42,15 @@ export default function ScheduleDetail({ schedule, categories, onEdit, onDelete 
               <IconPencil size={16} />
             </ActionIcon>
             <ActionIcon variant="light" color="red" radius="xl" size="lg"
-              onClick={() => { if (confirm('삭제할까요?')) onDelete() }}>
+              onClick={() => { if (confirm('이 일정을 삭제할까요?')) onDelete() }}>
               <IconTrash size={16} />
             </ActionIcon>
+            {schedule.recurrenceId && onDeleteAll && (
+              <Button variant="light" color="red" size="xs" radius="xl"
+                onClick={() => { if (confirm('반복 일정을 모두 삭제할까요?')) onDeleteAll() }}>
+                전체 삭제
+              </Button>
+            )}
           </Group>
         </Group>
 

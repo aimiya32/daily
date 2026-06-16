@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useLocalStorageState } from '../hooks/useLocalStorageState'
 import {
   Stack, Group, Text, Box, Paper, NumberInput, Progress, Center,
   Popover, Button, Select, SegmentedControl,
@@ -31,8 +32,12 @@ function fmt1(n) {
 
 export default function TrackerView({ categories, logs, getLog, setLog, bulkSetPlanned }) {
   const [mode, setMode] = useState('calendar') // calendar | summary
-  const [day, setDay] = useState(dayjs())
-  const [month, setMonth] = useState(dayjs().startOf('month'))
+  const [_dayStr, _setDayStr] = useLocalStorageState('ui_tracker_day', dayjs().format('YYYY-MM-DD'))
+  const day = dayjs(_dayStr)
+  const setDay = (d) => _setDayStr(d.format('YYYY-MM-DD'))
+  const [_monthStr, _setMonthStr] = useLocalStorageState('ui_tracker_month', dayjs().format('YYYY-MM'))
+  const month = dayjs(_monthStr).startOf('month')
+  const setMonth = (d) => _setMonthStr(d.format('YYYY-MM'))
   const [catId, setCatId] = useState(categories[0]?.id ?? null)
   const [calMode, setCalMode] = useState('all') // all | plan | actual (달력 표시 모드)
   const [bulkOpened, { open: openBulk, close: closeBulk }] = useDisclosure(false)

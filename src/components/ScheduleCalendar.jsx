@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useLocalStorageState } from '../hooks/useLocalStorageState'
 import { Stack, Text, Chip, Group, Drawer, Paper, Badge, Button, Center, ScrollArea } from '@mantine/core'
 import { useDisclosure } from '@mantine/hooks'
 import { IconPlus } from '@tabler/icons-react'
@@ -10,7 +11,9 @@ import { DayPill, OverflowCount } from './DayPill'
 import dayjs from 'dayjs'
 
 export default function ScheduleCalendar({ schedules, categories, onView, onAdd, onManageCategories }) {
-  const [current, setCurrent] = useState(dayjs().startOf('month'))
+  const [_monthStr, _setMonthStr] = useLocalStorageState('ui_schedule_month', dayjs().format('YYYY-MM'))
+  const current = dayjs(_monthStr).startOf('month')
+  const setCurrent = (d) => _setMonthStr(d.format('YYYY-MM'))
   const [filterCat, setFilterCat] = useState('all')
   const [selectedDate, setSelectedDate] = useState(null)
   const [drawerOpened, { open: openDrawer, close: closeDrawer }] = useDisclosure(false)

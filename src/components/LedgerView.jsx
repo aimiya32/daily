@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useLocalStorageState } from '../hooks/useLocalStorageState'
 import {
   Stack, Paper, Group, Text, Button, NumberInput, TextInput,
   SegmentedControl, ActionIcon, Center, Divider, Select, Chip, Progress, Box,
@@ -24,7 +25,9 @@ function parseTags(str) {
 }
 
 export default function LedgerView({ items, categories = [], onAdd, onUpdate, onDelete }) {
-  const [month, setMonth] = useState(dayjs().startOf('month'))
+  const [_monthStr, _setMonthStr] = useLocalStorageState('ui_ledger_month', dayjs().format('YYYY-MM'))
+  const month = dayjs(_monthStr).startOf('month')
+  const setMonth = (d) => _setMonthStr(d.format('YYYY-MM'))
   const [tab, setTab] = useState('list') // list | tag | stat
   const [editingId, setEditingId] = useState(null)
   const [type, setType] = useState('expense')

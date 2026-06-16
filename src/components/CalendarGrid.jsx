@@ -1,7 +1,10 @@
-import { Box, Text, Paper } from '@mantine/core'
+import {Box, Text, Paper, Flex} from '@mantine/core'
 import { WEEKDAYS_KO } from '../lib/dates'
+import { useHolidays } from '../hooks/useHolidays'
+import { getLunarLabel } from '../lib/lunar'
 
 export default function CalendarGrid({ current, today, onSelectDate, renderDayContent, hideToday = false }) {
+  const holidays = useHolidays(current.year(), current.month() + 1)
   const firstDay = current.startOf('month')
   const startOffset = firstDay.day()
   const daysInMonth = current.daysInMonth()
@@ -52,6 +55,9 @@ export default function CalendarGrid({ current, today, onSelectDate, renderDayCo
 
             const dateStr = day.format('YYYY-MM-DD')
             const isToday = !hideToday && dateStr === today
+            const holidayName = holidays[dateStr]
+            const isHoliday = !!holidayName
+            const dateColor = isToday ? 'white' : (di === 0 || isHoliday) ? 'red.5' : di === 6 ? 'indigo.5' : 'gray.8'
 
             return (
               <Box
@@ -67,20 +73,26 @@ export default function CalendarGrid({ current, today, onSelectDate, renderDayCo
                   borderBottom,
                 }}
               >
-                <Box style={{
-                  width: 26, height: 26, borderRadius: '50%',
-                  background: isToday ? 'var(--mantine-color-indigo-6)' : 'transparent',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  margin: '0 auto 4px',
-                }}>
-                  <Text
-                    size="xs"
-                    fw={isToday ? 700 : 400}
-                    c={isToday ? 'white' : di === 0 ? 'red.5' : di === 6 ? 'indigo.5' : 'gray.8'}
-                  >
-                    {day.date()}
+                <Flex align={'center'} style={{ marginLeft: 10 }}>
+                  <Box style={{
+                    width: 26, height: 26, borderRadius: '50%',
+                    background: isToday ? 'var(--mantine-color-indigo-6)' : 'transparent',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  }}>
+                    <Text size="xs" fw={isToday ? 700 : 400} c={dateColor}>
+                      {day.date()}
+                    </Text>
+                  </Box>
+                  <Text c="gray.6" ta="center" style={{ fontSize: '0.55rem', lineHeight: 1.8, marginLeft: 5 }}>
+                    ({getLunarLabel(day.year(), day.month() + 1, day.date())})
                   </Text>
-                </Box>
+                </Flex>
+
+                {holidayName && (
+                  <Text c="red.4" ta="center" style={{ fontSize: '0.55rem', lineHeight: 1.2, marginBottom: 2 }} truncate>
+                    {holidayName}
+                  </Text>
+                )}
 
                 <Box style={{ display: 'flex', flexDirection: 'column', alignItems: 'stretch', gap: 2, textAlign: 'center' }}>
                   {renderDayContent?.(dateStr, di)}
