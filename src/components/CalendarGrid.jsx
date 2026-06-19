@@ -1,9 +1,11 @@
 import {Box, Text, Paper, Flex} from '@mantine/core'
+import { useMediaQuery } from '@mantine/hooks'
 import { WEEKDAYS_KO } from '../lib/dates'
 import { useHolidays } from '../hooks/useHolidays'
 import { getLunarLabel } from '../lib/lunar'
 
 export default function CalendarGrid({ current, today, onSelectDate, renderDayContent, hideToday = false }) {
+  const isMobile = useMediaQuery('(max-width: 700px)')
   const holidays = useHolidays(current.year(), current.month() + 1)
   const firstDay = current.startOf('month')
   const startOffset = firstDay.day()
@@ -73,7 +75,7 @@ export default function CalendarGrid({ current, today, onSelectDate, renderDayCo
                   borderBottom,
                 }}
               >
-                <Flex align={'center'} style={{ marginLeft: 10 }}>
+                <Flex align={'center'} justify={isMobile ? 'center' : 'flex-start'} style={{ marginLeft: isMobile ? 0 : 10 }}>
                   <Box style={{
                     width: 26, height: 26, borderRadius: '50%',
                     background: isToday ? 'var(--mantine-color-indigo-6)' : 'transparent',
@@ -83,9 +85,11 @@ export default function CalendarGrid({ current, today, onSelectDate, renderDayCo
                       {day.date()}
                     </Text>
                   </Box>
-                  <Text c="gray.6" ta="center" style={{ fontSize: '0.55rem', lineHeight: 1.8, marginLeft: 5 }}>
-                    ({getLunarLabel(day.year(), day.month() + 1, day.date())})
-                  </Text>
+                  {!isMobile && (
+                    <Text c="gray.6" ta="center" style={{ fontSize: '0.55rem', lineHeight: 1.8, marginLeft: 5 }}>
+                      ({getLunarLabel(day.year(), day.month() + 1, day.date())})
+                    </Text>
+                  )}
                 </Flex>
 
                 {holidayName && (

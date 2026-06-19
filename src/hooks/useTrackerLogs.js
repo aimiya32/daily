@@ -11,16 +11,32 @@ export function useTrackerLogs() {
   }
 
   // planned / actual 중 전달된 값만 갱신. 둘 다 비면 로그 삭제.
+  // actualEntries([number])를 patch에 포함하면 actual은 합계로 자동 계산.
   function setLog(categoryId, date, patch) {
     setLogs(prev => {
       const idx = prev.findIndex(l => l.categoryId === categoryId && l.date === date)
-      const base = idx >= 0 ? prev[idx] : { planned: null, actual: null }
+      const base = idx >= 0 ? prev[idx] : { planned: null, actual: null, actualEntries: null }
+
+      let actual, actualEntries
+      if ('actualEntries' in patch) {
+        const arr = patch.actualEntries && patch.actualEntries.length > 0 ? patch.actualEntries : null
+        actualEntries = arr
+        actual = arr ? Math.round(arr.reduce((s, v) => s + (Number(v) || 0), 0) * 100) / 100 : null
+      } else if ('actual' in patch) {
+        actual = patch.actual
+        actualEntries = null
+      } else {
+        actual = base.actual
+        actualEntries = base.actualEntries ?? null
+      }
+
       const next = {
         id: idx >= 0 ? prev[idx].id : crypto.randomUUID(),
         categoryId,
         date,
         planned: 'planned' in patch ? patch.planned : base.planned,
-        actual: 'actual' in patch ? patch.actual : base.actual,
+        actual,
+        actualEntries,
         updatedAt: new Date().toISOString(),
       }
       const empty = (next.planned === null || next.planned === undefined || next.planned === '') &&

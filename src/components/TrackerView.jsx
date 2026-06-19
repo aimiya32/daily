@@ -2,14 +2,16 @@ import { useState } from 'react'
 import { useLocalStorageState } from '../hooks/useLocalStorageState'
 import {
   Stack, Group, Text, Box, Paper, NumberInput, Progress, Center,
-  Popover, Button, Select, SegmentedControl,
+  Popover, Button, Select, SegmentedControl, ActionIcon,
 } from '@mantine/core'
 import { DatePicker } from '@mantine/dates'
 import { useDisclosure, useMediaQuery } from '@mantine/hooks'
-import { IconChevronDown, IconCalendarPlus } from '@tabler/icons-react'
+import { IconChevronDown, IconCalendarPlus, IconPlus, IconX } from '@tabler/icons-react'
 import CalendarNav from './CalendarNav'
 import CalendarGrid from './CalendarGrid'
 import TrackerBulkPlan from './TrackerBulkPlan'
+import { OverflowCount } from './DayPill'
+import { useCalendarMaxItems } from '../hooks/useCalendarMaxItems'
 import { hexOf, DEFAULT_HEX } from '../lib/colors'
 import dayjs from 'dayjs'
 import 'dayjs/locale/ko'
@@ -196,7 +198,7 @@ function DailyView({ categories, day, setDay, getLog, setLog, selectedId, setCat
                   <Text size="xs" fw={700} style={{ color: hex }}>달성 {achieved}%</Text>
                 </Group>
               )}
-              <Group grow gap="sm">
+              <Group grow gap="sm" align="flex-start">
                 <NumberInput
                   label="계획"
                   placeholder="0"
@@ -207,21 +209,140 @@ function DailyView({ categories, day, setDay, getLog, setLog, selectedId, setCat
                   suffix={cat.unit ? ` ${cat.unit}` : ''}
                   size="sm"
                 />
-                <NumberInput
-                  label="실제"
-                  placeholder="0"
-                  value={log?.actual ?? ''}
-                  onChange={v => setLog(cat.id, dateStr, { actual: v === '' ? null : v })}
-                  min={0}
-                  hideControls
-                  suffix={cat.unit ? ` ${cat.unit}` : ''}
-                  size="sm"
-                />
+                <ActualInput cat={cat} log={log} dateStr={dateStr} setLog={setLog} />
               </Group>
             </Paper>
           )}
         </Stack>
       </Paper>
+    </Stack>
+  )
+}
+
+// ── 실제 다중 입력 ─────────────────────────────────────
+function ActualInput({ cat, log, dateStr, setLog }) {
+  const [popoverOpened, setPopoverOpened] = useState(false)
+  const [addVal, setAddVal] = useState('')
+  const [entriesOpen, setEntriesOpen] = useState(false)
+  const hex = hexOf(cat.color)
+  const suffix = cat.unit ? ` ${cat.unit}` : ''
+
+  const entries = log?.actualEntries ?? null
+  const isEntriesMode = entries && entries.length > 0
+  const total = isEntriesMode ? fmt(entries.reduce((s, v) => s + (Number(v) || 0), 0)) : null
+  const inputValue = isEntriesMode ? total : (log?.actual ?? '')
+
+  function handleDirectChange(v) {
+    setLog(cat.id, dateStr, { actual: v === '' ? null : v })
+  }
+
+  function handleAdd() {
+    if (addVal === '' || addVal === null || addVal === undefined) return
+    const base = isEntriesMode
+      ? entries
+      : (log?.actual != null && log?.actual !== '' ? [log.actual] : [])
+    setLog(cat.id, dateStr, { actualEntries: [...base, Number(addVal)] })
+    setAddVal('')
+    setPopoverOpened(false)
+  }
+
+  function removeEntry(i) {
+    const next = entries.filter((_, idx) => idx !== i)
+    setLog(cat.id, dateStr, { actualEntries: next.length > 0 ? next : null })
+    if (next.length === 0) setEntriesOpen(false)
+  }
+
+  return (
+    <Stack gap={4}>
+      <Group gap={6} wrap="nowrap" align="flex-end">
+        <NumberInput
+          label="실제"
+          placeholder="0"
+          value={inputValue}
+          onChange={isEntriesMode ? () => {} : handleDirectChange}
+          readOnly={isEntriesMode}
+          min={0}
+          hideControls
+          suffix={suffix}
+          size="sm"
+          style={{ flex: 1 }}
+        />
+        <Popover
+          opened={popoverOpened}
+          onChange={setPopoverOpened}
+          position="top-end"
+          shadow="md"
+          withArrow
+        >
+          <Popover.Target>
+            <ActionIcon
+              onClick={() => { setAddVal(''); setPopoverOpened(true) }}
+              color="indigo"
+              variant="filled"
+              radius="xl"
+              size={32}
+            >
+              <IconPlus size={14} />
+            </ActionIcon>
+          </Popover.Target>
+          <Popover.Dropdown>
+            <Stack gap={8} style={{ minWidth: 160 }}>
+              <Text size="xs" fw={600} c="dimmed">추가 기록 입력</Text>
+              <Group gap={6} wrap="nowrap">
+                <NumberInput
+                  placeholder="0"
+                  value={addVal}
+                  onChange={setAddVal}
+                  min={0}
+                  hideControls
+                  suffix={suffix}
+                  size="sm"
+                  style={{ flex: 1 }}
+                  data-autofocus
+                  onKeyDown={(e) => e.key === 'Enter' && handleAdd()}
+                />
+                <Button size="xs" color="indigo" onClick={handleAdd}>추가</Button>
+              </Group>
+            </Stack>
+          </Popover.Dropdown>
+        </Popover>
+      </Group>
+      {isEntriesMode && (
+        <Box>
+          <Group
+            gap={4}
+            style={{ cursor: 'pointer', width: 'fit-content', userSelect: 'none' }}
+            onClick={() => setEntriesOpen(o => !o)}
+          >
+            <IconChevronDown
+              size={12}
+              color="var(--mantine-color-gray-5)"
+              style={{
+                transform: entriesOpen ? 'rotate(180deg)' : 'rotate(0deg)',
+                transition: 'transform 150ms ease',
+              }}
+            />
+            <Text size="xs" c="dimmed">기록 {entries.length}건</Text>
+          </Group>
+          {entriesOpen && (
+            <Paper p={6} mt={4} radius="sm" style={{ border: '1px solid var(--mantine-color-gray-2)', background: 'var(--mantine-color-gray-0)' }}>
+              <Stack gap={4}>
+                {entries.map((v, i) => (
+                  <Group key={i} justify="space-between" align="center" gap={6}>
+                    <Text size="xs" c="dimmed">{i + 1}번 기록</Text>
+                    <Group gap={4} wrap="nowrap">
+                      <Text size="xs" fw={600}>{fmt(v)}{suffix}</Text>
+                      <ActionIcon size="xs" variant="subtle" color="red" onClick={() => removeEntry(i)}>
+                        <IconX size={10} />
+                      </ActionIcon>
+                    </Group>
+                  </Group>
+                ))}
+              </Stack>
+            </Paper>
+          )}
+        </Box>
+      )}
     </Stack>
   )
 }
@@ -327,6 +448,7 @@ function MonthTotals({ cat, month, sumRange }) {
 function CalendarView({ cat, logs, month, setMonth, calMode, onSelectDate }) {
   const today = dayjs().format('YYYY-MM-DD')
   const isNarrow = useMediaQuery('(max-width: 500px)')
+  const maxItems = useCalendarMaxItems()
   const unit = (cat?.unit && !isNarrow) ? cat.unit : ''  // 500px 이하에선 달력 칸 단위 생략
   const showPlan = calMode === 'all' || calMode === 'plan'
   const showActual = calMode === 'all' || calMode === 'actual'
@@ -357,10 +479,15 @@ function CalendarView({ cat, logs, month, setMonth, calMode, onSelectDate }) {
   function renderDayContent(dateStr) {
     const log = byDate[dateStr]
     if (!log) return null
+    const items = []
+    if (showActual && log.actual != null) items.push({ color: ACTUAL_COLOR, value: log.actual })
+    if (showPlan && log.planned != null) items.push({ color: PLAN_COLOR, value: log.planned })
+    const visible = items.slice(0, maxItems)
+    const overflow = items.length - visible.length
     return (
       <Stack gap={2}>
-        {showActual && slot(ACTUAL_COLOR, log.actual)}
-        {showPlan && slot(PLAN_COLOR, log.planned)}
+        {visible.map((item, i) => <Box key={i}>{slot(item.color, item.value)}</Box>)}
+        <OverflowCount count={overflow} />
       </Stack>
     )
   }

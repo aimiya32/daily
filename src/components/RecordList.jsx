@@ -6,11 +6,13 @@ import CalendarGrid from './CalendarGrid'
 import WeekGrid from './WeekGrid'
 import CalendarNav from './CalendarNav'
 import StoredImage from './StoredImage'
-import { DayPill } from './DayPill'
+import { DayPill, OverflowCount } from './DayPill'
+import { useCalendarMaxItems } from '../hooks/useCalendarMaxItems'
 import { collectTags } from '../lib/tags'
 import dayjs from 'dayjs'
 
 export default function RecordList({ records, categories, onEdit, onDelete, onView, onNew }) {
+  const maxItems = useCalendarMaxItems()
   const [filterCat, setFilterCat] = useState('all')
   const [calView, setCalView] = useState('month') // list | month | week
   const [_monthStr, _setMonthStr] = useLocalStorageState('ui_record_month', dayjs().format('YYYY-MM'))
@@ -42,19 +44,29 @@ export default function RecordList({ records, categories, onEdit, onDelete, onVi
 
   const byDate = {}
   for (const e of filtered) {
-    if (!byDate[e.date]) byDate[e.date] = e
+    if (!byDate[e.date]) byDate[e.date] = []
+    byDate[e.date].push(e)
   }
 
   const weekDays = Array.from({ length: 7 }, (_, i) => currentWeek.add(i, 'day'))
 
   function renderMonthDay(dateStr) {
-    const record = byDate[dateStr]
-    if (!record) return null
-    const catName = record.categoryId ? catMap[record.categoryId] : null
+    const dayRecords = byDate[dateStr]
+    if (!dayRecords) return null
+    const visible = dayRecords.slice(0, maxItems)
+    const overflow = dayRecords.length - visible.length
     return (
-      <DayPill onClick={e => { e.stopPropagation(); onView(record) }}>
-        {record.title || catName || '기록'}
-      </DayPill>
+      <Stack gap={2}>
+        {visible.map(record => {
+          const catName = record.categoryId ? catMap[record.categoryId] : null
+          return (
+            <DayPill key={record.id} onClick={e => { e.stopPropagation(); onView(record) }}>
+              {record.title || catName || '기록'}
+            </DayPill>
+          )
+        })}
+        <OverflowCount count={overflow} />
+      </Stack>
     )
   }
 
