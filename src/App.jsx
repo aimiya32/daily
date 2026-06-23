@@ -16,6 +16,8 @@ import LedgerCategoryManager from './components/LedgerCategoryManager'
 import ContactsView from './components/ContactsView'
 import TrackerCategoryManager from './components/TrackerCategoryManager'
 import HomeScreen from './components/HomeScreen'
+import ApplicationView from './components/ApplicationView'
+import EngineerExamView from './components/EngineerExamView'
 import LoginScreen from './components/LoginScreen'
 import DriveSync from './components/DriveSync'
 import CategoryManager from './components/CategoryManager'
@@ -30,6 +32,7 @@ import { useTrackerLogs } from './hooks/useTrackerLogs'
 import { useLedger } from './hooks/useLedger'
 import { useLedgerCategories } from './hooks/useLedgerCategories'
 import { useContacts } from './hooks/useContacts'
+import { useExamResults } from './hooks/useExamResults'
 import { useGoogleDrive } from './hooks/useGoogleDrive'
 import { setAccountPrefix, isInitialized, markInitialized } from './lib/accountStorage'
 import { solarFromLunar } from './lib/lunar'
@@ -94,6 +97,7 @@ function Workspace({ drive }) {
   const { items: ledgerItems, addItem: addLedgerItem, updateItem: updateLedgerItem, deleteItem: deleteLedgerItem, mergeItems: mergeLedgerItems } = useLedger()
   const { categories: ledgerCategories, addCategory: addLedgerCategory, deleteCategory: deleteLedgerCategory, setAll: setAllLedgerCategories } = useLedgerCategories()
   const { items: contactItems, addItem: addContactItem, updateItem: updateContactItem, deleteItem: deleteContactItem, mergeItems: mergeContactItems } = useContacts()
+  const { items: examResults, addItem: addExamResult, mergeItems: mergeExamResults } = useExamResults()
 
   function applyDriveData(data) {
     if (!data) return
@@ -108,6 +112,7 @@ function Workspace({ drive }) {
     if (data.ledger) mergeLedgerItems(data.ledger)
     if (data.ledgerCategories) setAllLedgerCategories(data.ledgerCategories)
     if (data.contacts) mergeContactItems(data.contacts)
+    if (data.examResults) mergeExamResults(data.examResults)
   }
 
   async function handleDrivePull() {
@@ -127,8 +132,13 @@ function Workspace({ drive }) {
   }
 
   async function handleDrivePush() {
-    await push({ records, categories, schedules, scheduleCategories, routines, routineChecks, trackerCategories, trackerLogs, ledger: ledgerItems, ledgerCategories, contacts: contactItems })
+    await push({ records, categories, schedules, scheduleCategories, routines, routineChecks, trackerCategories, trackerLogs, ledger: ledgerItems, ledgerCategories, contacts: contactItems, examResults })
     await syncImagesToDrive()
+  }
+
+  async function handleSaveExamResult(entry) {
+    addExamResult(entry)
+    await push({ records, categories, schedules, scheduleCategories, routines, routineChecks, trackerCategories, trackerLogs, ledger: ledgerItems, ledgerCategories, contacts: contactItems, examResults: [entry, ...examResults] })
   }
 
   // 이 계정/브라우저에서 처음이면 Drive에서 1회 자동 로드
@@ -211,6 +221,8 @@ function Workspace({ drive }) {
     tracker: '목표',
     ledger: '가계부',
     contacts: '연락처',
+    application: 'Application',
+    engineer: '정보처리기사 필기',
   }[view] ?? ''
 
   const isNarrow = useMediaQuery('(max-width: 500px)')
@@ -300,7 +312,11 @@ function Workspace({ drive }) {
         </AppShell.Header>
 
         <AppShell.Main>
-          {view === 'home' && <HomeScreen onOpen={handleHomeOpen} editing={editingHome} />}
+          {view === 'home' && <HomeScreen onOpen={handleHomeOpen} editing={editingHome} onOpenApplication={() => setView('application')} />}
+
+          {view === 'application' && <ApplicationView onOpen={(id) => setView(id)} />}
+
+          {view === 'engineer' && <EngineerExamView onSaveResult={handleSaveExamResult} examResults={examResults} />}
 
           {/* 기록 */}
           {view === 'list' && (

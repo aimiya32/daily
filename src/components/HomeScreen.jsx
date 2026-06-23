@@ -1,7 +1,7 @@
 import { UnstyledButton, Stack, Text, Box, Center, ActionIcon, SimpleGrid } from '@mantine/core'
 import {
   IconBook2, IconCalendar, IconRepeat, IconChartBar, IconWallet, IconAddressBook,
-  IconEye, IconEyeOff,
+  IconEye, IconEyeOff, IconApps,
 } from '@tabler/icons-react'
 import { DndContext, closestCenter, MouseSensor, TouchSensor, useSensor, useSensors } from '@dnd-kit/core'
 import { SortableContext, rectSortingStrategy, useSortable } from '@dnd-kit/sortable'
@@ -18,7 +18,7 @@ const APP_DEFS = {
 }
 const ALL_IDS = ['schedule', 'tracker', 'routine', 'record', 'ledger', 'contacts']
 
-export default function HomeScreen({ onOpen, editing = false }) {
+export default function HomeScreen({ onOpen, editing = false, onOpenApplication }) {
   const { menu, toggleVisible, reorder } = useHomeMenu(ALL_IDS)
   const sensors = useSensors(
     // 데스크톱: 5px 이상 끌면 즉시 드래그
@@ -64,6 +64,44 @@ export default function HomeScreen({ onOpen, editing = false }) {
             </SimpleGrid>
           )
         )}
+        <UnstyledButton
+          onClick={onOpenApplication}
+          style={{ width: '100%', transition: 'transform 0.15s ease' }}
+          onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-2px)'}
+          onMouseLeave={e => e.currentTarget.style.transform = 'translateY(0)'}
+        >
+          <Box
+            style={{
+              display: 'flex',
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 12,
+              width: '100%',
+              padding: '20px 24px',
+              borderRadius: 20,
+              backgroundColor: '#ffffff',
+              boxShadow: '0 1px 2px rgba(15,23,42,0.04)',
+              border: '1px solid #6366f118',
+            }}
+          >
+            <Box
+              style={{
+                width: 36,
+                height: 36,
+                borderRadius: 10,
+                background: 'linear-gradient(135deg, #6366f122, #6366f110)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexShrink: 0,
+              }}
+            >
+              <IconApps size={18} color="#6366f1" stroke={1.8} />
+            </Box>
+            <Text fw={700} size="lg" c="#475569">Application</Text>
+          </Box>
+        </UnstyledButton>
       </Stack>
     </Center>
   )
