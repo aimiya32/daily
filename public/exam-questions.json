@@ -238,8 +238,8 @@
           "choices": [
             "파이프 필터 아키텍처에서 데이터는 파이프를 통해 양방향으로 흐르며, 필터 이동시 오버헤드가 발생하지 않는다.",
             "외부에서 인식할 수 있는 특성이 담긴 소프트웨어의 골격이 되는 기본 구조로 볼 수 있다.",
-            "데이터 중심 아키텍처는 공유 데이터 저장소를 통해 접근자 간의 통신이 이루어지므로 각 접근자의 수정과 확장이 용이하 다.",
-            "이해 관계자들의 품질 요구사항을 반영하여 품질 속성을 결정 한다. 제2과목 소프트웨어 개발"
+            "데이터 중심 아키텍처는 공유 데이터 저장소를 통해 접근자 간의 통신이 이루어지므로 각 접근자의 수정과 확장이 용이하다.",
+            "이해 관계자들의 품질 요구사항을 반영하여 품질 속성을 결정 한다."
           ],
           "answer": 1
         },
@@ -554,7 +554,7 @@
             "Divide and Conquer",
             "Greedy",
             "Static Block",
-            "Backtracking 제3과목 데이터베이스 구축"
+            "Backtracking"
           ],
           "answer": 3
         },
@@ -631,7 +631,7 @@
             "A: 1, 3, 1, 2"
           ],
           "answer": 4,
-          "description": "(R: A={1,3}, S: A={1,2} / SELECT A FROM R UNION ALL SELECT A FROM S)"
+          "description": "(R: A={1,3}, S: A={1,2}\nSELECT A FROM R UNION ALL SELECT A FROM S)"
         },
         {
           "number": 47,
@@ -1284,7 +1284,7 @@
         {
           "number": 100,
           "subject": "정보시스템 구축 관리",
-          "question": "클라우드 기반 HSM(Cloud-based Ha rdwa re Security Module)에 대한 설명으로 틀린 것은?",
+          "question": "클라우드 기반 HSM(Cloud-based Hardware Security Module)에 대한 설명으로 틀린 것은?",
           "choices": [
             "클라우드(데이터센터) 기반 암호화 키 생성, 처리, 저장 등을 하는 보안 기기이다.",
             "국내에서는 공인인증제의 폐지와 전자서명법 개정을 추진하면 서 클라우드 HSM 용어가 자주 등장하였다.",
@@ -1780,7 +1780,7 @@
             "개발 정보시스템의 특성",
             "사용자의 요구사항",
             "컴파일러의 가용성",
-            "컴파일러의 독창성 제3과목 데이터베이스 구축"
+            "컴파일러의 독창성"
           ],
           "answer": 4
         },
@@ -2027,7 +2027,7 @@
             "메시지",
             "클래스",
             "추상화",
-            "메소드 제4과목 프로그래밍 언어 활용"
+            "메소드"
           ],
           "answer": 2
         },
@@ -9658,7 +9658,7 @@
             "A: 1, 3, 1, 2"
           ],
           "answer": 4,
-          "description": "(R: A={1,3}, S: A={1,2} / SELECT A FROM R UNION ALL SELECT A FROM S)"
+          "description": "(R: A={1,3}, S: A={1,2}\nSELECT A FROM R UNION ALL SELECT A FROM S)"
         },
         {
           "number": 57,
@@ -12876,7 +12876,7 @@
           ],
           "answer": 0,
           "explanation": "문제에 제시된 질의문은 집합 연산자 UNION ALL을 이용한 통합 질의로, 여러 테이블의 필드 값을 통합하여 표시하되 중복된 레코드도 그대로 표시합니다.",
-          "description": "[R] A B 1 A 3 B [S] A B 1 A 2 B SELECT A FROM R UNION ALL SELECT A FROM S; 1"
+          "description": "[R] A B 1 A 3 B [S] A B 1 A 2 B\nSELECT A FROM R UNION ALL SELECT A FROM S; 1"
         },
         {
           "number": 49,

@@ -338,7 +338,11 @@ function ExamScreen({ exam, onFinish, onBack, initialAnswers = {}, initialIdx = 
   const [timeLeft, setTimeLeft] = useState(isCollection || reviewMode ? 0 : 150 * 60)
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [showSubmitModal, setShowSubmitModal] = useState(false)
-  const isNarrow = useMediaQuery('(max-width: 500px)')
+
+  useEffect(() => {
+    document.body.style.overflow = sidebarOpen ? 'hidden' : ''
+    return () => { document.body.style.overflow = '' }
+  }, [sidebarOpen])
 
   const timerRef = useRef(null)
 
@@ -415,36 +419,33 @@ function ExamScreen({ exam, onFinish, onBack, initialAnswers = {}, initialIdx = 
 
   return (
     <Box className={styles.examWrap}>
-      {/* 좁은 화면: 헤더 위 버튼 행 (헤더 배경 밖, non-sticky) */}
-      {isNarrow && (
-        <Box style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, padding: '5px 10px', flexShrink: 0 }}>
+      {/* 헤더 위 버튼 행 */}
+      <Box style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, padding: '5px 10px', flexShrink: 0 }}>
+        <button
+          onClick={() => setSidebarOpen(o => !o)}
+          style={{ background: 'white', border: '1.5px solid #d1d5db', borderRadius: 8, padding: '4px 12px', cursor: 'pointer', fontSize: 12, fontWeight: 600, color: '#4b5563', display: 'flex', alignItems: 'center', gap: 4, boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}
+        >
+          <IconList size={13} /> 목록
+        </button>
+        {!isCollection && !reviewMode && (
           <button
-            onClick={() => setSidebarOpen(o => !o)}
-            style={{ background: 'white', border: '1.5px solid #d1d5db', borderRadius: 8, padding: '4px 12px', cursor: 'pointer', fontSize: 12, fontWeight: 600, color: '#4b5563', display: 'flex', alignItems: 'center', gap: 4, boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}
+            onClick={() => setShowSubmitModal(true)}
+            style={{ background: '#2563eb', border: 'none', borderRadius: 8, padding: '4px 12px', cursor: 'pointer', fontSize: 12, fontWeight: 700, color: 'white', boxShadow: '0 1px 3px rgba(37,99,235,0.25)' }}
           >
-            <IconList size={13} /> 목록
+            제출
           </button>
-          {!isCollection && !reviewMode && (
-            <button
-              onClick={() => setShowSubmitModal(true)}
-              style={{ background: '#2563eb', border: 'none', borderRadius: 8, padding: '4px 12px', cursor: 'pointer', fontSize: 12, fontWeight: 700, color: 'white', boxShadow: '0 1px 3px rgba(37,99,235,0.25)' }}
-            >
-              제출
-            </button>
-          )}
-        </Box>
-      )}
+        )}
+      </Box>
 
       {/* 헤더 */}
       <Box
         style={{
           background: reviewMode ? '#1f2937' : 'white',
           borderBottom: '1px solid #e5e7eb',
-          padding: isNarrow ? '0 12px' : '0 16px',
+          padding: '0 12px',
           height: 52,
           display: 'flex',
           alignItems: 'center',
-          justifyContent: 'space-between',
           position: 'sticky',
           top: 60,
           zIndex: 10,
@@ -452,68 +453,28 @@ function ExamScreen({ exam, onFinish, onBack, initialAnswers = {}, initialIdx = 
           flexShrink: 0,
         }}
       >
-          {isNarrow ? (
-            <Box style={{ display: 'grid', gridTemplateColumns: '1fr auto 1fr', alignItems: 'center', width: '100%' }}>
-              <Box style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 0 }}>
-                <button onClick={onBack} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '0 2px', display: 'flex', alignItems: 'center', flexShrink: 0 }}>
-                  <IconChevronLeft size={20} color={reviewMode ? 'white' : '#374151'} />
-                </button>
-                <Text fw={700} size="sm" c={reviewMode ? 'white' : '#1f2937'} style={{ minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                  {exam.name}
-                </Text>
-              </Box>
-              <Text size="xs" c={reviewMode ? 'rgba(255,255,255,0.7)' : '#6b7280'} ta="center">
-                <Text span fw={700} c={reviewMode ? 'white' : '#1f2937'}>{currentIdx + 1}</Text>
-                {' '}/ {questions.length}
+        <Box style={{ display: 'grid', gridTemplateColumns: '1fr auto 1fr', alignItems: 'center', width: '100%' }}>
+          <Box style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 0 }}>
+            <button onClick={onBack} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '0 2px', display: 'flex', alignItems: 'center', flexShrink: 0 }}>
+              <IconChevronLeft size={20} color={reviewMode ? 'white' : '#374151'} />
+            </button>
+            <Text fw={700} size="sm" c={reviewMode ? 'white' : '#1f2937'} style={{ minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {exam.name}
+            </Text>
+          </Box>
+          <Text size="xs" c={reviewMode ? 'rgba(255,255,255,0.7)' : '#6b7280'} ta="center">
+            <Text span fw={700} c={reviewMode ? 'white' : '#1f2937'}>{currentIdx + 1}</Text>
+            {' '}/ {questions.length}
+          </Text>
+          <Box style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end' }}>
+            {!isCollection && (
+              <Text fw={700} size="xs" style={{ color: timerColor, fontVariantNumeric: 'tabular-nums', background: reviewMode ? 'rgba(255,255,255,0.1)' : '#f3f4f6', padding: '2px 6px', borderRadius: 6 }}>
+                {timerStr}
               </Text>
-              <Box style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end' }}>
-                {!isCollection && (
-                  <Text fw={700} size="xs" style={{ color: timerColor, fontVariantNumeric: 'tabular-nums', background: reviewMode ? 'rgba(255,255,255,0.1)' : '#f3f4f6', padding: '2px 6px', borderRadius: 6 }}>
-                    {timerStr}
-                  </Text>
-                )}
-              </Box>
-            </Box>
-          ) : (
-            <>
-              <Group gap={8}>
-                <button onClick={onBack} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, display: 'flex', alignItems: 'center' }}>
-                  <IconChevronLeft size={20} color={reviewMode ? 'white' : '#374151'} />
-                </button>
-                <Text fw={700} size="sm" c={reviewMode ? 'white' : '#1f2937'} style={{ maxWidth: 120, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                  {exam.name}
-                </Text>
-                {q?.subject && (
-                  <Badge size="xs" style={{ background: reviewMode ? 'rgba(255,255,255,0.15)' : '#eff6ff', color: reviewMode ? 'white' : '#2563eb', border: 'none' }}>
-                    {SUBJECT_SHORT[q.subject] || q.subject}
-                  </Badge>
-                )}
-              </Group>
-              <Group gap={12}>
-                <Text size="sm" c={reviewMode ? 'rgba(255,255,255,0.7)' : '#6b7280'}>
-                  <Text span fw={700} c={reviewMode ? 'white' : '#1f2937'}>{currentIdx + 1}</Text>
-                  {' '}/ {questions.length}
-                </Text>
-                {!isCollection && (
-                  <Text fw={700} size="sm" style={{ color: timerColor, fontVariantNumeric: 'tabular-nums', background: '#f3f4f6', padding: '3px 10px', borderRadius: 8 }}>
-                    {timerStr}
-                  </Text>
-                )}
-              </Group>
-              <Group gap={8}>
-                <button onClick={() => setSidebarOpen(o => !o)} style={{ background: 'none', border: '1px solid #d1d5db', borderRadius: 6, padding: '4px 10px', cursor: 'pointer', fontSize: 12, fontWeight: 600, color: reviewMode ? '#e5e7eb' : '#4b5563', display: 'flex', alignItems: 'center', gap: 4 }}>
-                  <IconList size={14} />
-                  목록
-                </button>
-                {!isCollection && !reviewMode && (
-                  <button onClick={() => setShowSubmitModal(true)} style={{ background: '#2563eb', border: 'none', borderRadius: 6, padding: '4px 12px', cursor: 'pointer', fontSize: 12, fontWeight: 700, color: 'white' }}>
-                    제출하기
-                  </button>
-                )}
-              </Group>
-            </>
-          )}
+            )}
+          </Box>
         </Box>
+      </Box>
 
       {/* 검토 모드 배너 */}
       {reviewMode && (
@@ -523,63 +484,58 @@ function ExamScreen({ exam, onFinish, onBack, initialAnswers = {}, initialIdx = 
       )}
 
       {/* 본문 */}
-      <Box style={{ flex: 1, display: 'grid', gridTemplateColumns: sidebarOpen ? '1fr 220px' : '1fr', position: 'relative' }}>
+      <Box style={{ flex: 1, position: 'relative' }}>
         {/* 문제 영역 */}
         <Box className={styles.examContent}>
           <Box className={styles.inner800}>
             {/* 문제 카드 */}
             <Box className={styles.questionCard}>
-              <Group align="flex-start" gap={12} mb={20} wrap="nowrap">
+              <Group align="flex-start" gap={12} mb={12} wrap="nowrap">
                 <Box className={styles.questionNumCircle}>
                   {q.number}
                 </Box>
-                <Box style={{ flex: 1 }}>
-                  <Text fw={600} size="sm" c="#1f2937" style={{ lineHeight: 1.7, whiteSpace: 'pre-line', marginBottom: q.description ? 12 : 0 }}>
-                    {q.question}
-                  </Text>
-                  {(q.table || q.description) && (() => {
-                    const boxStyle = { background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 8, padding: '12px 14px', overflowX: 'auto', marginBottom: q.tree ? 0 : undefined }
-                    const renderTable = (headers, rows, prefix) => (
-                      <Box style={boxStyle}>
-                        {prefix && <Text size="xs" c="#374151" mb={8} style={{ lineHeight: 1.7, whiteSpace: 'pre-wrap' }}>{prefix}</Text>}
-                        <table style={{ borderCollapse: 'collapse', fontSize: 12 }}>
-                          <thead>
-                            <tr>
-                              {headers.map((h, i) => (
-                                <th key={i} style={{ background: '#e2e8f0', border: '1px solid #cbd5e1', padding: '5px 10px', fontWeight: 700, color: '#374151', textAlign: 'center', whiteSpace: 'nowrap' }}>{h}</th>
-                              ))}
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {rows.map((row, i) => (
-                              <tr key={i} style={{ background: i % 2 === 0 ? 'white' : '#f8fafc' }}>
-                                {row.map((cell, j) => (
-                                  <td key={j} style={{ border: '1px solid #e2e8f0', padding: '4px 10px', textAlign: 'center', color: '#374151', whiteSpace: 'nowrap' }}>{cell}</td>
-                                ))}
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </Box>
-                    )
-                    // 우선순위 1: JSON의 명시적 table 필드
-                    if (q.table) return renderTable(q.table.headers, q.table.rows, '')
-                    // 우선순위 2: description 텍스트에서 자동 감지
-                    const detected = detectTable(q.description)
-                    if (detected) return renderTable(detected.headers, detected.rows, detected.prefix)
-                    // 우선순위 3: 코드/일반 텍스트
-                    const isCode = q.description.includes('\n    ')
-                    return (
-                      <Box style={boxStyle}>
-                        <Text size="xs" c="#374151" style={{ lineHeight: isCode ? 1.6 : 1.8, whiteSpace: 'pre-wrap', fontFamily: isCode ? '"Consolas", "Menlo", monospace' : 'inherit' }}>
-                          {q.description}
-                        </Text>
-                      </Box>
-                    )
-                  })()}
-                  {q.tree && <TreeRenderer tree={q.tree} />}
-                </Box>
+                <Text fw={600} size="sm" c="#1f2937" style={{ flex: 1, lineHeight: 1.7, whiteSpace: 'pre-line' }}>
+                  {q.question}
+                </Text>
               </Group>
+              {(q.table || q.description) && (() => {
+                const boxStyle = { background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 8, padding: '12px 14px', overflowX: 'auto', marginBottom: 12 }
+                const renderTable = (headers, rows, prefix) => (
+                  <Box style={boxStyle}>
+                    {prefix && <Text size="xs" c="#374151" mb={8} style={{ lineHeight: 1.7, whiteSpace: 'pre-wrap' }}>{prefix}</Text>}
+                    <table style={{ borderCollapse: 'collapse', fontSize: 12, width: '100%' }}>
+                      <thead>
+                        <tr>
+                          {headers.map((h, i) => (
+                            <th key={i} style={{ background: '#e2e8f0', border: '1px solid #cbd5e1', padding: '5px 10px', fontWeight: 700, color: '#374151', textAlign: 'center', whiteSpace: 'nowrap' }}>{h}</th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {rows.map((row, i) => (
+                          <tr key={i} style={{ background: i % 2 === 0 ? 'white' : '#f8fafc' }}>
+                            {row.map((cell, j) => (
+                              <td key={j} style={{ border: '1px solid #e2e8f0', padding: '4px 10px', textAlign: 'center', color: '#374151', whiteSpace: 'nowrap' }}>{cell}</td>
+                            ))}
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </Box>
+                )
+                if (q.table) return renderTable(q.table.headers, q.table.rows, '')
+                const detected = detectTable(q.description)
+                if (detected) return renderTable(detected.headers, detected.rows, detected.prefix)
+                const isCode = q.description.includes('\n    ')
+                return (
+                  <Box style={boxStyle}>
+                    <Text size="xs" c="#374151" style={{ lineHeight: isCode ? 1.6 : 1.8, whiteSpace: 'pre-wrap', fontFamily: isCode ? '"Consolas", "Menlo", monospace' : 'inherit' }}>
+                      {q.description}
+                    </Text>
+                  </Box>
+                )
+              })()}
+              {q.tree && <TreeRenderer tree={q.tree} />}
 
               <Stack gap={8}>
                 {q.choices.map((c, i) => {
@@ -691,15 +647,22 @@ function ExamScreen({ exam, onFinish, onBack, initialAnswers = {}, initialIdx = 
         {/* 사이드바 */}
         {sidebarOpen && (
           <>
+            <Box onClick={() => setSidebarOpen(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.3)', zIndex: 99 }} />
             <Box
               style={{
-                background: 'white', borderLeft: '1px solid #e5e7eb',
-                padding: '14px 12px', overflowY: 'auto', maxHeight: 'calc(100vh - 112px)', position: 'sticky', top: 112,
+                position: 'fixed', top: 0, right: 0, bottom: 0,
+                width: 240, background: 'white', borderLeft: '1px solid #e5e7eb',
+                display: 'flex', flexDirection: 'column', zIndex: 100,
+                boxShadow: '-4px 0 16px rgba(0,0,0,0.1)',
               }}
             >
-              <Text size="xs" fw={700} c="#9ca3af" style={{ textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 10 }}>
-                문제 현황
-              </Text>
+              <Box style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 12px', borderBottom: '1px solid #e5e7eb', flexShrink: 0 }}>
+                <Text size="xs" fw={700} c="#9ca3af" style={{ textTransform: 'uppercase', letterSpacing: '0.05em' }}>문제 현황</Text>
+                <button onClick={() => setSidebarOpen(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, display: 'flex', alignItems: 'center', color: '#6b7280' }}>
+                  <IconX size={16} />
+                </button>
+              </Box>
+              <Box style={{ flex: 1, overflowY: 'auto', padding: '14px 12px' }}>
 
               {!isCollection ? (
                 SUBJECTS.map(subj => {
@@ -736,6 +699,7 @@ function ExamScreen({ exam, onFinish, onBack, initialAnswers = {}, initialIdx = 
                     <Text size="xs" c="#6b7280">{label}</Text>
                   </Box>
                 ))}
+              </Box>
               </Box>
             </Box>
           </>
