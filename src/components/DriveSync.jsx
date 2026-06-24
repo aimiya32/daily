@@ -1,5 +1,6 @@
 import { Menu, ActionIcon } from '@mantine/core'
 import { IconCloudDownload, IconCloudUpload, IconLogout, IconCloud } from '@tabler/icons-react'
+import './DriveSync.module.scss'
 
 const statusColor = { idle: 'gray', loading: 'blue', synced: 'teal', error: 'red' }
 

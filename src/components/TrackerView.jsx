@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import styles from './TrackerView.module.scss'
 import { useLocalStorageState } from '../hooks/useLocalStorageState'
 import {
   Stack, Group, Text, Box, Paper, NumberInput, Progress, Center,
@@ -10,8 +11,6 @@ import { IconChevronDown, IconCalendarPlus, IconPlus, IconX } from '@tabler/icon
 import CalendarNav from './CalendarNav'
 import CalendarGrid from './CalendarGrid'
 import TrackerBulkPlan from './TrackerBulkPlan'
-import { OverflowCount } from './DayPill'
-import { useCalendarMaxItems } from '../hooks/useCalendarMaxItems'
 import { hexOf, DEFAULT_HEX } from '../lib/colors'
 import dayjs from 'dayjs'
 import 'dayjs/locale/ko'
@@ -26,10 +25,11 @@ function fmt(n) {
   return Math.round(n * 100) / 100
 }
 
-// 달력 칸 표시용: 소수점 1자리까지 반올림
+// 달력 칸 표시용: 소수점 1자리 반올림, 0이면 생략
 function fmt1(n) {
   if (n === null || n === undefined || n === '') return 0
-  return Math.round(n * 10) / 10
+  const v = Math.round(Number(n) * 10) / 10
+  return v % 1 === 0 ? v : v.toFixed(1)
 }
 
 export default function TrackerView({ categories, logs, getLog, setLog, bulkSetPlanned }) {
@@ -40,6 +40,8 @@ export default function TrackerView({ categories, logs, getLog, setLog, bulkSetP
   const [_monthStr, _setMonthStr] = useLocalStorageState('ui_tracker_month', dayjs().format('YYYY-MM'))
   const month = dayjs(_monthStr).startOf('month')
   const setMonth = (d) => _setMonthStr(d.format('YYYY-MM'))
+  useEffect(() => { setDay(dayjs()); setMonth(dayjs()) }, [])
+
   const [catId, setCatId] = useState(categories[0]?.id ?? null)
   const [calMode, setCalMode] = useState('all') // all | plan | actual (달력 표시 모드)
   const [bulkOpened, { open: openBulk, close: closeBulk }] = useDisclosure(false)
@@ -311,7 +313,7 @@ function ActualInput({ cat, log, dateStr, setLog }) {
         <Box>
           <Group
             gap={4}
-            style={{ cursor: 'pointer', width: 'fit-content', userSelect: 'none' }}
+            className={styles.entriesToggle}
             onClick={() => setEntriesOpen(o => !o)}
           >
             <IconChevronDown
@@ -355,7 +357,7 @@ function StatCard({ cat, planned, actual, breakdown }) {
     <Paper p="md" radius="md" style={{ border: `1px solid ${hex}22`, background: 'white' }}>
       <Group justify="space-between" mb={6}>
         <Group gap={8}>
-          <Box style={{ width: 12, height: 12, borderRadius: '50%', background: hex }} />
+          <Box className={styles.colorDot} style={{ width: 12, height: 12, background: hex }} />
           <Text fw={700} c="#1E293B">{cat.name}</Text>
           {cat.unit && <Text size="xs" c="dimmed">({cat.unit})</Text>}
         </Group>
@@ -434,10 +436,10 @@ function MonthTotals({ cat, month, sumRange }) {
   const pct = planned > 0 ? Math.round(actual / planned * 100) : null
   return (
     <Group gap={6} wrap="wrap">
-      <Box style={{ width: 9, height: 9, borderRadius: '50%', background: PLAN_COLOR, flexShrink: 0 }} />
+      <Box className={styles.colorDot} style={{ width: 9, height: 9, background: PLAN_COLOR }} />
       <Text size="sm" c="dimmed">계획 <Text span fw={700} c="#334155">{fmt(planned)}{cat.unit ? ` ${cat.unit}` : ''}</Text></Text>
       <Text size="sm" c="dimmed">/</Text>
-      <Box style={{ width: 9, height: 9, borderRadius: '50%', background: ACTUAL_COLOR, flexShrink: 0 }} />
+      <Box className={styles.colorDot} style={{ width: 9, height: 9, background: ACTUAL_COLOR }} />
       <Text size="sm" c="dimmed">실제 <Text span fw={700} style={{ color: ACTUAL_COLOR }}>{fmt(actual)}{cat.unit ? ` ${cat.unit}` : ''}</Text></Text>
       {pct !== null && <Text size="sm" c="dimmed">({pct}%)</Text>}
     </Group>
@@ -448,7 +450,6 @@ function MonthTotals({ cat, month, sumRange }) {
 function CalendarView({ cat, logs, month, setMonth, calMode, onSelectDate }) {
   const today = dayjs().format('YYYY-MM-DD')
   const isNarrow = useMediaQuery('(max-width: 500px)')
-  const maxItems = useCalendarMaxItems()
   const unit = (cat?.unit && !isNarrow) ? cat.unit : ''  // 500px 이하에선 달력 칸 단위 생략
   const showPlan = calMode === 'all' || calMode === 'plan'
   const showActual = calMode === 'all' || calMode === 'actual'
@@ -464,12 +465,8 @@ function CalendarView({ cat, logs, month, setMonth, calMode, onSelectDate }) {
   function slot(color, value) {
     if (value == null) return null
     return (
-      <Box style={{
-        position: 'relative',
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        background: color + '22', borderRadius: 5, padding: '2px 4px',
-      }}>
-        <Text style={{ fontSize: '0.78rem', fontWeight: 700, color, lineHeight: 1.2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+      <Box className={styles.planSlot} style={{ background: color + '22' }}>
+        <Text className={styles.planSlotText} style={{ fontSize: '0.78rem', color, lineHeight: 1.2 }}>
           {fmt1(value)}{unit}
         </Text>
       </Box>
@@ -482,12 +479,10 @@ function CalendarView({ cat, logs, month, setMonth, calMode, onSelectDate }) {
     const items = []
     if (showActual && log.actual != null) items.push({ color: ACTUAL_COLOR, value: log.actual })
     if (showPlan && log.planned != null) items.push({ color: PLAN_COLOR, value: log.planned })
-    const visible = items.slice(0, maxItems)
-    const overflow = items.length - visible.length
+    if (items.length === 0) return null
     return (
       <Stack gap={2}>
-        {visible.map((item, i) => <Box key={i}>{slot(item.color, item.value)}</Box>)}
-        <OverflowCount count={overflow} />
+        {items.map((item, i) => <Box key={i}>{slot(item.color, item.value)}</Box>)}
       </Stack>
     )
   }

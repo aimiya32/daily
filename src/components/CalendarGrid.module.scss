@@ -1,0 +1,57 @@
+.grid7 {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+}
+
+.weekHeader {
+  text-align: center;
+  background: var(--mantine-color-gray-0);
+  border-bottom: 1px solid var(--mantine-color-gray-2);
+}
+
+.weekRow {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  align-items: stretch;
+}
+
+.emptyCell {
+  min-height: 72px;
+  background: var(--mantine-color-gray-0);
+}
+
+.dayCell {
+  min-height: 72px;
+  padding: 6px 4px;
+  background: white;
+  overflow: hidden;
+}
+
+.dateCircle {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.dayContent {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 2px;
+  text-align: center;
+}
+
+.lunarLabel {
+  font-size: 0.55rem;
+  line-height: 1.8;
+  margin-left: 5px;
+}
+
+.holidayLabel {
+  font-size: 0.55rem;
+  line-height: 1.2;
+  margin-bottom: 2px;
+}

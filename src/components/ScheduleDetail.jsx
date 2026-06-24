@@ -3,6 +3,7 @@ import { IconPencil, IconTrash, IconClock } from '@tabler/icons-react'
 import { hexOf } from '../lib/colors'
 import ContentCard from './ContentCard'
 import dayjs from 'dayjs'
+import styles from './ScheduleDetail.module.scss'
 
 export default function ScheduleDetail({ schedule, categories, onEdit, onDelete, onDeleteAll }) {
   const cat = categories.find(c => c.id === schedule.categoryId)
@@ -13,7 +14,7 @@ export default function ScheduleDetail({ schedule, categories, onEdit, onDelete,
       <Stack gap="xl">
         <Group justify="space-between" align="flex-start">
           <Stack gap={8}>
-            <Text fw={800} size="xl" c="#1E293B" style={{ letterSpacing: '-0.5px' }}>
+            <Text fw={800} size="xl" c="#1E293B" className={styles.titleText}>
               {schedule.title}
             </Text>
             <Group gap={8} wrap="wrap">
@@ -57,7 +58,7 @@ export default function ScheduleDetail({ schedule, categories, onEdit, onDelete,
         {schedule.description && (
           <>
             <Divider color="gray.1" />
-            <Text size="md" lh={2} style={{ whiteSpace: 'pre-wrap', color: '#334155' }}>
+            <Text size="md" lh={2} className={styles.description} c="#334155">
               {schedule.description}
             </Text>
           </>

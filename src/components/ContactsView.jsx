@@ -12,6 +12,7 @@ import TagFilter from './TagFilter'
 import { storeImageFile, deleteImage, getImage, putImage } from '../lib/imageStore'
 import { uploadImageRecord } from '../lib/driveImages'
 import { parseTags, collectTags } from '../lib/tags'
+import styles from './ContactsView.module.scss'
 
 // 파일의 원본 가로/세로 크기 읽기
 function readImageSize(file) {
@@ -218,20 +219,20 @@ export default function ContactsView({ items, onAdd, onUpdate, onDelete }) {
               {(keptExisting.length > 0 || pending.length > 0) && (
                 <Group gap="xs" wrap="wrap" align="center">
                   {keptExisting.map(id => (
-                    <Box key={id} style={{ position: 'relative', width: 72, flexShrink: 0 }}>
+                    <Box key={id} className={styles.thumbWrap}>
                       <StoredImage id={id} variant="thumb" height={72} radius={10} />
                       <ActionIcon size={18} radius="xl" color="dark" variant="filled"
-                        style={{ position: 'absolute', top: -6, right: -6, opacity: 0.9 }}
+                        className={styles.removeBtn}
                         onClick={() => removeExisting(id)}>
                         <IconX size={11} />
                       </ActionIcon>
                     </Box>
                   ))}
                   {pending.map(p => (
-                    <Box key={p.key} style={{ position: 'relative', width: 72, flexShrink: 0 }}>
-                      <img src={previews[p.key]} style={{ width: 72, height: 72, objectFit: 'cover', borderRadius: 10, display: 'block' }} />
+                    <Box key={p.key} className={styles.thumbWrap}>
+                      <img src={previews[p.key]} className={styles.pendingThumb} />
                       <ActionIcon size={18} radius="xl" color="dark" variant="filled"
-                        style={{ position: 'absolute', top: -6, right: -6, opacity: 0.9 }}
+                        className={styles.removeBtn}
                         onClick={() => removePending(p.key)}>
                         <IconX size={11} />
                       </ActionIcon>

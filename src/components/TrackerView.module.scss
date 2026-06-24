@@ -1,0 +1,27 @@
+.colorDot {
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.planSlot {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 5px;
+  padding: 2px 4px;
+}
+
+.planSlotText {
+  font-weight: 700;
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.entriesToggle {
+  cursor: pointer;
+  width: fit-content;
+  user-select: none;
+}

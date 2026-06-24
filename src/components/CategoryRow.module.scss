@@ -1,0 +1,9 @@
+.row {
+  border: 1px solid var(--mantine-color-gray-2);
+  border-radius: 8px;
+}
+
+.inner {
+  flex: 1;
+  min-width: 0;
+}

@@ -1,5 +1,6 @@
 import { Group, Box } from '@mantine/core'
 import { CATEGORY_COLORS } from '../lib/colors'
+import styles from './ColorSwatchPicker.module.scss'
 
 // 카테고리 색상 선택 동그라미 팔레트
 export default function ColorSwatchPicker({ value, onChange }) {
@@ -9,11 +10,10 @@ export default function ColorSwatchPicker({ value, onChange }) {
         <Box
           key={c.name}
           onClick={() => onChange(c.name)}
+          className={styles.swatch}
           style={{
-            width: 24, height: 24, borderRadius: '50%',
-            background: c.hex, cursor: 'pointer',
+            background: c.hex,
             outline: value === c.name ? `3px solid ${c.hex}` : '2px solid transparent',
-            outlineOffset: 2, transition: 'outline 0.1s',
           }}
         />
       ))}
@@ -22,5 +22,5 @@ export default function ColorSwatchPicker({ value, onChange }) {
 }
 
 export function ColorDot({ hex, size = 14 }) {
-  return <Box style={{ width: size, height: size, borderRadius: '50%', background: hex, flexShrink: 0 }} />
+  return <Box className={styles.colorDot} style={{ width: size, height: size, background: hex }} />
 }

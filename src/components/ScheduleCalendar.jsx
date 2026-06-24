@@ -9,6 +9,7 @@ import CalendarGrid from './CalendarGrid'
 import CalendarNav from './CalendarNav'
 import { DayPill, OverflowCount } from './DayPill'
 import dayjs from 'dayjs'
+import './ScheduleCalendar.module.scss'
 
 export default function ScheduleCalendar({ schedules, categories, onView, onAdd, onManageCategories }) {
   const [_monthStr, _setMonthStr] = useLocalStorageState('ui_schedule_month', dayjs().format('YYYY-MM'))

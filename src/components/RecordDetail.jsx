@@ -4,6 +4,7 @@ import { IconPencil, IconTrash } from '@tabler/icons-react'
 import StoredImage from './StoredImage'
 import ContentCard from './ContentCard'
 import dayjs from 'dayjs'
+import styles from './RecordDetail.module.scss'
 
 export default function RecordDetail({ record, categories, onEdit, onDelete }) {
   const cat = categories.find(c => c.id === record.categoryId)
@@ -19,7 +20,7 @@ export default function RecordDetail({ record, categories, onEdit, onDelete }) {
               <Badge size="lg" variant="light" radius="xl" color="indigo">{cat.name}</Badge>
             )}
             {record.title && (
-              <Text fw={800} size="xl" c="#1E293B" style={{ letterSpacing: '-0.5px' }}>
+              <Text fw={800} size="xl" c="#1E293B" className={styles.titleText}>
                 {record.title}
               </Text>
             )}
@@ -34,7 +35,7 @@ export default function RecordDetail({ record, categories, onEdit, onDelete }) {
             )}
           </Stack>
           <Group gap="xs">
-            <ActionIcon variant="subtle" color="gray" radius="xl" size="lg" onClick={onEdit} style={{ background: '#F8FAFC' }}>
+            <ActionIcon variant="subtle" color="gray" radius="xl" size="lg" onClick={onEdit} className={styles.editBtn}>
               <IconPencil size={16} />
             </ActionIcon>
             <ActionIcon variant="light" color="red" radius="xl" size="lg"
@@ -49,14 +50,14 @@ export default function RecordDetail({ record, categories, onEdit, onDelete }) {
         {images.length > 0 && (
           <Group justify="center" gap="xs">
             {images.map(id => (
-              <Box key={id} style={{ width: 300, maxWidth: '100%' }}>
+              <Box key={id} className={styles.imageWrap}>
                 <StoredImage id={id} variant="thumb" height="auto" onClick={() => setViewer(id)} style={{ height: 'auto', objectFit: 'contain' }} />
               </Box>
             ))}
           </Group>
         )}
 
-        <Text size="md" lh={2} style={{ whiteSpace: 'pre-wrap', color: '#334155' }}>
+        <Text size="md" lh={2} className={styles.contentText} c="#334155">
           {record.content}
         </Text>
       </Stack>

@@ -4,6 +4,7 @@ import { IconPlus } from '@tabler/icons-react'
 import { hexOf } from '../lib/colors'
 import ColorSwatchPicker, { ColorDot } from './ColorSwatchPicker'
 import { CategoryRow, EmptyText } from './CategoryRow'
+import './ScheduleCategoryManager.module.scss'
 
 export default function ScheduleCategoryManager({ opened, onClose, categories, onAdd, onDelete }) {
   const [input, setInput] = useState('')

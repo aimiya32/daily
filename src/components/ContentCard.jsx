@@ -1,4 +1,5 @@
 import { Paper } from '@mantine/core'
+import './ContentCard.module.scss'
 
 // 상세/편집 화면 공통 카드
 export default function ContentCard({ children }) {

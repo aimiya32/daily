@@ -1,4 +1,5 @@
 import { Group, Chip, Center, Text } from '@mantine/core'
+import './TagFilter.module.scss'
 
 // 태그 칩 목록 + 토글 선택. 태그가 없으면 안내 문구를 보여준다.
 export default function TagFilter({ tags, selected, onSelect, emptyText = '사용된 태그가 없어요.' }) {

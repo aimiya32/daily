@@ -1,0 +1,21 @@
+.navInner {
+  position: relative;
+  display: flex;
+  align-items: center;
+  min-height: 30px;
+}
+
+.centerAbs {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.rightGroup {
+  margin-left: auto;
+  z-index: 1;
+}
+
+.titleNoWrap {
+  white-space: nowrap;
+}

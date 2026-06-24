@@ -10,6 +10,7 @@ import { DayPill, OverflowCount } from './DayPill'
 import { useCalendarMaxItems } from '../hooks/useCalendarMaxItems'
 import { collectTags } from '../lib/tags'
 import dayjs from 'dayjs'
+import styles from './RecordList.module.scss'
 
 export default function RecordList({ records, categories, onEdit, onDelete, onView, onNew }) {
   const maxItems = useCalendarMaxItems()
@@ -141,7 +142,7 @@ export default function RecordList({ records, categories, onEdit, onDelete, onVi
         {imgId ? (
           <StoredImage id={imgId} variant="thumb" height={240} radius={0} />
         ) : (
-          <Box style={{ height: 240, background: 'var(--mantine-color-gray-1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <Box className={styles.galleryPlaceholder}>
             <Text size="xs" c="dimmed">이미지 없음</Text>
           </Box>
         )}
@@ -165,10 +166,10 @@ export default function RecordList({ records, categories, onEdit, onDelete, onVi
         </Group>
         {categories.length > 0 && (
           <Chip.Group value={filterCat} onChange={setFilterCat}>
-            <Group gap="xs" wrap="nowrap" style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch', paddingBottom: 2, scrollbarWidth: 'none' }}>
-              <Chip value="all" variant="light" size="sm" radius="xl" style={{ flexShrink: 0 }}>전체</Chip>
+            <Group gap="xs" wrap="nowrap" className={styles.chipScroll} style={{ WebkitOverflowScrolling: 'touch', scrollbarWidth: 'none' }}>
+              <Chip value="all" variant="light" size="sm" radius="xl" className={styles.chipItem}>전체</Chip>
               {categories.map(cat => (
-                <Chip key={cat.id} value={cat.id} variant="light" size="sm" radius="xl" style={{ flexShrink: 0 }}>{cat.name}</Chip>
+                <Chip key={cat.id} value={cat.id} variant="light" size="sm" radius="xl" className={styles.chipItem}>{cat.name}</Chip>
               ))}
             </Group>
           </Chip.Group>

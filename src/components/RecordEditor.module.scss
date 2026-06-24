@@ -1,0 +1,17 @@
+.thumbWrap {
+  position: relative;
+  width: 46px;
+  flex-shrink: 0;
+}
+
+.removeBtn {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  opacity: 0.9;
+}
+
+.attachRow {
+  overflow-x: auto;
+  padding-top: 4px;
+}

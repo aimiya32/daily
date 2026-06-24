@@ -10,6 +10,7 @@ import ContentCard from './ContentCard'
 import { useImageAttachments } from '../hooks/useImageAttachments'
 import { parseTags } from '../lib/tags'
 import dayjs from 'dayjs'
+import styles from './RecordEditor.module.scss'
 
 export default function RecordEditor({ record, onSave, onCancel, categories }) {
   const [date, setDate] = useState(record ? dayjs(record.date).toDate() : new Date())
@@ -91,13 +92,13 @@ export default function RecordEditor({ record, onSave, onCancel, categories }) {
         {/* 이미지 첨부 */}
         <Stack gap="xs">
           {/* 썸네일(기존) / 첨부 버튼 / 원본 체크박스 한 줄 */}
-          <Group gap="xs" wrap="nowrap" align="center" style={{ overflowX: 'auto', paddingTop: 4 }}>
+          <Group gap="xs" wrap="nowrap" align="center" className={styles.attachRow}>
             {images.keptExisting.map(id => (
-              <Box key={id} style={{ position: 'relative', width: 46, flexShrink: 0 }}>
+              <Box key={id} className={styles.thumbWrap}>
                 <StoredImage id={id} variant="thumb" height={46} radius={6} />
                 <ActionIcon
                   size={16} radius="xl" color="dark" variant="filled"
-                  style={{ position: 'absolute', top: -5, right: -5, opacity: 0.9 }}
+                  className={styles.removeBtn}
                   onClick={() => images.removeExisting(id)}
                 >
                   <IconX size={10} />

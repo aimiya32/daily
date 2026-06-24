@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Drawer, Stack, Group, TextInput, Button, Text, SegmentedControl, Divider } from '@mantine/core'
 import { IconPlus } from '@tabler/icons-react'
 import { CategoryRow, EmptyText } from './CategoryRow'
+import './LedgerCategoryManager.module.scss'
 
 export default function LedgerCategoryManager({ opened, onClose, categories, onAdd, onDelete }) {
   const [input, setInput] = useState('')

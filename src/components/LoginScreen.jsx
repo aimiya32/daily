@@ -1,17 +1,10 @@
 import { Paper, Stack, Text, Button, ThemeIcon, Box } from '@mantine/core'
 import { IconBrandGoogle, IconBook2 } from '@tabler/icons-react'
+import styles from './LoginScreen.module.scss'
 
 export default function LoginScreen({ onLogin }) {
   return (
-    <Box
-      style={{
-        minHeight: '100vh',
-        background: 'linear-gradient(160deg, #EEF2FF 0%, #F4F6FB 50%, #E0E7FF 100%)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-      }}
-    >
+    <Box className={styles.bg}>
       <Paper radius="2rem" shadow="xl" p={48} w={360} style={{ background: 'white' }}>
         <Stack align="center" gap="xl">
           <Stack align="center" gap="md">

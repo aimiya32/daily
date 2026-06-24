@@ -13,6 +13,7 @@ import CalendarNav from './CalendarNav'
 import DatePopoverTitle from './DatePopoverTitle'
 import { DayPill, OverflowCount } from './DayPill'
 import dayjs from 'dayjs'
+import styles from './RoutineView.module.scss'
 
 export default function RoutineView({ routines, isChecked, toggle, getCheckedRoutineIds, addRoutine, updateRoutine, toggleVisible, onExposeOpen }) {
   const [calView, setCalView] = useState('month') // month | week

@@ -5,6 +5,7 @@ import ContentCard from './ContentCard'
 import dayjs from 'dayjs'
 import KoreanLunarCalendar from 'korean-lunar-calendar'
 import { getLunarLabel } from '../lib/lunar'
+import styles from './ScheduleEditor.module.scss'
 
 const _cal = new KoreanLunarCalendar()
 
@@ -91,7 +92,7 @@ export default function ScheduleEditor({ schedule, categories, initialDate, onSa
             음력으로 입력하기
           </Button>
           <Collapse in={lunarInputOpen}>
-            <Box mt="xs" p="sm" style={{ border: '1px solid var(--mantine-color-gray-2)', borderRadius: 8, background: 'var(--mantine-color-gray-0)' }}>
+            <Box mt="xs" p="sm" className={styles.lunarBox}>
               <Group gap="xs" align="flex-end">
                 <NumberInput
                   label="음력 월"

@@ -1,12 +1,12 @@
 import { Group, ActionIcon, Text } from '@mantine/core'
 import { IconTrash } from '@tabler/icons-react'
+import styles from './CategoryRow.module.scss'
 
 // 카테고리 관리 Drawer의 한 줄: 내용 + 삭제 버튼
 export function CategoryRow({ onDelete, children }) {
   return (
-    <Group gap="xs" wrap="nowrap" px="xs" py={6}
-      style={{ border: '1px solid var(--mantine-color-gray-2)', borderRadius: 8 }}>
-      <Group gap="xs" wrap="nowrap" style={{ flex: 1, minWidth: 0 }}>
+    <Group gap="xs" wrap="nowrap" px="xs" py={6} className={styles.row}>
+      <Group gap="xs" wrap="nowrap" className={styles.inner}>
         {children}
       </Group>
       <ActionIcon variant="subtle" color="red" size="sm" onClick={onDelete}>

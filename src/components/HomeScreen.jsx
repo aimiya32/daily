@@ -7,6 +7,7 @@ import { DndContext, closestCenter, MouseSensor, TouchSensor, useSensor, useSens
 import { SortableContext, rectSortingStrategy, useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { useHomeMenu } from '../hooks/useHomeMenu'
+import styles from './HomeScreen.module.scss'
 
 const APP_DEFS = {
   schedule: { label: '일정',   icon: IconCalendar,    color: '#A78BFA' },
@@ -66,37 +67,12 @@ export default function HomeScreen({ onOpen, editing = false, onOpenApplication 
         )}
         <UnstyledButton
           onClick={onOpenApplication}
-          style={{ width: '100%', transition: 'transform 0.15s ease' }}
+          className={styles.appBtn}
           onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-2px)'}
           onMouseLeave={e => e.currentTarget.style.transform = 'translateY(0)'}
         >
-          <Box
-            style={{
-              display: 'flex',
-              flexDirection: 'row',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: 12,
-              width: '100%',
-              padding: '20px 24px',
-              borderRadius: 20,
-              backgroundColor: '#ffffff',
-              boxShadow: '0 1px 2px rgba(15,23,42,0.04)',
-              border: '1px solid #6366f118',
-            }}
-          >
-            <Box
-              style={{
-                width: 36,
-                height: 36,
-                borderRadius: 10,
-                background: 'linear-gradient(135deg, #6366f122, #6366f110)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                flexShrink: 0,
-              }}
-            >
+          <Box className={styles.applicationCard}>
+            <Box className={styles.applicationIconBox}>
               <IconApps size={18} color="#6366f1" stroke={1.8} />
             </Box>
             <Text fw={700} size="lg" c="#475569">Application</Text>
@@ -110,33 +86,15 @@ export default function HomeScreen({ onOpen, editing = false, onOpenApplication 
 function CardFace({ label, icon: Icon, color = '#4F46E5', dim = false }) {
   return (
     <Box
+      className={styles.cardFace}
       style={{
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        gap: 16,
-        width: '100%',
-        aspectRatio: '1 / 1',
-        padding: '20px 16px',
-        borderRadius: 20,
-        backgroundColor: '#ffffff',
-        boxShadow: '0 1px 2px rgba(15,23,42,0.04)',
         border: `1px solid ${color}18`,
         opacity: dim ? 0.45 : 1,
       }}
     >
       <Box
-        style={{
-          width: 40,
-          height: 40,
-          borderRadius: 12,
-          background: `linear-gradient(135deg, ${color}22, ${color}10)`,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          flexShrink: 0,
-        }}
+        className={styles.cardIconBox}
+        style={{ background: `linear-gradient(135deg, ${color}22, ${color}10)` }}
       >
         <Icon size={20} color={color} stroke={1.8} />
       </Box>
@@ -149,7 +107,7 @@ function AppRow({ onClick, ...def }) {
   return (
     <UnstyledButton
       onClick={onClick}
-      style={{ width: '100%', transition: 'transform 0.15s ease' }}
+      className={styles.appBtn}
       onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-2px)'}
       onMouseLeave={e => e.currentTarget.style.transform = 'translateY(0)'}
     >
@@ -165,15 +123,12 @@ function SortableMenuCard({ id, def, visible, onToggle }) {
     transition,
     opacity: isDragging ? 0.5 : 1,
     zIndex: isDragging ? 2 : 1,
-    position: 'relative',
-    cursor: 'grab',
-    touchAction: 'manipulation',
   }
   return (
-    <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
+    <div ref={setNodeRef} style={style} className={styles.sortableCard} {...attributes} {...listeners}>
       <ActionIcon
         variant="subtle" color="gray" radius="xl" size="md"
-        style={{ position: 'absolute', top: 8, right: 8, zIndex: 3 }}
+        className={styles.visibilityBtn}
         onPointerDown={(e) => e.stopPropagation()}
         onClick={onToggle}
       >

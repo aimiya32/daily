@@ -1,5 +1,6 @@
 import { Box, Paper, Stack, Text } from '@mantine/core'
 import { WEEKDAYS_KO } from '../lib/dates'
+import styles from './WeekGrid.module.scss'
 
 export default function WeekGrid({ weekDays, today, selectedDate, onSelectDate, renderDayContent }) {
   return (
@@ -14,32 +15,28 @@ export default function WeekGrid({ weekDays, today, selectedDate, onSelectDate, 
             <Box
               key={dateStr}
               onClick={() => onSelectDate?.(dateStr)}
+              className={styles.dayRow}
               style={{
-                display: 'flex',
-                alignItems: 'flex-start',
-                gap: 16,
-                padding: '12px 16px',
                 background: isSelected ? '#EEF2FF' : 'white',
                 borderBottom: di < 6 ? '1px solid var(--mantine-color-gray-1)' : 'none',
                 cursor: onSelectDate ? 'pointer' : 'default',
               }}
             >
-              <Stack gap={0} align="center" style={{ width: 48, flexShrink: 0 }}>
+              <Stack gap={0} align="center" className={styles.dateStack}>
                 <Text size="sm" fw={600} c={di === 0 ? 'red.5' : di === 6 ? 'blue.5' : 'gray.5'}>
                   {WEEKDAYS_KO[di]}
                 </Text>
-                <Box style={{
-                  width: 34, height: 34, borderRadius: '50%',
-                  background: isToday ? 'var(--mantine-color-blue-6)' : 'transparent',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                }}>
+                <Box
+                  className={styles.dateCircle}
+                  style={{ background: isToday ? 'var(--mantine-color-blue-6)' : 'transparent' }}
+                >
                   <Text size="md" fw={isToday ? 700 : 500} c={isToday ? 'white' : 'gray.8'}>
                     {day.date()}
                   </Text>
                 </Box>
               </Stack>
 
-              <Box style={{ flex: 1, paddingTop: 6 }}>
+              <Box className={styles.dayContent}>
                 {renderDayContent?.(dateStr, di)}
               </Box>
             </Box>

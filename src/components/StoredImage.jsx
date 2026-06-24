@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { Box } from '@mantine/core'
 import { getImage, putImage } from '../lib/imageStore'
 import { downloadImageBlob } from '../lib/driveImages'
+import styles from './StoredImage.module.scss'
 
 // IndexedDB에 저장된 이미지를 표시. 로컬에 없으면 Drive에서 받아 캐시한다.
 // variant: 'thumb' | 'original'
@@ -51,7 +52,7 @@ export default function StoredImage({ id, variant = 'thumb', radius = 8, height,
 
   if (!url) {
     return (
-      <Box style={{ width: '100%', height: height ?? 96, borderRadius: radius, background: 'var(--mantine-color-gray-1)' }} />
+      <Box className={styles.placeholder} style={{ height: height ?? 96, borderRadius: radius }} />
     )
   }
 
@@ -59,12 +60,11 @@ export default function StoredImage({ id, variant = 'thumb', radius = 8, height,
     <img
       src={url}
       onClick={onClick}
+      className={styles.img}
       style={{
-        width: '100%',
         height: height ?? 96,
         objectFit: 'cover',
         borderRadius: radius,
-        display: 'block',
         cursor: onClick ? 'pointer' : 'default',
         ...style,
       }}

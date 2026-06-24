@@ -3,6 +3,7 @@ import { useMediaQuery } from '@mantine/hooks'
 import { WEEKDAYS_KO } from '../lib/dates'
 import { useHolidays } from '../hooks/useHolidays'
 import { getLunarLabel } from '../lib/lunar'
+import styles from './CalendarGrid.module.scss'
 
 export default function CalendarGrid({ current, today, onSelectDate, renderDayContent, hideToday = false }) {
   const isMobile = useMediaQuery('(max-width: 700px)')
@@ -23,13 +24,9 @@ export default function CalendarGrid({ current, today, onSelectDate, renderDayCo
 
   return (
     <Paper style={{ borderRadius: `0 0 ${radius}px ${radius}px`, overflow: 'hidden', border: '1px solid #E2E8F0', borderTop: 'none' }}>
-      <Box style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)' }}>
+      <Box className={styles.grid7}>
         {WEEKDAYS_KO.map((d, i) => (
-          <Box key={d} py={8} style={{
-            textAlign: 'center',
-            background: 'var(--mantine-color-gray-0)',
-            borderBottom: '1px solid var(--mantine-color-gray-2)',
-          }}>
+          <Box key={d} py={8} className={styles.weekHeader}>
             <Text size="xs" fw={600} c={i === 0 ? 'red.5' : i === 6 ? 'indigo.5' : 'gray.6'}>
               {d}
             </Text>
@@ -38,7 +35,7 @@ export default function CalendarGrid({ current, today, onSelectDate, renderDayCo
       </Box>
 
       {weeks.map((week, wi) => (
-        <Box key={wi} style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', alignItems: 'stretch' }}>
+        <Box key={wi} className={styles.weekRow}>
           {week.map((day, di) => {
             const isLast = wi === weeks.length - 1
             const borderRight = di < 6 ? '1px solid var(--mantine-color-gray-1)' : 'none'
@@ -46,12 +43,7 @@ export default function CalendarGrid({ current, today, onSelectDate, renderDayCo
 
             if (!day) {
               return (
-                <Box key={di} style={{
-                  minHeight: 72,
-                  background: 'var(--mantine-color-gray-0)',
-                  borderRight,
-                  borderBottom,
-                }} />
+                <Box key={di} className={styles.emptyCell} style={{ borderRight, borderBottom }} />
               )
             }
 
@@ -65,40 +57,33 @@ export default function CalendarGrid({ current, today, onSelectDate, renderDayCo
               <Box
                 key={di}
                 onClick={() => onSelectDate?.(dateStr)}
+                className={styles.dayCell}
                 style={{
-                  minHeight: 72,
-                  padding: '6px 4px',
-                  background: 'white',
                   cursor: onSelectDate ? 'pointer' : 'default',
-                  overflow: 'hidden',
                   borderRight,
                   borderBottom,
                 }}
               >
                 <Flex align={'center'} justify={isMobile ? 'center' : 'flex-start'} style={{ marginLeft: isMobile ? 0 : 10 }}>
-                  <Box style={{
-                    width: 26, height: 26, borderRadius: '50%',
-                    background: isToday ? 'var(--mantine-color-indigo-6)' : 'transparent',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  }}>
+                  <Box className={styles.dateCircle} style={{ background: isToday ? 'var(--mantine-color-indigo-6)' : 'transparent' }}>
                     <Text size="xs" fw={isToday ? 700 : 400} c={dateColor}>
                       {day.date()}
                     </Text>
                   </Box>
                   {!isMobile && (
-                    <Text c="gray.6" ta="center" style={{ fontSize: '0.55rem', lineHeight: 1.8, marginLeft: 5 }}>
+                    <Text c="gray.6" ta="center" className={styles.lunarLabel}>
                       ({getLunarLabel(day.year(), day.month() + 1, day.date())})
                     </Text>
                   )}
                 </Flex>
 
                 {holidayName && (
-                  <Text c="red.4" ta="center" style={{ fontSize: '0.55rem', lineHeight: 1.2, marginBottom: 2 }} truncate>
+                  <Text c="red.4" ta="center" className={styles.holidayLabel} truncate>
                     {holidayName}
                   </Text>
                 )}
 
-                <Box style={{ display: 'flex', flexDirection: 'column', alignItems: 'stretch', gap: 2, textAlign: 'center' }}>
+                <Box className={styles.dayContent}>
                   {renderDayContent?.(dateStr, di)}
                 </Box>
               </Box>

@@ -6,6 +6,7 @@ import { MonthPickerInput } from '@mantine/dates'
 import { IconDeviceFloppy, IconTrash } from '@tabler/icons-react'
 import dayjs from 'dayjs'
 import 'dayjs/locale/ko'
+import './TrackerBulkPlan.module.scss'
 
 dayjs.locale('ko')
 

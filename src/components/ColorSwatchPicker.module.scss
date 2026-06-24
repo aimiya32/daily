@@ -1,0 +1,13 @@
+.swatch {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  cursor: pointer;
+  outline-offset: 2px;
+  transition: outline 0.1s;
+}
+
+.colorDot {
+  border-radius: 50%;
+  flex-shrink: 0;
+}

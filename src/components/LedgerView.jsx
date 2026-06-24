@@ -9,6 +9,7 @@ import { IconPlus, IconTrash } from '@tabler/icons-react'
 import CalendarNav from './CalendarNav'
 import dayjs from 'dayjs'
 import 'dayjs/locale/ko'
+import styles from './LedgerView.module.scss'
 
 dayjs.locale('ko')
 
@@ -104,7 +105,7 @@ export default function LedgerView({ items, categories = [], onAdd, onUpdate, on
             <Text fw={700} size="md" c="#1E293B" style={{ flexShrink: 0, width: 50, textAlign: 'center' }}>{dayjs(i.date).format('D')}</Text>
             <Stack gap={6} style={{ minWidth: 0 }} align="flex-start">
               {i.categoryId && catMap[i.categoryId] && (
-                <Box style={{ background: '#F1F5F9', borderRadius: 6, padding: '1px 8px' }}>
+                <Box className={styles.categoryTag}>
                   <Text size="xs" c="#1E293B">{catMap[i.categoryId]}</Text>
                 </Box>
               )}

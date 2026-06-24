@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Drawer, Stack, Group, TextInput, ActionIcon, Text, Select } from '@mantine/core'
 import { IconPlus } from '@tabler/icons-react'
 import { CategoryRow, EmptyText } from './CategoryRow'
+import './CategoryManager.module.scss'
 
 const VIEW_OPTIONS = [
   { label: '목록형', value: 'list' },

@@ -1,0 +1,28 @@
+.thumbWrap {
+  position: relative;
+  width: 72px;
+  flex-shrink: 0;
+}
+
+.removeBtn {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  opacity: 0.9;
+}
+
+.pendingThumb {
+  width: 72px;
+  height: 72px;
+  object-fit: cover;
+  border-radius: 10px;
+  display: block;
+}
+
+.fieldIcon {
+  flex-shrink: 0;
+}
+
+.cardMeta {
+  min-width: 0;
+}
