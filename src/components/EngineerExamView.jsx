@@ -54,6 +54,36 @@ function detectTable(text) {
   return { prefix, headers, rows }
 }
 
+// ── 보기(선택지) 소형 테이블 ─────────────────────────────────
+function ChoiceTable({ table }) {
+  const { headers, rows } = table
+  const hasHeader = headers && headers.length > 0
+  return (
+    <Box style={{ overflowX: 'auto', maxWidth: '100%' }}>
+      <table style={{ borderCollapse: 'collapse', fontSize: 12 }}>
+        {hasHeader && (
+          <thead>
+            <tr>
+              {headers.map((h, i) => (
+                <th key={i} style={{ background: '#e2e8f0', border: '1px solid #cbd5e1', padding: '3px 10px', fontWeight: 700, color: '#374151', textAlign: 'center', whiteSpace: 'nowrap' }}>{h}</th>
+              ))}
+            </tr>
+          </thead>
+        )}
+        <tbody>
+          {rows.map((row, i) => (
+            <tr key={i}>
+              {row.map((cell, j) => (
+                <td key={j} style={{ border: '1px solid #e2e8f0', padding: '3px 10px', textAlign: 'center', color: '#374151', whiteSpace: 'nowrap' }}>{cell}</td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </Box>
+  )
+}
+
 // ── 트리 렌더러 ──────────────────────────────────────────────
 function TreeRenderer({ tree }) {
   const NODE_R = 15
@@ -488,17 +518,55 @@ function ExamScreen({ exam, onFinish, onBack, initialAnswers = {}, initialIdx = 
         {/* 문제 영역 */}
         <Box className={styles.examContent}>
           <Box className={styles.inner800}>
+            {/* 이전/다음 */}
+            <Group justify="space-between" mb={12} wrap="nowrap">
+              <button
+                onClick={() => navigate(-1)}
+                disabled={currentIdx === 0}
+                className={styles.navBtn} style={{ cursor: currentIdx === 0 ? 'not-allowed' : 'pointer', opacity: currentIdx === 0 ? 0.4 : 1 }}
+              >
+                <IconChevronLeft size={16} /> 이전
+              </button>
+
+              <button
+                onClick={toggleFlag}
+                style={{
+                  padding: '10px 16px', borderRadius: 8,
+                  border: `2px solid ${flags.has(currentIdx) ? '#d97706' : '#d97706'}`,
+                  background: flags.has(currentIdx) ? '#d97706' : 'white',
+                  cursor: 'pointer', fontSize: 13, fontWeight: 700,
+                  color: flags.has(currentIdx) ? 'white' : '#d97706',
+                  display: 'flex', alignItems: 'center', gap: 4,
+                }}
+              >
+                <IconFlag size={14} /> 표시
+              </button>
+
+              <button
+                onClick={() => navigate(1)}
+                disabled={currentIdx === questions.length - 1}
+                className={styles.navBtn} style={{ cursor: currentIdx === questions.length - 1 ? 'not-allowed' : 'pointer', opacity: currentIdx === questions.length - 1 ? 0.4 : 1 }}
+              >
+                다음 <IconChevronRight size={16} />
+              </button>
+            </Group>
+
             {/* 문제 카드 */}
             <Box className={styles.questionCard}>
               <Group align="flex-start" gap={12} mb={12} wrap="nowrap">
                 <Box className={styles.questionNumCircle}>
                   {q.number}
                 </Box>
-                <Text fw={600} size="sm" c="#1f2937" style={{ flex: 1, lineHeight: 1.7, whiteSpace: 'pre-line' }}>
+                <Text fw={600} size="sm" c="#1f2937" style={{ flex: 1, lineHeight: 1.7, whiteSpace: 'pre-line', marginTop: 4 }}>
                   {q.question}
                 </Text>
               </Group>
-              {(q.table || q.description) && (() => {
+              {q.sql && (
+                <Box style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 8, padding: '10px 14px', overflowX: 'auto', marginBottom: 12 }}>
+                  <Text size="xs" c="#374151" style={{ lineHeight: 1.6, whiteSpace: 'pre-wrap', fontFamily: '"Consolas", "Menlo", monospace' }}>{q.sql}</Text>
+                </Box>
+              )}
+              {(q.table || q.tables || q.description) && (() => {
                 const boxStyle = { background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 8, padding: '12px 14px', overflowX: 'auto', marginBottom: 12 }
                 const renderTable = (headers, rows, prefix) => (
                   <Box style={boxStyle}>
@@ -523,10 +591,22 @@ function ExamScreen({ exam, onFinish, onBack, initialAnswers = {}, initialIdx = 
                     </table>
                   </Box>
                 )
+                if (q.tables) {
+                  return (
+                    <Stack gap={6} mb={12}>
+                      {q.tables.map((t, i) => (
+                        <Box key={i}>
+                          {t.label && <Text size="xs" fw={600} c="#6b7280" mb={4}>{t.label}</Text>}
+                          {renderTable(t.headers, t.rows, '')}
+                        </Box>
+                      ))}
+                    </Stack>
+                  )
+                }
                 if (q.table) return renderTable(q.table.headers, q.table.rows, '')
-                const detected = detectTable(q.description)
+                const detected = !q.code && detectTable(q.description)
                 if (detected) return renderTable(detected.headers, detected.rows, detected.prefix)
-                const isCode = q.description.includes('\n    ')
+                const isCode = q.code || q.description.includes('\n    ')
                 return (
                   <Box style={boxStyle}>
                     <Text size="xs" c="#374151" style={{ lineHeight: isCode ? 1.6 : 1.8, whiteSpace: 'pre-wrap', fontFamily: isCode ? '"Consolas", "Menlo", monospace' : 'inherit' }}>
@@ -580,7 +660,9 @@ function ExamScreen({ exam, onFinish, onBack, initialAnswers = {}, initialIdx = 
                       >
                         {num}
                       </Box>
-                      <span>{c}</span>
+                      {c && typeof c === 'object' && c.table
+                        ? <Box style={{ marginTop: 1 }}><ChoiceTable table={c.table} /></Box>
+                        : <span style={{ display: 'inline-block', marginTop: 3, whiteSpace: 'pre-line' }}>{c}</span>}
                     </button>
                   )
                 })}
@@ -609,38 +691,6 @@ function ExamScreen({ exam, onFinish, onBack, initialAnswers = {}, initialIdx = 
               </Box>
             )}
 
-            {/* 이전/다음 */}
-            <Group justify="space-between" mt={16} wrap="nowrap">
-              <button
-                onClick={() => navigate(-1)}
-                disabled={currentIdx === 0}
-                className={styles.navBtn} style={{ cursor: currentIdx === 0 ? 'not-allowed' : 'pointer', opacity: currentIdx === 0 ? 0.4 : 1 }}
-              >
-                <IconChevronLeft size={16} /> 이전
-              </button>
-
-              <button
-                onClick={toggleFlag}
-                style={{
-                  padding: '10px 16px', borderRadius: 8,
-                  border: `2px solid ${flags.has(currentIdx) ? '#d97706' : '#d97706'}`,
-                  background: flags.has(currentIdx) ? '#d97706' : 'white',
-                  cursor: 'pointer', fontSize: 13, fontWeight: 700,
-                  color: flags.has(currentIdx) ? 'white' : '#d97706',
-                  display: 'flex', alignItems: 'center', gap: 4,
-                }}
-              >
-                <IconFlag size={14} /> 표시
-              </button>
-
-              <button
-                onClick={() => navigate(1)}
-                disabled={currentIdx === questions.length - 1}
-                className={styles.navBtn} style={{ cursor: currentIdx === questions.length - 1 ? 'not-allowed' : 'pointer', opacity: currentIdx === questions.length - 1 ? 0.4 : 1 }}
-              >
-                다음 <IconChevronRight size={16} />
-              </button>
-            </Group>
           </Box>
         </Box>
 

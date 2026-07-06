@@ -102,20 +102,20 @@ export default function LedgerView({ items, categories = [], onAdd, onUpdate, on
         onClick={() => startEdit(i)}>
         <Group justify="space-between" wrap="nowrap" align="center">
           <Group gap="sm" wrap="nowrap" align="center" style={{ minWidth: 0 }}>
-            <Text fw={700} size="md" c="#1E293B" style={{ flexShrink: 0, width: 50, textAlign: 'center' }}>{dayjs(i.date).format('D')}</Text>
+            <Text fw={700} size="md" c="#1E293B" style={{ flexShrink: 0, width: 30, textAlign: 'center' }}>{dayjs(i.date).format('D')}</Text>
             <Stack gap={6} style={{ minWidth: 0 }} align="flex-start">
               {i.categoryId && catMap[i.categoryId] && (
                 <Box className={styles.categoryTag}>
                   <Text size="xs" c="#1E293B">{catMap[i.categoryId]}</Text>
                 </Box>
               )}
-              <Text size="sm" c="#1E293B" truncate>{i.memo || (i.type === 'income' ? '수입' : '지출')}</Text>
+              <Text size="sm" c="#1E293B" style={{ wordBreak: 'keep-all', overflowWrap: 'break-word' }}>{i.memo || (i.type === 'income' ? '수입' : '지출')}</Text>
               {(i.tags ?? []).length > 0 && (
                 <Text size="xs" c="#94A3B8">{(i.tags ?? []).map(t => `#${t}`).join(' ')}</Text>
               )}
             </Stack>
           </Group>
-          <Group gap="xs" wrap="nowrap" style={{ flexShrink: 0 }}>
+          <Group gap="xs" style={{ flexShrink: 0 }}>
             <Text fw={700} size="sm" c={i.type === 'income' ? '#2563EB' : '#DC2626'}>
               {i.type === 'income' ? '+' : '-'}{won(i.amount)}
             </Text>
