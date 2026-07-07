@@ -1,7 +1,27 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <rect width="512" height="512" rx="80" fill="#228be6"/>
-  <rect x="120" y="100" width="272" height="312" rx="20" fill="white"/>
-  <rect x="160" y="160" width="192" height="20" rx="10" fill="#228be6"/>
-  <rect x="160" y="210" width="192" height="20" rx="10" fill="#228be6"/>
-  <rect x="160" y="260" width="140" height="20" rx="10" fill="#228be6"/>
+  <defs>
+    <linearGradient id="bgC" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#20c997"/>
+      <stop offset="0.5" stop-color="#1098ad"/>
+      <stop offset="1" stop-color="#4263eb"/>
+    </linearGradient>
+    <mask id="nibC">
+      <rect width="512" height="512" fill="white"/>
+      <circle cx="256" cy="262" r="16" fill="black"/>
+      <path d="M252.5 274 L259.5 274 L256 384 Z" fill="black"/>
+    </mask>
+    <filter id="shC" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="10"/>
+    </filter>
+    <filter id="hazeC" x="-80%" y="-80%" width="260%" height="260%">
+      <feGaussianBlur stdDeviation="30"/>
+    </filter>
+  </defs>
+  <rect width="512" height="512" rx="114" fill="url(#bgC)"/>
+  <circle cx="415" cy="105" r="95" fill="#ffffff" opacity="0.26" filter="url(#hazeC)"/>
+  <circle cx="90" cy="420" r="80" fill="#ffffff" opacity="0.26" filter="url(#hazeC)"/>
+  <path d="M264 396 C 244 364, 198 332, 198 262 L 198 182 Q 198 152 228 152 L 300 152 Q 330 152 330 182 L 330 262 C 330 332, 284 364, 264 396 Z" fill="#0b3954" opacity="0.30" filter="url(#shC)"/>
+  <path d="M256 384 C 236 352, 190 320, 190 250 L 190 170 Q 190 140 220 140 L 292 140 Q 322 140 322 170 L 322 250 C 322 320, 276 352, 256 384 Z" fill="#ffffff" mask="url(#nibC)"/>
+  <path d="M352 96 l8 22 22 8 -22 8 -8 22 -8 -22 -22 -8 22 -8 z" fill="#ffffff" opacity="0.7"/>
+  <circle cx="150" cy="392" r="10" fill="#ffffff" opacity="0.6"/>
 </svg>
