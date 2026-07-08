@@ -3,7 +3,7 @@ import styles from './TrackerView.module.scss'
 import { useLocalStorageState } from '../hooks/useLocalStorageState'
 import {
   Stack, Group, Text, Box, Paper, NumberInput, Progress, Center,
-  Popover, Button, Select, SegmentedControl, ActionIcon,
+  Popover, Button, Select, SegmentedControl, ActionIcon, Divider,
 } from '@mantine/core'
 import { DatePicker } from '@mantine/dates'
 import { useDisclosure, useMediaQuery } from '@mantine/hooks'
@@ -350,7 +350,7 @@ function ActualInput({ cat, log, dateStr, setLog }) {
 }
 
 // ── 카테고리별 합계 카드 ────────────────────────────────
-function StatCard({ cat, planned, actual, breakdown }) {
+function StatCard({ cat, planned, actual, breakdown, todayPct }) {
   const hex = hexOf(cat.color)
   const pct = planned > 0 ? Math.round(actual / planned * 100) : null
   return (
@@ -361,7 +361,11 @@ function StatCard({ cat, planned, actual, breakdown }) {
           <Text fw={700} c="#1E293B">{cat.name}</Text>
           {cat.unit && <Text size="xs" c="dimmed">({cat.unit})</Text>}
         </Group>
-        {pct !== null && <Text fw={800} style={{ color: hex }}>{pct}%</Text>}
+        {todayPct !== null && todayPct !== undefined ? (
+          <RatePair todayPct={todayPct} pct={pct} color={hex} />
+        ) : (
+          pct !== null && <Text fw={800} style={{ color: hex }}>{pct}%</Text>
+        )}
       </Group>
       <Group gap="xl" mb={pct !== null ? 8 : 0}>
         <Text size="sm" c="dimmed">계획 <Text span fw={700} c="#334155">{fmt(planned)}</Text> {cat.unit}</Text>
@@ -420,11 +424,40 @@ function MonthlySummary({ categories, month, setMonth, sumRange }) {
         {categories.map(cat => {
           const { planned, actual } = sumRange(cat.id, monthStart.format('YYYY-MM-DD'), monthEnd.format('YYYY-MM-DD'))
           const breakdown = weeks.map(w => ({ label: w.label, ...sumRange(cat.id, w.start, w.end) }))
-          return <StatCard key={cat.id} cat={cat} planned={planned} actual={actual} breakdown={breakdown} />
+          return <StatCard key={cat.id} cat={cat} planned={planned} actual={actual} breakdown={breakdown}
+            todayPct={mtdPct(sumRange, cat.id, month)} />
         })}
       </Stack>
     </Stack>
   )
+}
+
+// 오늘까지/월간 달성율 쌍 — 연회색 칩 안에 라벨+숫자로 표시
+function RatePair({ todayPct, pct, color }) {
+  return (
+    <Group gap={10} wrap="nowrap" className={styles.ratePair}>
+      <Text size="xs" c="dimmed" lh={1.2}>
+        ( 오늘까지 <Text span fw={700} size="xs" style={{ color }}>{todayPct}%</Text>
+      </Text>
+      {pct !== null && (
+        <>
+          <Divider orientation="vertical" color="gray.3" />
+          <Text size="xs" c="dimmed" lh={1.2}>
+            월간 <Text span fw={700} size="xs" c="#64748B">{pct}%</Text> )
+          </Text>
+        </>
+      )}
+    </Group>
+  )
+}
+
+// 1일~오늘 계획 대비 실제 달성율(%) — 표시 중인 달이 이번 달일 때만 의미가 있어 그 외엔 null
+function mtdPct(sumRange, categoryId, month) {
+  if (!month.isSame(dayjs(), 'month')) return null
+  const start = month.startOf('month').format('YYYY-MM-DD')
+  const todayStr = dayjs().format('YYYY-MM-DD')
+  const { planned, actual } = sumRange(categoryId, start, todayStr)
+  return planned > 0 ? Math.round(actual / planned * 100) : null
 }
 
 // ── 달력 위 월 합계 (선택 카테고리, 계획/실제 한 줄) ──────
@@ -434,6 +467,7 @@ function MonthTotals({ cat, month, sumRange }) {
   const end = month.endOf('month').format('YYYY-MM-DD')
   const { planned, actual } = sumRange(cat.id, start, end)
   const pct = planned > 0 ? Math.round(actual / planned * 100) : null
+  const todayPct = mtdPct(sumRange, cat.id, month)
   return (
     <Group gap={6} wrap="wrap">
       <Box className={styles.colorDot} style={{ width: 9, height: 9, background: PLAN_COLOR }} />
@@ -441,7 +475,8 @@ function MonthTotals({ cat, month, sumRange }) {
       <Text size="sm" c="dimmed">/</Text>
       <Box className={styles.colorDot} style={{ width: 9, height: 9, background: ACTUAL_COLOR }} />
       <Text size="sm" c="dimmed">실제 <Text span fw={700} style={{ color: ACTUAL_COLOR }}>{fmt(actual)}{cat.unit ? ` ${cat.unit}` : ''}</Text></Text>
-      {pct !== null && <Text size="sm" c="dimmed">({pct}%)</Text>}
+      {pct !== null && todayPct === null && <Text size="sm" c="dimmed">({pct}%)</Text>}
+      {todayPct !== null && <RatePair todayPct={todayPct} pct={pct} color={ACTUAL_COLOR} />}
     </Group>
   )
 }

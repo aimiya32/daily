@@ -26,6 +26,7 @@ export default function ScheduleEditor({ schedule, categories, initialDate, onSa
   const [yearlyRepeat, setYearlyRepeat] = useState(false)
   const [repeatMode, setRepeatMode] = useState('indefinite') // indefinite | count
   const [repeatCount, setRepeatCount] = useState(10)
+  const [applyToAll, setApplyToAll] = useState(false) // 반복 일정 전체에 수정 적용
 
   const catOptions = categories.map(c => ({ value: c.id, label: c.name }))
 
@@ -50,6 +51,7 @@ export default function ScheduleEditor({ schedule, categories, initialDate, onSa
     if (!title.trim()) return
     onSave({
       id: schedule?.id ?? crypto.randomUUID(),
+      recurrenceId: schedule?.recurrenceId,
       date: dayjs(date).format('YYYY-MM-DD'),
       time: time || null,
       title: title.trim(),
@@ -60,6 +62,7 @@ export default function ScheduleEditor({ schedule, categories, initialDate, onSa
       repeatMode: !schedule && yearlyRepeat ? repeatMode : undefined,
       repeatCount: !schedule && yearlyRepeat && repeatMode === 'count' ? repeatCount : undefined,
       lunarRecurrence: !schedule && yearlyRepeat ? lunarRecurrence : undefined,
+      applyToAll: !!schedule && !!schedule.recurrenceId && applyToAll,
     })
   }
 
@@ -185,6 +188,14 @@ export default function ScheduleEditor({ schedule, categories, initialDate, onSa
               </Box>
             </Collapse>
           </Box>
+        )}
+
+        {schedule && schedule.recurrenceId && (
+          <Checkbox
+            label="반복 일정 전체에 적용 (제목·시간·분류·내용)"
+            checked={applyToAll}
+            onChange={e => setApplyToAll(e.currentTarget.checked)}
+          />
         )}
 
         <Group justify="flex-end">

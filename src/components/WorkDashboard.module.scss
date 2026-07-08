@@ -1,0 +1,234 @@
+/* 3패널 배치: 월간 달력이 넓고, 주간/오늘 패널은 기존 균등 폭의 80% */
+.dashboardGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--mantine-spacing-md);
+  max-width: 1300px;
+  margin: 0 auto;
+
+  @media (min-width: 992px) {
+    grid-template-columns: 1.75fr 1fr 1fr;
+  }
+}
+
+.panel {
+  border-radius: 18px;
+  background-color: #ffffff;
+  border: 1px solid #6366f118;
+  box-shadow: 0 2px 12px rgba(99, 102, 241, 0.06);
+}
+
+@media (max-width: 500px) {
+  .panel {
+    border-radius: 16px;
+    padding: 14px !important;
+  }
+}
+
+/* ── 패널 공통 헤더 ── */
+.panelIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 9px;
+  flex-shrink: 0;
+}
+
+.panelTitle {
+  letter-spacing: -0.3px;
+}
+
+/* ── 월간 달력 (공용 CalendarGrid 사용) ── */
+/* 세로 플렉스: 달력 그리드가 남은 높이를 채워 주간 일정 패널과 아래 끝이 맞는다 */
+.monthPanel {
+  display: flex;
+  flex-direction: column;
+}
+
+/* 달력 셀 안 업무 도트를 가운데 정렬 */
+.monthDotRow {
+  display: flex;
+  justify-content: center;
+}
+
+/* 요일 색 (주간 일정 요일 라벨에서도 사용) */
+.sunday {
+  color: #ef4444;
+}
+
+.saturday {
+  color: #3b82f6;
+}
+
+/* 업무(투두/시간별 일정)가 있는 날짜에 표시하는 인디고 도트 */
+.dot {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background-color: #818CF8;
+  flex-shrink: 0;
+}
+
+/* 카테고리 색 도트 (시간 있는 개인 일정 목록) */
+.catDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* 카테고리 필터 칩 (가로 스크롤) */
+.filterBar {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  padding: 2px 0 14px;
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+
+  > * {
+    flex-shrink: 0;
+  }
+}
+
+/* ── 주간 일정 ── */
+.weekRow {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid transparent;
+  border-radius: 12px;
+  background: #f8fafc;
+  text-align: left;
+  transition: background-color 0.12s ease;
+
+  &:hover {
+    background-color: #eef2ff;
+  }
+}
+
+.weekRowSelected {
+  border-color: #A5B4FC90;
+  background-color: #eef2ff;
+}
+
+.weekRowToday {
+  border-left: 3px solid #A5B4FC90;
+  padding-left: 7px;
+}
+
+.weekRowTop {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  width: 100%;
+}
+
+.weekRowMain {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  flex: 1;
+  min-width: 0;
+  cursor: pointer;
+}
+
+.weekLabel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 34px;
+  flex-shrink: 0;
+  line-height: 1.1;
+  gap: 2px;
+}
+
+.weekLabelBadge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  transition: background-color 0.12s ease;
+}
+
+.weekLabelToday .weekLabelBadge {
+  background-color: #ffffff;
+  color: #3730A3;
+}
+
+.weekEvents {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding-top: 2px;
+}
+
+.weekEventLine {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+
+  b {
+    color: #748ffc;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+.weekWeeklyLine {
+  align-items: center;
+}
+
+.weekWeeklyText {
+  cursor: pointer;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.weeklyBullet {
+  color: #38bdf8;
+  font-weight: 700;
+}
+
+.weekWeeklyEditInput {
+  flex: 1;
+}
+
+/* ── Todo / 시간별 일정 행 호버 ── */
+.todoRow,
+.eventRow {
+  border-radius: 8px;
+  padding: 4px 6px;
+  transition: background-color 0.12s ease;
+
+  &:hover {
+    background-color: #f8fafc;
+  }
+}
+
+.rowDeleteBtn {
+  @media (hover: hover) {
+    opacity: 0.35;
+    transition: opacity 0.12s ease;
+  }
+}
+
+.todoRow:hover .rowDeleteBtn,
+.eventRow:hover .rowDeleteBtn {
+  opacity: 1;
+}

@@ -1,11 +1,13 @@
 import { useState, useRef, useEffect } from 'react'
-import { AppShell, Group, Text, Button, ActionIcon } from '@mantine/core'
+import { AppShell, Group, Text, Button, ActionIcon, SegmentedControl } from '@mantine/core'
 import { useDisclosure, useMediaQuery } from '@mantine/hooks'
 import { IconCategory, IconHome, IconList, IconCalendar, IconChartBar, IconPencil, IconCheck } from '@tabler/icons-react'
+import dayjs from 'dayjs'
 import RecordEditor from './components/RecordEditor'
 import RecordList from './components/RecordList'
 import RecordDetail from './components/RecordDetail'
 import ScheduleCalendar from './components/ScheduleCalendar'
+import ScheduleDayDrawer from './components/ScheduleDayDrawer'
 import ScheduleEditor from './components/ScheduleEditor'
 import ScheduleDetail from './components/ScheduleDetail'
 import ScheduleCategoryManager from './components/ScheduleCategoryManager'
@@ -21,6 +23,7 @@ import EngineerExamView from './components/EngineerExamView'
 import LoginScreen from './components/LoginScreen'
 import DriveSync from './components/DriveSync'
 import CategoryManager from './components/CategoryManager'
+import WorkDashboard from './components/WorkDashboard'
 import { useRecords } from './hooks/useRecords'
 import { useCategories } from './hooks/useCategories'
 import { useSchedules } from './hooks/useSchedules'
@@ -34,7 +37,10 @@ import { useLedgerCategories } from './hooks/useLedgerCategories'
 import { useContacts } from './hooks/useContacts'
 import { useExamResults } from './hooks/useExamResults'
 import { useGoogleDrive } from './hooks/useGoogleDrive'
-import { setAccountPrefix, isInitialized, markInitialized } from './lib/accountStorage'
+import { useWorkTodos } from './hooks/useWorkTodos'
+import { useWorkEvents } from './hooks/useWorkEvents'
+import { useWorkWeekly } from './hooks/useWorkWeekly'
+import { setAccountPrefix, isInitialized, markInitialized, nk } from './lib/accountStorage'
 import { solarFromLunar } from './lib/lunar'
 import { deleteImages, getImage, putImage } from './lib/imageStore'
 import { setImageTokenProvider, uploadImageRecord } from './lib/driveImages'
@@ -84,11 +90,17 @@ function Workspace({ drive }) {
   const [scatModalOpened, { open: openScatModal, close: closeScatModal }] = useDisclosure(false)
   const [tcatModalOpened, { open: openTcatModal, close: closeTcatModal }] = useDisclosure(false)
   const [lcatModalOpened, { open: openLcatModal, close: closeLcatModal }] = useDisclosure(false)
+  // 대시보드에서 여는 날짜별 일정 드로어
+  const [workDayDrawerOpened, { open: openWorkDayDrawer, close: closeWorkDayDrawer }] = useDisclosure(false)
   const openRoutineDrawerRef = useRef(null)
+
+  // 업무 모드
+  const [mode, setMode] = useState('work')
+  const [workDateStr, setWorkDateStr] = useState(dayjs().format('YYYY-MM-DD'))
 
   const { records, saveRecord, deleteRecord, mergeRecords } = useRecords()
   const { categories, addCategory, updateCategory, deleteCategory, setAll: setAllCategories } = useCategories()
-  const { schedules, saveSchedule, deleteSchedule, deleteByRecurrenceId, mergeSchedules } = useSchedules()
+  const { schedules, saveSchedule, deleteSchedule, deleteByRecurrenceId, updateByRecurrenceId, mergeSchedules } = useSchedules()
   const { categories: scheduleCategories, addCategory: addScatCategory, deleteCategory: deleteScatCategory, setAll: setAllScatCategories } = useScheduleCategories()
   const { routines, addRoutine, updateRoutine, toggleVisible, setAll: setAllRoutines } = useRoutines()
   const { checks: routineChecks, isChecked, toggle: toggleCheck, getCheckedRoutineIds, mergeChecks } = useRoutineChecks()
@@ -98,6 +110,9 @@ function Workspace({ drive }) {
   const { categories: ledgerCategories, addCategory: addLedgerCategory, deleteCategory: deleteLedgerCategory, setAll: setAllLedgerCategories } = useLedgerCategories()
   const { items: contactItems, addItem: addContactItem, updateItem: updateContactItem, deleteItem: deleteContactItem, mergeItems: mergeContactItems } = useContacts()
   const { items: examResults, addItem: addExamResult, mergeItems: mergeExamResults } = useExamResults()
+  const { items: workTodos, addItem: addTodoRaw, updateItem: updateTodo, deleteItem: deleteTodo, mergeItems: mergeWorkTodos } = useWorkTodos()
+  const { items: workEvents, updateItem: updateEvent, deleteItem: deleteEvent, mergeItems: mergeWorkEvents } = useWorkEvents()
+  const { items: workWeekly, updateItem: updateWeekly, deleteItem: deleteWeekly, mergeItems: mergeWorkWeekly } = useWorkWeekly()
 
   function applyDriveData(data) {
     if (!data) return
@@ -113,6 +128,9 @@ function Workspace({ drive }) {
     if (data.ledgerCategories) setAllLedgerCategories(data.ledgerCategories)
     if (data.contacts) mergeContactItems(data.contacts)
     if (data.examResults) mergeExamResults(data.examResults)
+    if (data.workTodos) mergeWorkTodos(data.workTodos)
+    if (data.workEvents) mergeWorkEvents(data.workEvents)
+    if (data.workWeekly) mergeWorkWeekly(data.workWeekly)
   }
 
   async function handleDrivePull() {
@@ -132,13 +150,13 @@ function Workspace({ drive }) {
   }
 
   async function handleDrivePush() {
-    await push({ records, categories, schedules, scheduleCategories, routines, routineChecks, trackerCategories, trackerLogs, ledger: ledgerItems, ledgerCategories, contacts: contactItems, examResults })
+    await push({ records, categories, schedules, scheduleCategories, routines, routineChecks, trackerCategories, trackerLogs, ledger: ledgerItems, ledgerCategories, contacts: contactItems, examResults, workTodos, workEvents, workWeekly })
     await syncImagesToDrive()
   }
 
   async function handleSaveExamResult(entry) {
     addExamResult(entry)
-    await push({ records, categories, schedules, scheduleCategories, routines, routineChecks, trackerCategories, trackerLogs, ledger: ledgerItems, ledgerCategories, contacts: contactItems, examResults: [entry, ...examResults] })
+    await push({ records, categories, schedules, scheduleCategories, routines, routineChecks, trackerCategories, trackerLogs, ledger: ledgerItems, ledgerCategories, contacts: contactItems, examResults: [entry, ...examResults], workTodos, workEvents, workWeekly })
   }
 
   // 이 계정/브라우저에서 처음이면 Drive에서 1회 자동 로드
@@ -162,6 +180,44 @@ function Workspace({ drive }) {
     deleteTrackerLogsByCategory(id)
   }
 
+  function handleModeChange(next) {
+    setMode(next)
+    setView('home')
+    setSelectedRecord(null)
+    setSelectedSchedule(null)
+  }
+
+  // ── 업무: 투두 ──
+  function addTodo(dateStr, text) {
+    const t = (text || '').trim()
+    if (!t) return
+    addTodoRaw({ id: crypto.randomUUID(), date: dateStr, text: t, done: false, updatedAt: new Date().toISOString() })
+  }
+
+  function toggleTodo(item) {
+    updateTodo({ ...item, done: !item.done, updatedAt: new Date().toISOString() })
+  }
+
+  function editTodo(item, text) {
+    const t = (text || '').trim()
+    if (!t || t === item.text) return
+    updateTodo({ ...item, text: t, updatedAt: new Date().toISOString() })
+  }
+
+  // ── 업무: 시간별 일정 ──
+  function editEvent(item, text) {
+    const t = (text || '').trim()
+    if (!t || t === item.text) return
+    updateEvent({ ...item, text: t, updatedAt: new Date().toISOString() })
+  }
+
+  // ── 업무: 주간 일정 ──
+  function editWeekly(item, text) {
+    const t = (text || '').trim()
+    if (!t || t === item.text) return
+    updateWeekly({ ...item, text: t, updatedAt: new Date().toISOString() })
+  }
+
   function handleSaveRecord(record) {
     saveRecord(record)
     setView('list')
@@ -180,7 +236,8 @@ function Workspace({ drive }) {
     deleteContactItem(id)
   }
 
-  function handleSaveSchedule(schedule) {
+  // 일정 저장 로직(뷰 전환 제외) — 개인 메뉴와 대시보드 모달이 공용으로 쓴다
+  function persistSchedule(schedule) {
     const { yearlyRepeat, repeatMode, repeatCount, lunarRecurrence, ...base } = schedule
     if (yearlyRepeat) {
       const recurrenceId = crypto.randomUUID()
@@ -202,7 +259,22 @@ function Workspace({ drive }) {
     } else {
       saveSchedule(base)
     }
-    setView('schedule')
+  }
+
+  function handleSaveSchedule(schedule) {
+    const { applyToAll, ...base } = schedule
+    if (applyToAll && base.recurrenceId) {
+      // 반복 일정 전체 수정: 날짜 외 필드만 병합(현재 항목의 날짜 변경은 무시)
+      updateByRecurrenceId(base.recurrenceId, {
+        title: base.title,
+        time: base.time,
+        description: base.description,
+        categoryId: base.categoryId,
+      })
+    } else {
+      persistSchedule(base)
+    }
+    setView(mode === 'work' ? 'home' : 'schedule')
     setSelectedSchedule(null)
   }
 
@@ -221,7 +293,7 @@ function Workspace({ drive }) {
     tracker: '목표',
     ledger: '가계부',
     contacts: '연락처',
-    application: 'Application',
+    application: 'Etc.',
     engineer: '정보처리기사 필기',
   }[view] ?? ''
 
@@ -269,7 +341,7 @@ function Workspace({ drive }) {
             </Group>
 
             <Group gap="xs">
-              {view === 'home' && (
+              {view === 'home' && mode === 'personal' && (
                 <ActionIcon variant={editingHome ? 'light' : 'subtle'} color={editingHome ? 'indigo' : 'gray'}
                   radius="xl" onClick={() => setEditingHome(e => !e)}>
                   {editingHome ? <IconCheck size={18} /> : <IconPencil size={18} />}
@@ -280,7 +352,7 @@ function Workspace({ drive }) {
                   <IconCategory size={18} />
                 </ActionIcon>
               )}
-              {view === 'schedule' && (
+              {(view === 'schedule' || (view === 'home' && mode === 'work')) && (
                 <ActionIcon variant="subtle" color="gray" radius="xl" onClick={openScatModal}>
                   <IconCategory size={18} />
                 </ActionIcon>
@@ -307,12 +379,40 @@ function Workspace({ drive }) {
                 onPush={handleDrivePush}
                 onSignOut={signOut}
               />
+              <SegmentedControl
+                size="xs"
+                radius="xl"
+                value={mode}
+                onChange={handleModeChange}
+                data={[{ label: 'Dashboard', value: 'work' }, { label: 'Apps', value: 'personal' }]}
+              />
             </Group>
           </Group>
         </AppShell.Header>
 
         <AppShell.Main>
-          {view === 'home' && <HomeScreen onOpen={handleHomeOpen} editing={editingHome} onOpenApplication={() => setView('application')} />}
+          {view === 'home' && mode === 'personal' && <HomeScreen onOpen={handleHomeOpen} editing={editingHome} onOpenApplication={() => setView('application')} />}
+
+          {view === 'home' && mode === 'work' && (
+            <WorkDashboard
+              todos={workTodos}
+              events={workEvents}
+              schedules={schedules}
+              scheduleCategories={scheduleCategories}
+              weekly={workWeekly}
+              dateStr={workDateStr}
+              onChangeDate={setWorkDateStr}
+              onAddTodo={addTodo}
+              onToggleTodo={toggleTodo}
+              onEditTodo={editTodo}
+              onDeleteTodo={deleteTodo}
+              onEditEvent={editEvent}
+              onDeleteEvent={deleteEvent}
+              onEditWeekly={editWeekly}
+              onDeleteWeekly={deleteWeekly}
+              onAddSchedule={openWorkDayDrawer}
+            />
+          )}
 
           {view === 'application' && <ApplicationView onOpen={(id) => setView(id)} />}
 
@@ -361,8 +461,8 @@ function Workspace({ drive }) {
               schedule={selectedSchedule}
               categories={scheduleCategories}
               onEdit={() => setView('schedule-editor')}
-              onDelete={() => { deleteSchedule(selectedSchedule.id); setView('schedule'); setSelectedSchedule(null) }}
-              onDeleteAll={() => { deleteByRecurrenceId(selectedSchedule.recurrenceId); setView('schedule'); setSelectedSchedule(null) }}
+              onDelete={() => { deleteSchedule(selectedSchedule.id); setView(mode === 'work' ? 'home' : 'schedule'); setSelectedSchedule(null) }}
+              onDeleteAll={() => { deleteByRecurrenceId(selectedSchedule.recurrenceId); setView(mode === 'work' ? 'home' : 'schedule'); setSelectedSchedule(null) }}
             />
           )}
           {view === 'schedule-editor' && (
@@ -371,7 +471,7 @@ function Workspace({ drive }) {
               categories={scheduleCategories}
               initialDate={scheduleInitialDate}
               onSave={handleSaveSchedule}
-              onCancel={() => setView(selectedSchedule ? 'schedule-detail' : 'schedule')}
+              onCancel={() => setView(selectedSchedule ? 'schedule-detail' : (mode === 'work' ? 'home' : 'schedule'))}
             />
           )}
 
@@ -451,6 +551,17 @@ function Workspace({ drive }) {
         categories={ledgerCategories}
         onAdd={addLedgerCategory}
         onDelete={deleteLedgerCategory}
+      />
+
+      {/* 대시보드 날짜별 일정 드로어: 개인 '일정' 화면과 동일한 드로어 재사용 */}
+      <ScheduleDayDrawer
+        opened={workDayDrawerOpened}
+        onClose={closeWorkDayDrawer}
+        date={workDateStr}
+        schedules={schedules}
+        categories={scheduleCategories}
+        onView={s => { setSelectedSchedule(s); setView('schedule-detail') }}
+        onAdd={date => { setSelectedSchedule(null); setScheduleInitialDate(date); setView('schedule-editor') }}
       />
     </>
   )

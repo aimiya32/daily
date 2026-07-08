@@ -27,9 +27,18 @@ export function useSchedules() {
     setSchedules(prev => prev.filter(s => s.recurrenceId !== recurrenceId))
   }
 
+  // 같은 recurrenceId를 공유하는 일괄 등록 일정 전체에 patch(날짜 외 필드) 병합
+  function updateByRecurrenceId(recurrenceId, patch) {
+    setSchedules(prev => prev.map(s =>
+      s.recurrenceId === recurrenceId
+        ? { ...s, ...patch, updatedAt: new Date().toISOString() }
+        : s
+    ))
+  }
+
   function mergeSchedules(remote) {
     setSchedules(prev => mergeById(prev, remote, byDateAsc))
   }
 
-  return { schedules, saveSchedule, deleteSchedule, deleteByRecurrenceId, mergeSchedules }
+  return { schedules, saveSchedule, deleteSchedule, deleteByRecurrenceId, updateByRecurrenceId, mergeSchedules }
 }

@@ -1,8 +1,9 @@
 import { UnstyledButton, Stack, Text, Box, Center, ActionIcon, SimpleGrid } from '@mantine/core'
 import {
-  IconBook2, IconCalendar, IconRepeat, IconChartBar, IconWallet, IconAddressBook,
+  IconBook2, IconRepeat, IconChartBar, IconWallet, IconAddressBook,
   IconEye, IconEyeOff, IconApps,
 } from '@tabler/icons-react'
+import { useMediaQuery } from '@mantine/hooks'
 import { DndContext, closestCenter, MouseSensor, TouchSensor, useSensor, useSensors } from '@dnd-kit/core'
 import { SortableContext, rectSortingStrategy, useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
@@ -10,14 +11,13 @@ import { useHomeMenu } from '../hooks/useHomeMenu'
 import styles from './HomeScreen.module.scss'
 
 const APP_DEFS = {
-  schedule: { label: '일정',   icon: IconCalendar,    color: '#A78BFA' },
   tracker:  { label: '목표',   icon: IconChartBar,    color: '#34D399' },
   routine:  { label: '루틴',   icon: IconRepeat,      color: '#38BDF8' },
   record:   { label: '기록',   icon: IconBook2,       color: '#818CF8' },
   ledger:   { label: '가계부', icon: IconWallet,      color: '#F472B6' },
   contacts: { label: '연락처', icon: IconAddressBook, color: '#FB923C' },
 }
-const ALL_IDS = ['schedule', 'tracker', 'routine', 'record', 'ledger', 'contacts']
+const ALL_IDS = ['tracker', 'routine', 'record', 'ledger', 'contacts']
 
 export default function HomeScreen({ onOpen, editing = false, onOpenApplication }) {
   const { menu, toggleVisible, reorder } = useHomeMenu(ALL_IDS)
@@ -30,6 +30,10 @@ export default function HomeScreen({ onOpen, editing = false, onOpenApplication 
 
   const visibleMenu = menu.filter(m => m.visible)
 
+  // 720px 초과 화면에서는 아이콘 3열, 이하는 2열
+  const isWide = useMediaQuery('(min-width: 721px)')
+  const cols = isWide ? 3 : 2
+
   function handleDragEnd(event) {
     const { active, over } = event
     if (over && active.id !== over.id) reorder(active.id, over.id)
@@ -41,7 +45,7 @@ export default function HomeScreen({ onOpen, editing = false, onOpenApplication 
         {editing ? (
           <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
             <SortableContext items={menu.map(m => m.id)} strategy={rectSortingStrategy}>
-              <SimpleGrid cols={2} spacing="md">
+              <SimpleGrid cols={cols} spacing="md">
                 {menu.map(m => (
                   <SortableMenuCard
                     key={m.id}
@@ -55,29 +59,14 @@ export default function HomeScreen({ onOpen, editing = false, onOpenApplication 
             </SortableContext>
           </DndContext>
         ) : (
-          visibleMenu.length === 0 ? (
-            <Text size="sm" c="dimmed" ta="center" py="xl">표시할 메뉴가 없어요. ‘편집’에서 켜보세요.</Text>
-          ) : (
-            <SimpleGrid cols={2} spacing="md">
-              {visibleMenu.map(m => (
-                <AppRow key={m.id} {...APP_DEFS[m.id]} onClick={() => onOpen(m.id)} />
-              ))}
-            </SimpleGrid>
-          )
+          <SimpleGrid cols={cols} spacing="md">
+            {visibleMenu.map(m => (
+              <AppRow key={m.id} {...APP_DEFS[m.id]} onClick={() => onOpen(m.id)} />
+            ))}
+            {/* Etc.: 다른 메뉴 버튼과 동일한 카드로 표시 */}
+            <AppRow label="Etc." icon={IconApps} color="#6366F1" onClick={onOpenApplication} />
+          </SimpleGrid>
         )}
-        <UnstyledButton
-          onClick={onOpenApplication}
-          className={styles.appBtn}
-          onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-2px)'}
-          onMouseLeave={e => e.currentTarget.style.transform = 'translateY(0)'}
-        >
-          <Box className={styles.applicationCard}>
-            <Box className={styles.applicationIconBox}>
-              <IconApps size={18} color="#6366f1" stroke={1.8} />
-            </Box>
-            <Text fw={700} size="lg" c="#475569">Application</Text>
-          </Box>
-        </UnstyledButton>
       </Stack>
     </Center>
   )

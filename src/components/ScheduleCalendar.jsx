@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useLocalStorageState } from '../hooks/useLocalStorageState'
-import { Stack, Text, Chip, Group, Drawer, Paper, Badge, Button, Center, ScrollArea } from '@mantine/core'
+import { Stack, Chip, Group, Button, ScrollArea } from '@mantine/core'
 import { useDisclosure } from '@mantine/hooks'
 import { IconPlus } from '@tabler/icons-react'
 import { useCalendarMaxItems } from '../hooks/useCalendarMaxItems'
@@ -8,6 +8,7 @@ import { hexOf, DEFAULT_HEX } from '../lib/colors'
 import CalendarGrid from './CalendarGrid'
 import CalendarNav from './CalendarNav'
 import { DayPill, OverflowCount } from './DayPill'
+import ScheduleDayDrawer from './ScheduleDayDrawer'
 import dayjs from 'dayjs'
 import './ScheduleCalendar.module.scss'
 
@@ -34,11 +35,6 @@ export default function ScheduleCalendar({ schedules, categories, onView, onAdd,
   }
 
   const colorHexMap = Object.fromEntries(categories.map(c => [c.id, hexOf(c.color)]))
-
-  // 드로어에 보여줄 선택 날짜의 일정 (시간순 정렬)
-  const drawerSchedules = selectedDate
-    ? schedules.filter(s => s.date === selectedDate).sort((a, b) => (a.time || '').localeCompare(b.time || ''))
-    : []
 
   function handleSelectDate(dateStr) {
     setSelectedDate(dateStr)
@@ -99,51 +95,15 @@ export default function ScheduleCalendar({ schedules, categories, onView, onAdd,
         />
       </Stack>
 
-      <Drawer
+      <ScheduleDayDrawer
         opened={drawerOpened}
         onClose={closeDrawer}
-        title={selectedDate ? dayjs(selectedDate).format('M월 D일 (ddd)') : ''}
-      >
-        <Stack gap="sm">
-          {drawerSchedules.length === 0 && (
-            <Center py="lg"><Text size="sm" c="dimmed">이 날짜에 일정이 없어요.</Text></Center>
-          )}
-          {drawerSchedules.map(s => {
-            const hex = colorHexMap[s.categoryId] ?? DEFAULT_HEX
-            const cat = categories.find(c => c.id === s.categoryId)
-            return (
-              <Paper
-                key={s.id} p="sm" radius="md" withBorder
-                style={{ cursor: 'pointer', borderColor: hex + '33' }}
-                onClick={() => { onView(s); closeDrawer() }}
-              >
-                <Group justify="space-between" align="flex-start" mb={s.description ? 6 : 0} wrap="nowrap">
-                  <Group gap={6} wrap="nowrap" style={{ minWidth: 0 }}>
-                    {s.time && <Text size="xs" c="dimmed" style={{ flexShrink: 0 }}>{s.time}</Text>}
-                    <Text fw={700} c="#1E293B">{s.title}</Text>
-                  </Group>
-                  {cat && (
-                    <Badge size="sm" radius="xl" style={{ background: hex + '18', color: hex, border: `1px solid ${hex}33`, flexShrink: 0 }}>
-                      {cat.name}
-                    </Badge>
-                  )}
-                </Group>
-                {s.description && (
-                  <Text size="sm" c="#475569" style={{ whiteSpace: 'pre-wrap' }}>{s.description}</Text>
-                )}
-              </Paper>
-            )
-          })}
-
-          <Button
-            variant="light" color="violet" radius="xl"
-            leftSection={<IconPlus size={15} />}
-            onClick={() => { onAdd(selectedDate); closeDrawer() }}
-          >
-            이 날짜에 일정 추가
-          </Button>
-        </Stack>
-      </Drawer>
+        date={selectedDate}
+        schedules={schedules}
+        categories={categories}
+        onView={onView}
+        onAdd={onAdd}
+      />
     </Stack>
   )
 }
