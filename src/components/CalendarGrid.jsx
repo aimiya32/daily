@@ -49,7 +49,7 @@ export default function CalendarGrid({ current, today, onSelectDate, renderDayCo
 
             if (!day) {
               return (
-                <Box key={di} className={styles.emptyCell}
+                <Box key={di} className={`${styles.emptyCell} ${standalone ? styles.compactCell : ''}`}
                   style={{ borderRight, borderBottom, ...(standalone && { background: 'transparent' }) }} />
               )
             }
@@ -65,7 +65,7 @@ export default function CalendarGrid({ current, today, onSelectDate, renderDayCo
               <Box
                 key={di}
                 onClick={() => onSelectDate?.(dateStr)}
-                className={styles.dayCell}
+                className={`${styles.dayCell} ${standalone ? styles.compactCell : ''}`}
                 style={{
                   cursor: onSelectDate ? 'pointer' : 'default',
                   borderRight,

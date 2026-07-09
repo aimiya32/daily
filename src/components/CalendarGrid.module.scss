@@ -27,6 +27,14 @@
   overflow: hidden;
 }
 
+/* 대시보드(standalone) 달력 전용: 3열 배치가 되는 좁은 구간에선 셀 높이 하한을 낮춘다.
+   6주 × 16px = 96px이 줄어, 폴드 펼침처럼 세로가 빠듯한 화면에서 페이지 스크롤이 생기지 않는다. */
+@media (min-width: 690px) and (max-width: 1200px) {
+  .compactCell {
+    min-height: 56px;
+  }
+}
+
 .dateCircle {
   width: 26px;
   height: 26px;
