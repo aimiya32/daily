@@ -5,8 +5,9 @@
   font-size: clamp(15px, 13.5px + 0.5vw, 18px);
 }
 
-/* 대시보드 3열이 막 시작되는 900px대 구간에선 폰트가 상한(18px)에 닿아 빡빡함 → 기준 폰트를 조금 낮춤 */
-@media (min-width: 900px) and (max-width: 1200px) {
+/* 대시보드가 3열로 바뀌는 690px부터 1200px까지는 폰트가 상한(18px)에 닿아 빡빡함 → 기준 폰트를 조금 낮춤.
+   rem 기반이라 이 구간에서 헤더 높이·패널 여백·달력 셀이 함께 부풀어 세로 스크롤이 생기는 것도 같이 완화된다. */
+@media (min-width: 690px) and (max-width: 1200px) {
   :root {
     font-size: 16px;
   }
@@ -14,6 +15,9 @@
 
 body {
   background-color: #F4F6FB;
+  /* 100vh는 주소창이 숨겨진 상태의 높이라, 툴바가 보이는 모바일에선 화면보다 길어져
+     콘텐츠가 없어도 세로 스크롤이 생긴다. 실제 보이는 높이인 dvh를 쓴다(vh는 구형 브라우저 폴백). */
   min-height: 100vh;
+  min-height: 100dvh;
   font-family: 'Nunito', 'Pretendard', -apple-system, sans-serif;
 }
