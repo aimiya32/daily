@@ -311,7 +311,9 @@ function Workspace({ drive }) {
             borderBottom: '1px solid #E2E8F0',
             boxShadow: '0 2px 12px rgba(99,102,241,0.06)',
           },
-          main: { backgroundColor: '#F4F6FB' },
+          // Mantine 기본값은 min-height:100dvh. standalone PWA에선 dvh가 실제 창 높이보다 커서
+          // 콘텐츠가 짧아도 그 차이만큼 세로 스크롤이 생긴다 → 높이는 콘텐츠가 정하게 둔다(배경은 body가 칠함).
+          main: { backgroundColor: '#F4F6FB', minHeight: 'auto' },
         }}
       >
         <AppShell.Header>

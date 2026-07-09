@@ -13,11 +13,10 @@
   }
 }
 
+/* min-height를 두지 않는다: 뷰포트 단위(vh/dvh)는 설치된 PWA(standalone)에서 실제 창 높이보다
+   크게 잡혀 콘텐츠가 짧아도 그 차이만큼 세로 스크롤이 생긴다.
+   배경색은 body에서 캔버스 전체로 전파되므로 높이를 늘리지 않아도 화면이 다 칠해진다. */
 body {
   background-color: #F4F6FB;
-  /* 100vh는 주소창이 숨겨진 상태의 높이라, 툴바가 보이는 모바일에선 화면보다 길어져
-     콘텐츠가 없어도 세로 스크롤이 생긴다. 실제 보이는 높이인 dvh를 쓴다(vh는 구형 브라우저 폴백). */
-  min-height: 100vh;
-  min-height: 100dvh;
   font-family: 'Nunito', 'Pretendard', -apple-system, sans-serif;
 }
