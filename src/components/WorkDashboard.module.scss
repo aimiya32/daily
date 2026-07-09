@@ -6,7 +6,7 @@
   max-width: 1300px;
   margin: 0 auto;
 
-  @media (min-width: 992px) {
+  @media (min-width: 900px) {
     grid-template-columns: 1.75fr 1fr 1fr;
   }
 }
@@ -14,8 +14,8 @@
 .panel {
   border-radius: 18px;
   background-color: #ffffff;
-  border: 1px solid #6366f118;
-  box-shadow: 0 2px 12px rgba(99, 102, 241, 0.06);
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
 }
 
 @media (max-width: 500px) {
@@ -34,6 +34,15 @@
   height: 30px;
   border-radius: 9px;
   flex-shrink: 0;
+}
+
+/* 제목 옆 심플한 세로선(accent bar) — 뉴트럴 슬레이트 단색으로 통일 */
+.titleBar {
+  width: 2px;
+  height: 14px;
+  border-radius: 2px;
+  flex-shrink: 0;
+  background: #CBD5E1;
 }
 
 .panelTitle {
@@ -55,11 +64,11 @@
 
 /* 요일 색 (주간 일정 요일 라벨에서도 사용) */
 .sunday {
-  color: #ef4444;
+  color: #F87171;
 }
 
 .saturday {
-  color: #3b82f6;
+  color: #60A5FA;
 }
 
 /* 업무(투두/시간별 일정)가 있는 날짜에 표시하는 인디고 도트 */
@@ -67,7 +76,7 @@
   width: 4px;
   height: 4px;
   border-radius: 50%;
-  background-color: #818CF8;
+  background-color: #A5B4FC;
   flex-shrink: 0;
 }
 
@@ -176,9 +185,9 @@
 }
 
 .weekEventLine {
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 
   b {
     color: #748ffc;
@@ -188,20 +197,25 @@
 }
 
 .weekWeeklyLine {
-  align-items: center;
+  align-items: flex-start;
 }
 
 .weekWeeklyText {
   cursor: pointer;
   flex: 1;
   min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+/* 줄바꿈된 텍스트의 첫 줄 높이에 카테고리 도트를 맞춘다 */
+.weekWeeklyLine > .catDot {
+  margin-top: 5px;
 }
 
 .weeklyBullet {
-  color: #38bdf8;
+  color: #94A3B8;
   font-weight: 700;
 }
 
@@ -219,6 +233,33 @@
   &:hover {
     background-color: #f8fafc;
   }
+}
+
+/* 시간별 일정 행: 제목이 길면 줄바꿈. 시간/도트는 첫 줄에 맞춘다 */
+.eventRowTime {
+  flex-shrink: 0;
+  line-height: 22px;
+}
+
+.eventRowText {
+  flex: 1;
+  min-width: 0;
+  line-height: 22px;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+/* 6px 도트를 22px 줄 높이의 중앙에 */
+.eventRowDot {
+  margin-top: 8px;
+}
+
+/* unstyled Textarea를 한 줄 텍스트처럼 보이게 (여백 제거 + 리사이즈 핸들 숨김) */
+.eventRowInput {
+  padding: 0;
+  min-height: 0;
+  line-height: 22px;
+  resize: none;
 }
 
 .rowDeleteBtn {

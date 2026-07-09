@@ -5,6 +5,13 @@
   font-size: clamp(15px, 13.5px + 0.5vw, 18px);
 }
 
+/* 대시보드 3열이 막 시작되는 900px대 구간에선 폰트가 상한(18px)에 닿아 빡빡함 → 기준 폰트를 조금 낮춤 */
+@media (min-width: 900px) and (max-width: 1200px) {
+  :root {
+    font-size: 16px;
+  }
+}
+
 body {
   background-color: #F4F6FB;
   min-height: 100vh;

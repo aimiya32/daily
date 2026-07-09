@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react'
-import { Stack, Group, Text, Paper, ActionIcon, Button, Checkbox, TextInput, Center, Chip, Modal } from '@mantine/core'
-import { useDisclosure } from '@mantine/hooks'
+import { Stack, Group, Text, Paper, ActionIcon, Button, Checkbox, TextInput, Textarea, Center, Select, Modal, Tooltip } from '@mantine/core'
+import { useDisclosure, useClickOutside } from '@mantine/hooks'
 import {
   IconChevronLeft, IconChevronRight, IconTrash, IconPlus,
-  IconCalendarWeek, IconChecklist, IconClock,
+  IconChecklist, IconClock,
 } from '@tabler/icons-react'
 import dayjs from 'dayjs'
 import 'dayjs/locale/ko'
@@ -134,37 +134,42 @@ function MonthPanel({ events, schedules, scheduleCategories, dateStr, onChangeDa
 
   return (
     <Paper className={`${styles.panel} ${styles.monthPanel}`} p="md">
-      {scheduleCategories.length > 0 && (
-        <Chip.Group multiple={false} value={filterCat ?? 'all'} onChange={v => onChangeFilterCat(v === 'all' ? null : v)}>
-          <div className={styles.filterBar}>
-            <Chip value="all" size="xs" radius="xl" variant="light" color="indigo">전체</Chip>
-            {scheduleCategories.map(c => (
-              <Chip key={c.id} value={c.id} size="xs" radius="xl" variant="light" color={c.color}>{c.name}</Chip>
-            ))}
-          </div>
-        </Chip.Group>
-      )}
+      <Group justify="flex-end" align="center" gap={8} mt={6} mb="sm" wrap="nowrap">
+        <Select
+          size="xs"
+          radius="xl"
+          allowDeselect={false}
+          w={130}
+          data={[{ value: 'all', label: '전체' }, ...scheduleCategories.map(c => ({ value: c.id, label: c.name }))]}
+          value={filterCat ?? 'all'}
+          onChange={v => onChangeFilterCat(v === 'all' ? null : v)}
+        />
+        {/* 크기 30 = Select size="xs"의 입력 높이 */}
+        <ActionIcon variant="light" color="indigo" size={30} radius="xl" onClick={onAddSchedule}>
+          <IconPlus size={16} />
+        </ActionIcon>
+      </Group>
 
-      <Group justify="space-between" mt={6} mb="md">
-        <Text fw={700} className={styles.panelTitle}>{monthStart.format('YYYY년 M월')}</Text>
-        <Group gap={4}>
+      <Group justify="space-between" align="center" mb="md" wrap="nowrap">
+        <Group gap={6} wrap="nowrap">
           <ActionIcon variant="subtle" color="gray" radius="xl"
             onClick={() => setViewMonth(monthStart.subtract(1, 'month').format('YYYY-MM'))}>
             <IconChevronLeft size={18} />
           </ActionIcon>
+          <Text fw={700} className={styles.panelTitle}>{monthStart.format('YYYY년 M월')}</Text>
           <ActionIcon variant="subtle" color="gray" radius="xl"
             onClick={() => setViewMonth(monthStart.add(1, 'month').format('YYYY-MM'))}>
             <IconChevronRight size={18} />
           </ActionIcon>
+        </Group>
+        <Group gap={8} wrap="nowrap">
           <Button size="compact-xs" variant="light" color="indigo" radius="xl"
             onClick={() => { onChangeDate(today); setViewMonth(dayjs(today).format('YYYY-MM')) }}>
             오늘
           </Button>
-          <Button size="compact-xs" variant="gradient" gradient={{ from: 'violet', to: 'grape' }} radius="xl"
-            leftSection={<IconPlus size={12} />}
-            onClick={onAddSchedule}>
-            일정 추가
-          </Button>
+          <Text size="xs" c="dimmed">
+            {dayjs(dateStr).format('M월 D일 ddd요일')} (음 {getLunarLabel(dayjs(dateStr).year(), dayjs(dateStr).month() + 1, dayjs(dateStr).date())})
+          </Text>
         </Group>
       </Group>
 
@@ -193,9 +198,7 @@ function WeekPanel({ events, schedules, scheduleCategories, weekly, dateStr, onC
   return (
     <Paper className={styles.panel} p="md">
       <Group gap={8} mb="xs">
-        <span className={styles.panelIcon} style={{ background: 'linear-gradient(135deg, #38BDF822, #38BDF810)' }}>
-          <IconCalendarWeek size={17} color="#38BDF8" />
-        </span>
+        <span className={styles.titleBar} />
         <Text fw={700} className={styles.panelTitle}>주간 일정</Text>
       </Group>
       <Stack gap={6}>
@@ -274,6 +277,11 @@ function DayPanel({ todos, events, schedules, scheduleCategories, dateStr, filte
   // 추가 입력용 모달 (+ 버튼으로 연다)
   const [todoModal, todoModalCtl] = useDisclosure(false)
 
+  // 상세 툴팁이 열린 개인 일정 id (한 번에 하나만 열린다)
+  const [openedDescId, setOpenedDescId] = useState(null)
+  // 시간별 일정 카드 바깥을 클릭하면 열린 툴팁을 닫는다
+  const eventsCardRef = useClickOutside(() => setOpenedDescId(null))
+
   const dayTodos = todos.filter(t => t.date === dateStr)
 
   // 카테고리 id → 색 이름 맵
@@ -303,52 +311,10 @@ function DayPanel({ todos, events, schedules, scheduleCategories, dateStr, filte
 
   return (
     <Stack gap="md">
-      <Paper className={styles.panel} p="md">
-        <Group justify="space-between" align="center" mb="xs">
-          <Group gap={8}>
-            <span className={styles.panelIcon} style={{ background: 'linear-gradient(135deg, #34D39922, #34D39910)' }}>
-              <IconChecklist size={17} color="#34D399" />
-            </span>
-            <Text fw={700} className={styles.panelTitle}>Todo</Text>
-          </Group>
-          <Group gap={8}>
-            <Text size="xs" c="dimmed">
-              {dayjs(dateStr).format('M월 D일 ddd요일')} (음 {getLunarLabel(dayjs(dateStr).year(), dayjs(dateStr).month() + 1, dayjs(dateStr).date())})
-            </Text>
-            <ActionIcon variant="light" color="indigo" size="sm" radius="xl" onClick={openTodoModal}>
-              <IconPlus size={16} />
-            </ActionIcon>
-          </Group>
-        </Group>
-        <Stack gap={6}>
-          {dayTodos.length === 0 && (
-            <Center>
-              <Stack align="center" gap={4} py="md">
-                <IconChecklist size={22} color="#cbd5e1" />
-                <Text size="sm" c="dimmed">할 일이 없어요.</Text>
-              </Stack>
-            </Center>
-          )}
-          {dayTodos.map(it => (
-            <TodoRow
-              key={it.id}
-              item={it}
-              onToggle={() => onToggleTodo(it)}
-              onEdit={text => onEditTodo(it, text)}
-              onDelete={() => onDeleteTodo(it.id)}
-            />
-          ))}
-        </Stack>
-      </Paper>
-
-      <Paper className={styles.panel} p="md">
-        <Group justify="space-between" align="center" mb="xs">
-          <Group gap={8}>
-            <span className={styles.panelIcon} style={{ background: 'linear-gradient(135deg, #FB923C22, #FB923C10)' }}>
-              <IconClock size={17} color="#FB923C" />
-            </span>
-            <Text fw={700} className={styles.panelTitle}>시간별 일정</Text>
-          </Group>
+      <Paper ref={eventsCardRef} className={styles.panel} p="md">
+        <Group gap={8} mb="xs">
+          <span className={styles.titleBar} />
+          <Text fw={700} className={styles.panelTitle}>시간별 일정</Text>
         </Group>
         <Stack gap={6}>
           {dayItems.length === 0 && (
@@ -368,16 +334,44 @@ function DayPanel({ todos, events, schedules, scheduleCategories, dateStr, filte
                 onDelete={() => onDeleteEvent(item.data.id)}
               />
             ) : (
-              // 개인 일정: 카테고리 도트 + 시간 + 제목 (읽기 전용)
-              <Group key={`s-${item.data.id}`} gap="xs" wrap="nowrap" className={styles.eventRow}>
-                <span
-                  className={styles.catDot}
-                  style={{ background: hexOf(catColor.get(item.data.categoryId)) ?? DEFAULT_HEX }}
-                />
-                <Text size="sm" fw={700} c="indigo" w={42} style={{ flexShrink: 0 }}>{item.data.time}</Text>
-                <Text size="sm" style={{ flex: 1, minWidth: 0 }} truncate>{item.data.title}</Text>
-              </Group>
+              <ScheduleRow
+                key={`s-${item.data.id}`}
+                item={item.data}
+                catColor={catColor}
+                opened={openedDescId === item.data.id}
+                onToggle={() => setOpenedDescId(id => (id === item.data.id ? null : item.data.id))}
+              />
             )
+          ))}
+        </Stack>
+      </Paper>
+
+      <Paper className={styles.panel} p="md">
+        <Group justify="space-between" align="center" mb="xs">
+          <Group gap={8}>
+            <span className={styles.titleBar} />
+            <Text fw={700} className={styles.panelTitle}>Todo</Text>
+          </Group>
+          <ActionIcon variant="light" color="indigo" size="sm" radius="xl" onClick={openTodoModal}>
+            <IconPlus size={16} />
+          </ActionIcon>
+        </Group>
+        <Stack gap={6}>
+          {dayTodos.length === 0 && (
+            <Center>
+              <Stack align="center" gap={4} py="md">
+                <IconChecklist size={22} color="#cbd5e1" />
+                <Text size="sm" c="dimmed">할 일이 없어요.</Text>
+              </Stack>
+            </Center>
+          )}
+          {dayTodos.map(it => (
+            <TodoRow
+              key={it.id}
+              item={it}
+              onToggle={() => onToggleTodo(it)}
+              onDelete={() => onDeleteTodo(it.id)}
+            />
           ))}
         </Stack>
       </Paper>
@@ -393,7 +387,7 @@ function DayPanel({ todos, events, schedules, scheduleCategories, dateStr, filte
             placeholder="할 일 입력"
             value={todoInput}
             onChange={e => setTodoInput(e.currentTarget.value)}
-            onKeyDown={e => e.key === 'Enter' && handleAddTodo()}
+            onKeyDown={e => { if (e.key === 'Enter' && !e.nativeEvent.isComposing) handleAddTodo() }}
           />
           <Button color="indigo" radius="md" onClick={handleAddTodo} disabled={!todoInput.trim()}>추가</Button>
         </Stack>
@@ -402,31 +396,28 @@ function DayPanel({ todos, events, schedules, scheduleCategories, dateStr, filte
   )
 }
 
-// 투두 한 줄: 체크박스 + 인라인 텍스트 편집 + 삭제
-function TodoRow({ item, onToggle, onEdit, onDelete }) {
-  const [value, setValue] = useState(item.text)
-
-  function commit() {
-    if (value !== item.text) onEdit(value)
-  }
-
+// 투두 한 줄: 체크박스 + 텍스트(클릭 시 완료 토글) + 삭제. 긴 텍스트는 줄바꿈.
+function TodoRow({ item, onToggle, onDelete }) {
   return (
-    <Group gap="xs" wrap="nowrap" className={styles.todoRow}>
-      <Checkbox checked={item.done} onChange={onToggle} color="indigo" radius="xl" />
-      <TextInput
-        value={value}
-        onChange={e => setValue(e.currentTarget.value)}
-        onBlur={commit}
-        onKeyDown={e => e.key === 'Enter' && (commit(), e.currentTarget.blur())}
-        variant="unstyled"
-        style={{ flex: 1 }}
-        styles={{
-          input: item.done
+    <Group gap="xs" wrap="nowrap" align="flex-start" className={styles.todoRow}>
+      <Checkbox checked={item.done} onChange={onToggle} color="indigo" radius="xl" style={{ marginTop: 5, '--checkbox-size': '0.9rem' }} />
+      <Text
+        size="sm"
+        onClick={onToggle}
+        style={{
+          flex: 1,
+          minWidth: 0,
+          cursor: 'pointer',
+          lineHeight: '22px',
+          wordBreak: 'break-word',
+          ...(item.done
             ? { textDecoration: 'line-through', color: 'var(--mantine-color-dimmed)' }
-            : undefined,
+            : {}),
         }}
-      />
-      <ActionIcon variant="subtle" color="red" className={styles.rowDeleteBtn} onClick={onDelete}>
+      >
+        {item.text}
+      </Text>
+      <ActionIcon variant="subtle" color="red" className={styles.rowDeleteBtn} onClick={onDelete} style={{ alignSelf: 'flex-start' }}>
         <IconTrash size={16} />
       </ActionIcon>
     </Group>
@@ -442,22 +433,55 @@ function EventRow({ item, onEdit, onDelete }) {
   }
 
   return (
-    <Group gap="xs" wrap="nowrap" className={styles.eventRow}>
+    <Group gap="xs" wrap="nowrap" align="flex-start" className={styles.eventRow}>
       {item.time && (
-        <Text size="sm" fw={700} c="indigo" w={42} style={{ flexShrink: 0 }}>{item.time}</Text>
+        <Text size="sm" fw={700} c="indigo" w={42} className={styles.eventRowTime}>{item.time}</Text>
       )}
-      <TextInput
+      {/* 긴 텍스트가 줄바꿈되도록 TextInput 대신 autosize Textarea 사용 (Enter는 줄바꿈이 아니라 저장) */}
+      <Textarea
+        autosize
+        minRows={1}
         value={value}
         onChange={e => setValue(e.currentTarget.value)}
         onBlur={commit}
-        onKeyDown={e => e.key === 'Enter' && (commit(), e.currentTarget.blur())}
+        onKeyDown={e => {
+          if (e.key === 'Enter') {
+            e.preventDefault()
+            commit()
+            e.currentTarget.blur()
+          }
+        }}
         variant="unstyled"
-        style={{ flex: 1 }}
+        size="sm"
+        style={{ flex: 1, minWidth: 0 }}
+        classNames={{ input: styles.eventRowInput }}
       />
       <ActionIcon variant="subtle" color="red" className={styles.rowDeleteBtn} onClick={onDelete}>
         <IconTrash size={16} />
       </ActionIcon>
     </Group>
+  )
+}
+
+// 개인 일정 한 줄(시간별 일정 카드): 카테고리 도트 + 시간 + 제목 (읽기 전용). description이 있으면 클릭 시 툴팁으로 상세 내용 표시.
+function ScheduleRow({ item, catColor, opened, onToggle }) {
+  const desc = item.description
+  const row = (
+    <Group gap="xs" wrap="nowrap" align="flex-start" className={styles.eventRow}
+      onClick={() => desc && onToggle()}
+      style={desc ? { cursor: 'pointer' } : undefined}>
+      <span className={`${styles.catDot} ${styles.eventRowDot}`} style={{ background: hexOf(catColor.get(item.categoryId)) ?? DEFAULT_HEX }} />
+      <Text size="sm" fw={700} c="indigo" w={42} className={styles.eventRowTime}>{item.time}</Text>
+      <Text size="sm" className={styles.eventRowText}>{item.title}</Text>
+    </Group>
+  )
+  if (!desc) return row
+  return (
+    <Tooltip label={desc} opened={opened} multiline maw={280} position="bottom-start"
+      offset={{ mainAxis: 5, crossAxis: 20 }}
+      styles={{ tooltip: { whiteSpace: 'pre-wrap' } }}>
+      {row}
+    </Tooltip>
   )
 }
 
