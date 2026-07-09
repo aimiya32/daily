@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Stack, Group, Text, Paper, ActionIcon, Button, Checkbox, TextInput, Textarea, Center, Select, Modal, Tooltip } from '@mantine/core'
 import { useDisclosure, useClickOutside } from '@mantine/hooks'
 import {
@@ -19,6 +19,37 @@ dayjs.locale('ko')
 
 const FMT = 'YYYY-MM-DD'
 
+// 세로 휠을 가로 스크롤로 바꾼다. 단, 가로 끝에 닿으면 기본 동작으로 넘겨
+// 페이지 세로 스크롤을 막지 않는다. (React onWheel은 passive라 preventDefault가 안 먹어서 직접 등록)
+function useHorizontalWheel() {
+  const ref = useRef(null)
+
+  useEffect(() => {
+    const el = ref.current
+    if (!el) return
+
+    function onWheel(e) {
+      // 트랙패드 가로 제스처는 브라우저에 맡긴다
+      if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) return
+      // 넘칠 게 없으면(=가로 스크롤 불가) 그대로 세로 스크롤
+      const max = el.scrollWidth - el.clientWidth
+      if (max <= 0) return
+      // 이미 해당 방향 끝이면 페이지 세로 스크롤로 넘긴다
+      const atStart = e.deltaY < 0 && el.scrollLeft <= 0
+      const atEnd = e.deltaY > 0 && el.scrollLeft >= max - 1
+      if (atStart || atEnd) return
+
+      e.preventDefault()
+      el.scrollLeft += e.deltaY
+    }
+
+    el.addEventListener('wheel', onWheel, { passive: false })
+    return () => el.removeEventListener('wheel', onWheel)
+  }, [])
+
+  return ref
+}
+
 // 업무 대시보드 홈: 월간 달력 / 주간 일정 / 오늘(선택일) 3패널 가로 배치
 export default function WorkDashboard({
   todos, events, schedules, scheduleCategories, weekly, dateStr, onChangeDate,
@@ -29,10 +60,11 @@ export default function WorkDashboard({
 }) {
   // 카테고리 필터 (null = 전체) — 월간/주간/시간별 패널의 개인 일정 표시에 공통 적용
   const [filterCat, setFilterCat] = useState(null)
+  const scrollRef = useHorizontalWheel()
 
   return (
     // 690px 이상에서는 모바일 1열로 접지 않고 3열을 유지 → 폭이 모자라면 이 래퍼가 가로 스크롤된다
-    <div className={styles.dashboardScroll}>
+    <div ref={scrollRef} className={styles.dashboardScroll}>
       <div className={styles.dashboardGrid}>
         <MonthPanel
           events={events}

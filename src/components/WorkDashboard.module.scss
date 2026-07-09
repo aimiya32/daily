@@ -7,8 +7,14 @@
        좌우 여백은 아래 .dashboardGrid의 margin이 대신하므로, 끝까지 스크롤해도 여백이 남는다.
        width는 auto로 둬야 음수 마진만큼 실제로 넓어진다(100%로 고정하면 왼쪽으로 밀리기만 한다). */
     margin-inline: calc(var(--app-shell-padding, 0px) * -1);
-    /* 스크롤바가 패널 그림자를 가리지 않도록 여유 */
-    padding-bottom: 6px;
+
+    /* 가로 스크롤바는 숨긴다(휠/드래그로 스크롤) */
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+
+    &::-webkit-scrollbar {
+      display: none;
+    }
   }
 }
 

@@ -1,10 +1,13 @@
+import { useMemo } from 'react'
 import { nk } from '../lib/accountStorage'
 import { mergeById } from '../lib/mergeById'
 import { useLocalStorageState } from './useLocalStorageState'
+import { tombstone, visible, pruneTombstones } from '../lib/tombstone'
 
 // 로그 1건: { id, categoryId, date(YYYY-MM-DD), planned, actual, updatedAt }
 export function useTrackerLogs() {
-  const [logs, setLogs] = useLocalStorageState(nk('tracker_logs'))
+  const [allLogs, setLogs] = useLocalStorageState(nk('tracker_logs'), [], items => pruneTombstones(items))
+  const logs = useMemo(() => visible(allLogs), [allLogs])
 
   function getLog(categoryId, date) {
     return logs.find(l => l.categoryId === categoryId && l.date === date) ?? null
@@ -37,14 +40,14 @@ export function useTrackerLogs() {
         planned: 'planned' in patch ? patch.planned : base.planned,
         actual,
         actualEntries,
+        deleted: false,
         updatedAt: new Date().toISOString(),
       }
       const empty = (next.planned === null || next.planned === undefined || next.planned === '') &&
                     (next.actual === null || next.actual === undefined || next.actual === '')
       if (idx >= 0) {
         const updated = [...prev]
-        if (empty) { updated.splice(idx, 1); return updated }
-        updated[idx] = next
+        updated[idx] = empty ? tombstone(next) : next
         return updated
       }
       if (empty) return prev
@@ -53,7 +56,7 @@ export function useTrackerLogs() {
   }
 
   function deleteLogsByCategory(categoryId) {
-    setLogs(prev => prev.filter(l => l.categoryId !== categoryId))
+    setLogs(prev => prev.map(l => (l.categoryId === categoryId ? tombstone(l) : l)))
   }
 
   // updates: [{ categoryId, date, planned }] — planned가 null/''이면 계획만 비움.
@@ -67,13 +70,12 @@ export function useTrackerLogs() {
         const planned = (u.planned === '' || u.planned === undefined) ? null : u.planned
         const idx = arr.findIndex(l => l.categoryId === u.categoryId && l.date === u.date)
         if (idx >= 0) {
-          const next = { ...arr[idx], planned, updatedAt: now }
+          const next = { ...arr[idx], planned, deleted: false, updatedAt: now }
           const empty = (next.planned === null || next.planned === undefined) &&
                         (next.actual === null || next.actual === undefined || next.actual === '')
-          if (empty) arr.splice(idx, 1)
-          else arr[idx] = next
+          arr[idx] = empty ? tombstone(next) : next
         } else if (planned !== null) {
-          arr.push({ id: crypto.randomUUID(), categoryId: u.categoryId, date: u.date, planned, actual: null, updatedAt: now })
+          arr.push({ id: crypto.randomUUID(), categoryId: u.categoryId, date: u.date, planned, actual: null, deleted: false, updatedAt: now })
         }
       }
       return arr
@@ -85,5 +87,5 @@ export function useTrackerLogs() {
     setLogs(prev => mergeById(prev, remote))
   }
 
-  return { logs, getLog, setLog, deleteLogsByCategory, bulkSetPlanned, mergeLogs }
+  return { logs, allLogs, getLog, setLog, deleteLogsByCategory, bulkSetPlanned, mergeLogs }
 }

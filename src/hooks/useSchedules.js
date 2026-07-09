@@ -1,11 +1,13 @@
+import { useMemo } from 'react'
 import { nk } from '../lib/accountStorage'
 import { mergeById } from '../lib/mergeById'
 import { useLocalStorageState } from './useLocalStorageState'
+import { tombstone, visible, pruneTombstones } from '../lib/tombstone'
 
 const byDateAsc = (a, b) => (a.date < b.date ? -1 : 1)
 
 export function useSchedules() {
-  const [schedules, setSchedules] = useLocalStorageState(nk('schedule_records'))
+  const [allSchedules, setSchedules] = useLocalStorageState(nk('schedule_records'), [], items => pruneTombstones(items))
 
   function saveSchedule(schedule) {
     setSchedules(prev => {
@@ -20,17 +22,17 @@ export function useSchedules() {
   }
 
   function deleteSchedule(id) {
-    setSchedules(prev => prev.filter(s => s.id !== id))
+    setSchedules(prev => prev.map(s => (s.id === id ? tombstone(s) : s)))
   }
 
   function deleteByRecurrenceId(recurrenceId) {
-    setSchedules(prev => prev.filter(s => s.recurrenceId !== recurrenceId))
+    setSchedules(prev => prev.map(s => (s.recurrenceId === recurrenceId ? tombstone(s) : s)))
   }
 
   // 같은 recurrenceId를 공유하는 일괄 등록 일정 전체에 patch(날짜 외 필드) 병합
   function updateByRecurrenceId(recurrenceId, patch) {
     setSchedules(prev => prev.map(s =>
-      s.recurrenceId === recurrenceId
+      s.recurrenceId === recurrenceId && !s.deleted
         ? { ...s, ...patch, updatedAt: new Date().toISOString() }
         : s
     ))
@@ -40,5 +42,7 @@ export function useSchedules() {
     setSchedules(prev => mergeById(prev, remote, byDateAsc))
   }
 
-  return { schedules, saveSchedule, deleteSchedule, deleteByRecurrenceId, updateByRecurrenceId, mergeSchedules }
+  const schedules = useMemo(() => visible(allSchedules), [allSchedules])
+
+  return { schedules, allSchedules, saveSchedule, deleteSchedule, deleteByRecurrenceId, updateByRecurrenceId, mergeSchedules }
 }

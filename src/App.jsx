@@ -98,21 +98,21 @@ function Workspace({ drive }) {
   const [mode, setMode] = useState('work')
   const [workDateStr, setWorkDateStr] = useState(dayjs().format('YYYY-MM-DD'))
 
-  const { records, saveRecord, deleteRecord, mergeRecords } = useRecords()
+  const { records, allRecords, saveRecord, deleteRecord, mergeRecords } = useRecords()
   const { categories, addCategory, updateCategory, deleteCategory, setAll: setAllCategories } = useCategories()
-  const { schedules, saveSchedule, deleteSchedule, deleteByRecurrenceId, updateByRecurrenceId, mergeSchedules } = useSchedules()
+  const { schedules, allSchedules, saveSchedule, deleteSchedule, deleteByRecurrenceId, updateByRecurrenceId, mergeSchedules } = useSchedules()
   const { categories: scheduleCategories, addCategory: addScatCategory, deleteCategory: deleteScatCategory, setAll: setAllScatCategories } = useScheduleCategories()
   const { routines, addRoutine, updateRoutine, toggleVisible, setAll: setAllRoutines } = useRoutines()
   const { checks: routineChecks, isChecked, toggle: toggleCheck, getCheckedRoutineIds, mergeChecks } = useRoutineChecks()
   const { categories: trackerCategories, addCategory: addTrackerCategory, deleteCategory: deleteTrackerCategory, setAll: setAllTrackerCategories } = useTrackerCategories()
-  const { logs: trackerLogs, getLog: getTrackerLog, setLog: setTrackerLog, deleteLogsByCategory: deleteTrackerLogsByCategory, bulkSetPlanned: bulkSetTrackerPlanned, mergeLogs: mergeTrackerLogs } = useTrackerLogs()
-  const { items: ledgerItems, addItem: addLedgerItem, updateItem: updateLedgerItem, deleteItem: deleteLedgerItem, mergeItems: mergeLedgerItems } = useLedger()
+  const { logs: trackerLogs, allLogs: allTrackerLogs, getLog: getTrackerLog, setLog: setTrackerLog, deleteLogsByCategory: deleteTrackerLogsByCategory, bulkSetPlanned: bulkSetTrackerPlanned, mergeLogs: mergeTrackerLogs } = useTrackerLogs()
+  const { items: ledgerItems, allItems: allLedgerItems, addItem: addLedgerItem, updateItem: updateLedgerItem, deleteItem: deleteLedgerItem, mergeItems: mergeLedgerItems } = useLedger()
   const { categories: ledgerCategories, addCategory: addLedgerCategory, deleteCategory: deleteLedgerCategory, setAll: setAllLedgerCategories } = useLedgerCategories()
-  const { items: contactItems, addItem: addContactItem, updateItem: updateContactItem, deleteItem: deleteContactItem, mergeItems: mergeContactItems } = useContacts()
-  const { items: examResults, addItem: addExamResult, mergeItems: mergeExamResults } = useExamResults()
-  const { items: workTodos, addItem: addTodoRaw, updateItem: updateTodo, deleteItem: deleteTodo, mergeItems: mergeWorkTodos } = useWorkTodos()
-  const { items: workEvents, updateItem: updateEvent, deleteItem: deleteEvent, mergeItems: mergeWorkEvents } = useWorkEvents()
-  const { items: workWeekly, updateItem: updateWeekly, deleteItem: deleteWeekly, mergeItems: mergeWorkWeekly } = useWorkWeekly()
+  const { items: contactItems, allItems: allContactItems, addItem: addContactItem, updateItem: updateContactItem, deleteItem: deleteContactItem, mergeItems: mergeContactItems } = useContacts()
+  const { items: examResults, allItems: allExamResults, addItem: addExamResult, mergeItems: mergeExamResults } = useExamResults()
+  const { items: workTodos, allItems: allWorkTodos, addItem: addTodoRaw, updateItem: updateTodo, deleteItem: deleteTodo, mergeItems: mergeWorkTodos } = useWorkTodos()
+  const { items: workEvents, allItems: allWorkEvents, updateItem: updateEvent, deleteItem: deleteEvent, mergeItems: mergeWorkEvents } = useWorkEvents()
+  const { items: workWeekly, allItems: allWorkWeekly, updateItem: updateWeekly, deleteItem: deleteWeekly, mergeItems: mergeWorkWeekly } = useWorkWeekly()
 
   function applyDriveData(data) {
     if (!data) return
@@ -150,13 +150,13 @@ function Workspace({ drive }) {
   }
 
   async function handleDrivePush() {
-    await push({ records, categories, schedules, scheduleCategories, routines, routineChecks, trackerCategories, trackerLogs, ledger: ledgerItems, ledgerCategories, contacts: contactItems, examResults, workTodos, workEvents, workWeekly })
+    await push({ records: allRecords, categories, schedules: allSchedules, scheduleCategories, routines, routineChecks, trackerCategories, trackerLogs: allTrackerLogs, ledger: allLedgerItems, ledgerCategories, contacts: allContactItems, examResults: allExamResults, workTodos: allWorkTodos, workEvents: allWorkEvents, workWeekly: allWorkWeekly })
     await syncImagesToDrive()
   }
 
   async function handleSaveExamResult(entry) {
     addExamResult(entry)
-    await push({ records, categories, schedules, scheduleCategories, routines, routineChecks, trackerCategories, trackerLogs, ledger: ledgerItems, ledgerCategories, contacts: contactItems, examResults: [entry, ...examResults], workTodos, workEvents, workWeekly })
+    await push({ records: allRecords, categories, schedules: allSchedules, scheduleCategories, routines, routineChecks, trackerCategories, trackerLogs: allTrackerLogs, ledger: allLedgerItems, ledgerCategories, contacts: allContactItems, examResults: [entry, ...allExamResults], workTodos: allWorkTodos, workEvents: allWorkEvents, workWeekly: allWorkWeekly })
   }
 
   // 이 계정/브라우저에서 처음이면 Drive에서 1회 자동 로드

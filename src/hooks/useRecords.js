@@ -1,9 +1,11 @@
+import { useMemo } from 'react'
 import { nk } from '../lib/accountStorage'
 import { mergeById } from '../lib/mergeById'
 import { useLocalStorageState } from './useLocalStorageState'
+import { tombstone, visible, pruneTombstones } from '../lib/tombstone'
 
 export function useRecords() {
-  const [records, setRecords] = useLocalStorageState(nk('records'))
+  const [allRecords, setRecords] = useLocalStorageState(nk('records'), [], items => pruneTombstones(items))
 
   function saveRecord(record) {
     setRecords(prev => {
@@ -18,12 +20,14 @@ export function useRecords() {
   }
 
   function deleteRecord(id) {
-    setRecords(prev => prev.filter(e => e.id !== id))
+    setRecords(prev => prev.map(e => (e.id === id ? tombstone(e) : e)))
   }
 
   function mergeRecords(remote) {
     setRecords(prev => mergeById(prev, remote, (a, b) => (a.date < b.date ? 1 : -1)))
   }
 
-  return { records, saveRecord, deleteRecord, mergeRecords }
+  const records = useMemo(() => visible(allRecords), [allRecords])
+
+  return { records, allRecords, saveRecord, deleteRecord, mergeRecords }
 }
