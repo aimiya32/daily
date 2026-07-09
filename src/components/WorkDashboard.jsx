@@ -31,42 +31,45 @@ export default function WorkDashboard({
   const [filterCat, setFilterCat] = useState(null)
 
   return (
-    <div className={styles.dashboardGrid}>
-      <MonthPanel
-        events={events}
-        schedules={schedules}
-        scheduleCategories={scheduleCategories}
-        dateStr={dateStr}
-        onChangeDate={onChangeDate}
-        onAddSchedule={onAddSchedule}
-        filterCat={filterCat}
-        onChangeFilterCat={setFilterCat}
-      />
-      <WeekPanel
-        events={events}
-        schedules={schedules}
-        scheduleCategories={scheduleCategories}
-        weekly={weekly}
-        dateStr={dateStr}
-        onChangeDate={onChangeDate}
-        onEditWeekly={onEditWeekly}
-        onDeleteWeekly={onDeleteWeekly}
-        filterCat={filterCat}
-      />
-      <DayPanel
-        todos={todos}
-        events={events}
-        schedules={schedules}
-        scheduleCategories={scheduleCategories}
-        dateStr={dateStr}
-        filterCat={filterCat}
-        onAddTodo={onAddTodo}
-        onToggleTodo={onToggleTodo}
-        onEditTodo={onEditTodo}
-        onDeleteTodo={onDeleteTodo}
-        onEditEvent={onEditEvent}
-        onDeleteEvent={onDeleteEvent}
-      />
+    // 690px 이상에서는 모바일 1열로 접지 않고 3열을 유지 → 폭이 모자라면 이 래퍼가 가로 스크롤된다
+    <div className={styles.dashboardScroll}>
+      <div className={styles.dashboardGrid}>
+        <MonthPanel
+          events={events}
+          schedules={schedules}
+          scheduleCategories={scheduleCategories}
+          dateStr={dateStr}
+          onChangeDate={onChangeDate}
+          onAddSchedule={onAddSchedule}
+          filterCat={filterCat}
+          onChangeFilterCat={setFilterCat}
+        />
+        <WeekPanel
+          events={events}
+          schedules={schedules}
+          scheduleCategories={scheduleCategories}
+          weekly={weekly}
+          dateStr={dateStr}
+          onChangeDate={onChangeDate}
+          onEditWeekly={onEditWeekly}
+          onDeleteWeekly={onDeleteWeekly}
+          filterCat={filterCat}
+        />
+        <DayPanel
+          todos={todos}
+          events={events}
+          schedules={schedules}
+          scheduleCategories={scheduleCategories}
+          dateStr={dateStr}
+          filterCat={filterCat}
+          onAddTodo={onAddTodo}
+          onToggleTodo={onToggleTodo}
+          onEditTodo={onEditTodo}
+          onDeleteTodo={onDeleteTodo}
+          onEditEvent={onEditEvent}
+          onDeleteEvent={onDeleteEvent}
+        />
+      </div>
     </div>
   )
 }

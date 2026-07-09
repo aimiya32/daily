@@ -1,3 +1,17 @@
+/* 690px 이상에서는 3열 데스크톱 배치를 유지하고, 폭이 모자라면 세로로 접는 대신 가로 스크롤한다.
+   스크롤 컨테이너가 AppShell.Main 안이라 헤더는 스크롤되지 않는다. */
+.dashboardScroll {
+  @media (min-width: 690px) {
+    overflow-x: auto;
+    /* AppShell.Main의 좌우 패딩을 상쇄해 스크롤 영역을 콘텐츠 폭 전체로 넓힌다.
+       좌우 여백은 아래 .dashboardGrid의 margin이 대신하므로, 끝까지 스크롤해도 여백이 남는다.
+       width는 auto로 둬야 음수 마진만큼 실제로 넓어진다(100%로 고정하면 왼쪽으로 밀리기만 한다). */
+    margin-inline: calc(var(--app-shell-padding, 0px) * -1);
+    /* 스크롤바가 패널 그림자를 가리지 않도록 여유 */
+    padding-bottom: 6px;
+  }
+}
+
 /* 3패널 배치: 월간 달력이 넓고, 주간/오늘 패널은 기존 균등 폭의 80% */
 .dashboardGrid {
   display: grid;
@@ -6,8 +20,13 @@
   max-width: 1300px;
   margin: 0 auto;
 
-  @media (min-width: 900px) {
+  @media (min-width: 690px) {
     grid-template-columns: 1.75fr 1fr 1fr;
+    /* 3열이 눌리지 않는 하한 — 이보다 좁으면 래퍼가 가로 스크롤된다 */
+    min-width: 992px;
+    /* 좌우 여백을 컨테이너 패딩이 아니라 콘텐츠 마진으로 준다 → 끝까지 스크롤해도 여백이 붙어 있다.
+       넓은 화면에선 (100% - 1300px)/2 가 커져 기존처럼 가운데 정렬된다. */
+    margin-inline: max(var(--app-shell-padding, 0px), calc((100% - 1300px) / 2));
   }
 }
 
