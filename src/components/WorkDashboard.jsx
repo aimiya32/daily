@@ -1,9 +1,9 @@
 import { useState, useEffect, useRef } from 'react'
 import { Stack, Group, Text, Paper, ActionIcon, Button, Checkbox, TextInput, Textarea, Center, Select, Modal, Tooltip } from '@mantine/core'
-import { useDisclosure, useClickOutside } from '@mantine/hooks'
+import { useDisclosure, useClickOutside, useMediaQuery } from '@mantine/hooks'
 import {
   IconChevronLeft, IconChevronRight, IconTrash, IconPlus,
-  IconChecklist, IconClock,
+  IconChecklist, IconClock, IconChevronDown, IconCheck,
 } from '@tabler/icons-react'
 import dayjs from 'dayjs'
 import 'dayjs/locale/ko'
@@ -57,15 +57,17 @@ export default function WorkDashboard({
   onEditEvent, onDeleteEvent,
   onEditWeekly, onDeleteWeekly,
   onAddSchedule,
+  forceWide = false,
 }) {
   // 카테고리 필터 (null = 전체) — 월간/주간/시간별 패널의 개인 일정 표시에 공통 적용
   const [filterCat, setFilterCat] = useState(null)
   const scrollRef = useHorizontalWheel()
 
   return (
-    // 690px 이상에서는 모바일 1열로 접지 않고 3열을 유지 → 폭이 모자라면 이 래퍼가 가로 스크롤된다
-    <div ref={scrollRef} className={styles.dashboardScroll}>
-      <div className={styles.dashboardGrid}>
+    // 690px 이상에서는 모바일 1열로 접지 않고 3열을 유지 → 폭이 모자라면 이 래퍼가 가로 스크롤된다.
+    // forceWide면 모바일(<690px)에서도 태블릿처럼 3열 가로스크롤을 강제한다.
+    <div ref={scrollRef} className={`${styles.dashboardScroll} ${forceWide ? styles.wide : ''}`}>
+      <div className={`${styles.dashboardGrid} ${forceWide ? styles.wide : ''}`}>
         <MonthPanel
           events={events}
           schedules={schedules}
@@ -129,6 +131,23 @@ function MonthPanel({ events, schedules, scheduleCategories, dateStr, onChangeDa
   // 달력 셀당 표시할 일정 최대 개수 (개인 일정 달력과 동일한 반응형 기준)
   const maxItems = useCalendarMaxItems()
 
+  // 모바일에서는 카테고리 필터를 화면 중앙 모달 피커로 띄운다
+  const isMobile = useMediaQuery('(max-width: 690px)')
+  const [filterModal, filterModalCtl] = useDisclosure(false)
+  const filterLabel = filterCat == null ? '전체' : (scheduleCategories.find(c => c.id === filterCat)?.name ?? '전체')
+  // 고정폭 대신 라벨 콘텐츠 폭에 맞춘다 (한글 ~13px, 그 외 ~8px 추정)
+  const labelPx = s => [...s].reduce((w, ch) => w + (/[가-힣]/.test(ch) ? 13 : 8), 0)
+  // PC: 가장 긴 옵션 라벨에 맞춰 폭 고정 — 픽셀 추정 대신 숨김 sizer로 실제 렌더 폭을 측정
+  const optionLabels = ['전체', ...scheduleCategories.map(c => c.name)]
+  const longestLabel = optionLabels.reduce((a, b) => (labelPx(b) > labelPx(a) ? b : a), '')
+  const sizerRef = useRef(null)
+  const [measuredW, setMeasuredW] = useState(null)
+  useEffect(() => {
+    if (sizerRef.current) setMeasuredW(sizerRef.current.offsetWidth)
+  }, [longestLabel])
+  const selectWidth = (measuredW ?? labelPx(longestLabel)) + 48   // + 셀렉트 좌패딩/화살표
+  const triggerWidth = labelPx('전체') + 46        // 모바일: 두 글자 + 화살표/패딩
+
   // 시간별 일정이 있는 날짜 집합 (인디고 도트 표시용) — Todo는 달력에 표시하지 않는다
   const eventDates = new Set(events.map(x => x.date))
 
@@ -168,55 +187,99 @@ function MonthPanel({ events, schedules, scheduleCategories, dateStr, onChangeDa
   }
 
   return (
-    <Paper className={`${styles.panel} ${styles.monthPanel}`} p="md">
-      <Group justify="flex-end" align="center" gap={8} mt={6} mb="sm" wrap="nowrap">
-        <Select
-          size="xs"
-          radius="xl"
-          allowDeselect={false}
-          w={130}
-          data={[{ value: 'all', label: '전체' }, ...scheduleCategories.map(c => ({ value: c.id, label: c.name }))]}
-          value={filterCat ?? 'all'}
-          onChange={v => onChangeFilterCat(v === 'all' ? null : v)}
+    <div className={styles.monthColumn}>
+      <Paper className={styles.headerBox} p="xs">
+        {/* 숨김 sizer: 가장 긴 옵션의 실제 렌더 폭 측정용 (PC 셀렉트 너비) */}
+        <span ref={sizerRef} aria-hidden="true"
+              style={{ position: 'absolute', visibility: 'hidden', pointerEvents: 'none', whiteSpace: 'nowrap', fontSize: 'var(--mantine-font-size-xs)' }}>
+          {longestLabel}
+        </span>
+        <Group justify="space-between" align="center" wrap="nowrap">
+          <Group gap={8} wrap="nowrap">
+            <Button size="compact-xs" variant="light" color="indigo" radius="xl"
+                    onClick={() => { onChangeDate(today); setViewMonth(dayjs(today).format('YYYY-MM')) }}>
+              오늘
+            </Button>
+            <Text size="xs" c="dimmed">
+              {dayjs(dateStr).format('M월 D일 ddd')} (음 {getLunarLabel(dayjs(dateStr).year(), dayjs(dateStr).month() + 1, dayjs(dateStr).date())})
+            </Text>
+          </Group>
+          <Group justify="flex-end" align="center" gap={8} wrap="nowrap">
+            {isMobile ? (
+              <Button
+                size="xs" radius="xl" variant="default" w={triggerWidth}
+                justify="space-between"
+                rightSection={<IconChevronDown size={14} />}
+                onClick={filterModalCtl.open}
+                styles={{ label: { fontWeight: 400, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' } }}
+              >
+                {filterLabel}
+              </Button>
+            ) : (
+              <Select
+                  size="xs"
+                  radius="xl"
+                  allowDeselect={false}
+                  w={selectWidth}
+                  data={[{ value: 'all', label: '전체' }, ...scheduleCategories.map(c => ({ value: c.id, label: c.name }))]}
+                  value={filterCat ?? 'all'}
+                  onChange={v => onChangeFilterCat(v === 'all' ? null : v)}
+              />
+            )}
+            {/* 크기 30 = Select size="xs"의 입력 높이 */}
+            <ActionIcon variant="light" color="indigo" size={30} radius="xl" onClick={onAddSchedule}>
+              <IconPlus size={16} />
+            </ActionIcon>
+          </Group>
+        </Group>
+      </Paper>
+
+      <Paper className={`${styles.panel} ${styles.monthPanel}`} p="md">
+        <Group justify="center" align="center" mb="md" wrap="nowrap">
+          <Group gap={6} wrap="nowrap">
+            <ActionIcon variant="subtle" color="gray" radius="xl"
+              onClick={() => setViewMonth(monthStart.subtract(1, 'month').format('YYYY-MM'))}>
+              <IconChevronLeft size={18} />
+            </ActionIcon>
+            <Text fw={700} className={styles.panelTitle}>{monthStart.format('YYYY년 M월')}</Text>
+            <ActionIcon variant="subtle" color="gray" radius="xl"
+              onClick={() => setViewMonth(monthStart.add(1, 'month').format('YYYY-MM'))}>
+              <IconChevronRight size={18} />
+            </ActionIcon>
+          </Group>
+        </Group>
+
+        <CalendarGrid
+          current={monthStart}
+          today={today}
+          onSelectDate={onChangeDate}
+          selectedDate={dateStr}
+          standalone
+          renderDayContent={renderDayContent}
         />
-        {/* 크기 30 = Select size="xs"의 입력 높이 */}
-        <ActionIcon variant="light" color="indigo" size={30} radius="xl" onClick={onAddSchedule}>
-          <IconPlus size={16} />
-        </ActionIcon>
-      </Group>
+      </Paper>
 
-      <Group justify="space-between" align="center" mb="md" wrap="nowrap">
-        <Group gap={6} wrap="nowrap">
-          <ActionIcon variant="subtle" color="gray" radius="xl"
-            onClick={() => setViewMonth(monthStart.subtract(1, 'month').format('YYYY-MM'))}>
-            <IconChevronLeft size={18} />
-          </ActionIcon>
-          <Text fw={700} className={styles.panelTitle}>{monthStart.format('YYYY년 M월')}</Text>
-          <ActionIcon variant="subtle" color="gray" radius="xl"
-            onClick={() => setViewMonth(monthStart.add(1, 'month').format('YYYY-MM'))}>
-            <IconChevronRight size={18} />
-          </ActionIcon>
-        </Group>
-        <Group gap={8} wrap="nowrap">
-          <Button size="compact-xs" variant="light" color="indigo" radius="xl"
-            onClick={() => { onChangeDate(today); setViewMonth(dayjs(today).format('YYYY-MM')) }}>
-            오늘
-          </Button>
-          <Text size="xs" c="dimmed">
-            {dayjs(dateStr).format('M월 D일 ddd요일')} (음 {getLunarLabel(dayjs(dateStr).year(), dayjs(dateStr).month() + 1, dayjs(dateStr).date())})
-          </Text>
-        </Group>
-      </Group>
-
-      <CalendarGrid
-        current={monthStart}
-        today={today}
-        onSelectDate={onChangeDate}
-        selectedDate={dateStr}
-        standalone
-        renderDayContent={renderDayContent}
-      />
-    </Paper>
+      <Modal opened={filterModal} onClose={filterModalCtl.close} title="카테고리 선택" radius="md" centered size="xs">
+        <Stack gap={4}>
+          {[{ value: null, label: '전체' }, ...scheduleCategories.map(c => ({ value: c.id, label: c.name }))].map(opt => {
+            const selected = (filterCat ?? null) === opt.value
+            return (
+              <Button
+                key={opt.value ?? 'all'}
+                variant={selected ? 'light' : 'subtle'}
+                color={selected ? 'indigo' : 'gray'}
+                justify="flex-start"
+                radius="md"
+                leftSection={selected ? <IconCheck size={16} /> : <span style={{ width: 16 }} />}
+                onClick={() => { onChangeFilterCat(opt.value); filterModalCtl.close() }}
+              >
+                {opt.label}
+              </Button>
+            )
+          })}
+        </Stack>
+      </Modal>
+    </div>
   )
 }
 

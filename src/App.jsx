@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { AppShell, Group, Text, Button, ActionIcon, SegmentedControl } from '@mantine/core'
 import { useDisclosure, useMediaQuery } from '@mantine/hooks'
-import { IconCategory, IconHome, IconList, IconCalendar, IconChartBar, IconPencil, IconCheck } from '@tabler/icons-react'
+import { IconCategory, IconHome, IconList, IconCalendar, IconChartBar, IconPencil, IconCheck, IconArrowsHorizontal } from '@tabler/icons-react'
 import dayjs from 'dayjs'
 import RecordEditor from './components/RecordEditor'
 import RecordList from './components/RecordList'
@@ -298,6 +298,9 @@ function Workspace({ drive }) {
   }[view] ?? ''
 
   const isNarrow = useMediaQuery('(max-width: 500px)')
+  // 모바일(<690px) 대시보드를 태블릿처럼 3열 가로스크롤로 강제 표시하는 토글
+  const isMobileDash = useMediaQuery('(max-width: 689px)')
+  const [wideDashboard, setWideDashboard] = useState(false)
 
   return (
     <>
@@ -352,6 +355,16 @@ function Workspace({ drive }) {
               {view === 'list' && (
                 <ActionIcon variant="subtle" color="gray" radius="xl" onClick={openCatModal}>
                   <IconCategory size={18} />
+                </ActionIcon>
+              )}
+              {view === 'home' && mode === 'work' && isMobileDash && (
+                <ActionIcon
+                  variant={wideDashboard ? 'light' : 'subtle'}
+                  color={wideDashboard ? 'indigo' : 'gray'}
+                  radius="xl"
+                  onClick={() => setWideDashboard(w => !w)}
+                >
+                  <IconArrowsHorizontal size={18} />
                 </ActionIcon>
               )}
               {(view === 'schedule' || (view === 'home' && mode === 'work')) && (
@@ -413,6 +426,7 @@ function Workspace({ drive }) {
               onEditWeekly={editWeekly}
               onDeleteWeekly={deleteWeekly}
               onAddSchedule={openWorkDayDrawer}
+              forceWide={wideDashboard}
             />
           )}
 

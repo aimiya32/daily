@@ -36,6 +36,24 @@
   }
 }
 
+/* 모바일에서 태블릿처럼 3열 가로스크롤을 강제하는 wide 토글 (690px 미디어쿼리와 동일 동작) */
+.dashboardScroll.wide {
+  overflow-x: auto;
+  margin-inline: calc(var(--app-shell-padding, 0px) * -1);
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+.dashboardGrid.wide {
+  grid-template-columns: 1.75fr 1fr 1fr;
+  min-width: 992px;
+  margin-inline: max(var(--app-shell-padding, 0px), calc((100% - 1300px) / 2));
+}
+
 .panel {
   border-radius: 18px;
   background-color: #ffffff;
@@ -48,6 +66,13 @@
     border-radius: 16px;
     padding: 14px !important;
   }
+}
+
+.headerBox {
+  border-radius: 14px;
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
 }
 
 /* ── 패널 공통 헤더 ── */
@@ -74,11 +99,22 @@
   letter-spacing: -0.3px;
 }
 
+/* 월간 헤더 박스 + 월간 달력 패널을 세로로 쌓는 래퍼.
+   dashboardGrid의 단일 그리드 아이템 역할을 하므로, 두 박스를 형제로 반환해도 3열 배치가 깨지지 않는다. */
+.monthColumn {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mantine-spacing-md);
+  min-width: 0;
+}
+
 /* ── 월간 달력 (공용 CalendarGrid 사용) ── */
-/* 세로 플렉스: 달력 그리드가 남은 높이를 채워 주간 일정 패널과 아래 끝이 맞는다 */
+/* 세로 플렉스: 달력 그리드가 남은 높이를 채워 주간 일정 패널과 아래 끝이 맞는다.
+   flex: 1 로 monthColumn 안에서 남는 높이를 차지해 다른 패널과 하단을 맞춘다. */
 .monthPanel {
   display: flex;
   flex-direction: column;
+  flex: 1;
 }
 
 /* 달력 셀 안 업무 도트를 가운데 정렬 */

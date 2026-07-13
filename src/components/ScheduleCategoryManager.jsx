@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Drawer, Stack, TextInput, Button, Text } from '@mantine/core'
+import { notifications } from '@mantine/notifications'
 import { IconPlus } from '@tabler/icons-react'
 import { hexOf } from '../lib/colors'
 import ColorSwatchPicker, { ColorDot } from './ColorSwatchPicker'
@@ -11,7 +12,16 @@ export default function ScheduleCategoryManager({ opened, onClose, categories, o
   const [color, setColor] = useState('blue')
 
   function handleAdd() {
-    if (!input.trim()) return
+    const name = input.trim()
+    if (!name) return
+    if (name.length > 10) {
+      notifications.show({
+        color: 'red',
+        title: '카테고리 이름이 너무 길어요',
+        message: '카테고리 이름은 10자까지만 입력할 수 있어요.',
+      })
+      return
+    }
     onAdd(input, color)
     setInput('')
   }
