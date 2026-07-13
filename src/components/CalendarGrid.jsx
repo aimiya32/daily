@@ -5,8 +5,9 @@ import { useHolidays } from '../hooks/useHolidays'
 import { getLunarLabel } from '../lib/lunar'
 import styles from './CalendarGrid.module.scss'
 
-export default function CalendarGrid({ current, today, onSelectDate, renderDayContent, hideToday = false, standalone = false, selectedDate = null }) {
-  const isMobile = useMediaQuery('(max-width: 700px)')
+// wide=true: 모바일 뷰포트라도 부모가 가로 스크롤로 넓게 펴진 상태 → 날짜 정렬 등을 데스크톱 기준으로 렌더링
+export default function CalendarGrid({ current, today, onSelectDate, renderDayContent, hideToday = false, standalone = false, selectedDate = null, wide = false }) {
+  const isMobile = useMediaQuery('(max-width: 700px)') && !wide
   const holidays = useHolidays(current.year(), current.month() + 1)
   const firstDay = current.startOf('month')
   const startOffset = firstDay.day()

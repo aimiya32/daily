@@ -77,6 +77,7 @@ export default function WorkDashboard({
           onAddSchedule={onAddSchedule}
           filterCat={filterCat}
           onChangeFilterCat={setFilterCat}
+          forceWide={forceWide}
         />
         <WeekPanel
           events={events}
@@ -118,7 +119,7 @@ function compareSchedule(a, b) {
 
 // ── 패널 1: 월간 달력 ─────────────────────────────────────
 // 개인 모드에서 등록한 일정(schedules)을 읽기 전용으로 표시한다. '전체'/카테고리별 필터 지원.
-function MonthPanel({ events, schedules, scheduleCategories, dateStr, onChangeDate, onAddSchedule, filterCat, onChangeFilterCat }) {
+function MonthPanel({ events, schedules, scheduleCategories, dateStr, onChangeDate, onAddSchedule, filterCat, onChangeFilterCat, forceWide }) {
   // 표시 중인 달('YYYY-MM'). 선택 날짜가 다른 달로 바뀌면 그 달을 따라간다.
   const [viewMonth, setViewMonth] = useState(() => dayjs(dateStr).format('YYYY-MM'))
   useEffect(() => {
@@ -129,7 +130,10 @@ function MonthPanel({ events, schedules, scheduleCategories, dateStr, onChangeDa
   const today = dayjs().format(FMT)
 
   // 달력 셀당 표시할 일정 최대 개수 (개인 일정 달력과 동일한 반응형 기준)
-  const maxItems = useCalendarMaxItems()
+  // wide 강제 시 그리드가 min-width 992px로 펴져 셀 폭이 992px 뷰포트와 같으므로,
+  // 뷰포트 기준 대신 그 구간의 개수(3개)를 쓴다 — 안 그러면 모바일 기준 0개라 전부 +N으로 접힌다
+  const responsiveMaxItems = useCalendarMaxItems()
+  const maxItems = forceWide ? 3 : responsiveMaxItems
 
   // 모바일에서는 카테고리 필터를 화면 중앙 모달 피커로 띄운다
   const isMobile = useMediaQuery('(max-width: 690px)')
@@ -255,6 +259,7 @@ function MonthPanel({ events, schedules, scheduleCategories, dateStr, onChangeDa
           onSelectDate={onChangeDate}
           selectedDate={dateStr}
           standalone
+          wide={forceWide}
           renderDayContent={renderDayContent}
         />
       </Paper>
