@@ -175,8 +175,15 @@ function TreeRenderer({ tree }) {
   )
 }
 
+// ── 답안 기록 키 정규화 (JSON 라운드트립 후 문자열 키 → 숫자 키) ──
+function normalizeAnswers(answers) {
+  const result = {}
+  Object.keys(answers || {}).forEach(k => { result[Number(k)] = answers[k] })
+  return result
+}
+
 // ── 시작 화면 ───────────────────────────────────────────────
-function StartScreen({ exams, onStart, examResults, tab, onTabChange }) {
+function StartScreen({ exams, onStart, examResults, tab, onTabChange, onReviewRecord }) {
   const [selectedIdx, setSelectedIdx] = useState(-1)
   const isNarrow = useMediaQuery('(max-width: 500px)')
 
@@ -213,8 +220,13 @@ function StartScreen({ exams, onStart, examResults, tab, onTabChange }) {
                 const passed = pct >= 60
                 const date = new Date(r.date)
                 const dateStr = `${date.getFullYear()}.${String(date.getMonth() + 1).padStart(2, '0')}.${String(date.getDate()).padStart(2, '0')}`
+                const reviewable = !!(r.answers && exams.some(e => e.name === r.examName))
                 return (
-                  <Box key={r.id} className={styles.historyItem}>
+                  <Box
+                    key={r.id}
+                    className={reviewable ? `${styles.historyItem} ${styles.historyItemClickable}` : styles.historyItem}
+                    onClick={reviewable ? () => onReviewRecord(r) : undefined}
+                  >
                     <Box className={styles.historyScore} style={{ background: passed ? '#eff6ff' : '#fef2f2' }}>
                       <Text fw={800} size="lg" c={passed ? '#2563eb' : '#dc2626'}>{pct}</Text>
                     </Box>
@@ -227,6 +239,9 @@ function StartScreen({ exams, onStart, examResults, tab, onTabChange }) {
                     <Box className={styles.passBadge} style={{ background: passed ? '#dcfce7' : '#fee2e2' }}>
                       <Text size="xs" fw={700} c={passed ? '#16a34a' : '#dc2626'}>{passed ? '합격' : '불합격'}</Text>
                     </Box>
+                    {!reviewable && (
+                      <Text size="xs" c="#9ca3af" style={{ flexShrink: 0 }}>답안 기록 없음</Text>
+                    )}
                   </Box>
                 )
               })}
@@ -919,6 +934,7 @@ export default function EngineerExamView({ onSaveResult, examResults }) {
   const [tab, setTab] = useState('exam') // 'exam' | 'history'
   const [selectedExamIdx, setSelectedExamIdx] = useState(-1)
   const [examResult, setExamResult] = useState(null)
+  const [reviewOrigin, setReviewOrigin] = useState('result') // 검토 화면에서 뒤로 갈 곳: 'result' | 'history'
 
   useEffect(() => {
     fetch(import.meta.env.BASE_URL + 'exam-questions.json')
@@ -951,6 +967,7 @@ export default function EngineerExamView({ onSaveResult, examResults }) {
             total: result.questions.length,
             date: new Date().toISOString(),
             updatedAt: new Date().toISOString(),
+            answers: result.userAnswers,
           })
         }}
         onBack={() => setScreen('start')}
@@ -963,6 +980,10 @@ export default function EngineerExamView({ onSaveResult, examResults }) {
       if (examResult.userAnswers[i] !== q.answer) acc.push(i)
       return acc
     }, [])
+    const backFromReview = () => {
+      if (reviewOrigin === 'history') { setTab('history'); setScreen('start') }
+      else setScreen('result')
+    }
     return (
       <ExamScreen
         key="review"
@@ -970,8 +991,8 @@ export default function EngineerExamView({ onSaveResult, examResults }) {
         reviewMode
         initialAnswers={examResult.userAnswers}
         initialIdx={wrongIdxs[0] ?? 0}
-        onFinish={() => setScreen('result')}
-        onBack={() => setScreen('result')}
+        onFinish={backFromReview}
+        onBack={backFromReview}
       />
     )
   }
@@ -987,6 +1008,7 @@ export default function EngineerExamView({ onSaveResult, examResults }) {
         result={examResult}
         onReview={() => {
           if (wrongIdxs.length === 0) { alert('모든 문제를 정답으로 맞혔습니다!'); return }
+          setReviewOrigin('result')
           setScreen('review')
         }}
         onRetry={() => setScreen('start')}
@@ -1001,6 +1023,13 @@ export default function EngineerExamView({ onSaveResult, examResults }) {
       examResults={examResults}
       tab={tab}
       onTabChange={setTab}
+      onReviewRecord={record => {
+        const exam = exams.find(e => e.name === record.examName)
+        if (!exam || !record.answers) return
+        setExamResult({ questions: exam.questions, userAnswers: normalizeAnswers(record.answers), exam })
+        setReviewOrigin('history')
+        setScreen('review')
+      }}
     />
   )
 }

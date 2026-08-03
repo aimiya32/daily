@@ -142,6 +142,15 @@
   gap: 16px;
 }
 
+.historyItemClickable {
+  cursor: pointer;
+  transition: box-shadow 0.15s;
+
+  &:hover {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  }
+}
+
 .historyScore {
   width: 52px;
   height: 52px;
