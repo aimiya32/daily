@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback, useId } from 'react'
 import { useMediaQuery } from '@mantine/hooks'
 import { Box, Text, Stack, Group, Badge, ActionIcon, Loader, Center } from '@mantine/core'
 import { IconChevronLeft, IconChevronRight, IconFlag, IconList, IconCheck, IconX } from '@tabler/icons-react'
+import { useExamProgress } from '../hooks/useExamProgress'
 import styles from './EngineerExamView.module.scss'
 
 const SUBJECTS = [
@@ -347,9 +348,28 @@ function normalizeAnswers(answers) {
   return result
 }
 
+// ── 타이머/저장시각 포맷 (ExamScreen 타이머, StartScreen 이어풀기 배너 공용) ──
+function formatTimer(totalSeconds) {
+  const h = Math.floor(totalSeconds / 3600)
+  const m = Math.floor((totalSeconds % 3600) / 60)
+  const s = totalSeconds % 60
+  return h > 0
+    ? `${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`
+    : `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`
+}
+
+function formatSavedAt(iso) {
+  const d = new Date(iso)
+  const dateStr = `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')}`
+  const timeStr = `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
+  return `${dateStr} ${timeStr}`
+}
+
 // ── 시작 화면 ───────────────────────────────────────────────
-function StartScreen({ exams, onStart, examResults, tab, onTabChange, onReviewRecord }) {
+function StartScreen({ exams, onStart, examResults, tab, onTabChange, onReviewRecord, progress, onResume, onDiscardProgress }) {
   const [selectedIdx, setSelectedIdx] = useState(-1)
+  const [confirmNewStart, setConfirmNewStart] = useState(false)
+  const [confirmDelete, setConfirmDelete] = useState(false)
   const isNarrow = useMediaQuery('(max-width: 500px)')
 
   const examList = exams.filter(e => e.type !== 'collection')
@@ -437,6 +457,50 @@ function StartScreen({ exams, onStart, examResults, tab, onTabChange, onReviewRe
         </Box>
         <Text size="sm" c="#6b7280" mb={20}>기출문제 CBT 모의시험</Text>
 
+        {/* 이어서 풀기 배너 */}
+        {progress && (
+          <Box
+            className={styles.card}
+            style={{
+              padding: '16px 20px',
+              marginBottom: 16,
+              background: '#eff6ff',
+              border: '1.5px solid #2563eb',
+              display: 'flex',
+              flexDirection: isNarrow ? 'column' : 'row',
+              alignItems: isNarrow ? 'stretch' : 'center',
+              justifyContent: 'space-between',
+              gap: isNarrow ? 10 : 16,
+            }}
+          >
+            <Box style={{ flex: 1, minWidth: 0 }}>
+              <Text size="xs" fw={700} c="#2563eb" mb={4}>이어서 풀 수 있는 시험이 있습니다</Text>
+              <Text fw={700} size="sm" c="#1e3a8a" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {progress.examName}
+              </Text>
+              <Text size="xs" c="#3b82f6" mt={2}>
+                {Object.keys(progress.answers || {}).length}/{progress.total}문제
+                {typeof progress.timeLeft === 'number' && progress.timeLeft > 0 ? ` · 남은 시간 ${formatTimer(progress.timeLeft)}` : ''}
+                {progress.updatedAt ? ` · ${formatSavedAt(progress.updatedAt)} 저장` : ''}
+              </Text>
+            </Box>
+            <Group gap={8} style={{ flexShrink: 0 }}>
+              <button
+                onClick={onResume}
+                style={{ padding: '10px 18px', background: '#2563eb', color: 'white', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}
+              >
+                이어서 풀기
+              </button>
+              <button
+                onClick={() => setConfirmDelete(true)}
+                style={{ padding: '10px 18px', background: 'white', color: '#dc2626', border: '1.5px solid #dc2626', borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}
+              >
+                삭제
+              </button>
+            </Group>
+          </Box>
+        )}
+
         {/* 시험 정보 + 시작 버튼 */}
         <Box
           className={styles.card}
@@ -472,7 +536,11 @@ function StartScreen({ exams, onStart, examResults, tab, onTabChange, onReviewRe
             )}
           </Box>
           <button
-            onClick={() => selected && onStart(selectedIdx)}
+            onClick={() => {
+              if (!selected) return
+              if (progress) setConfirmNewStart(true)
+              else onStart(selectedIdx)
+            }}
             disabled={selectedIdx < 0}
             style={{
               padding: '12px 28px',
@@ -533,19 +601,71 @@ function StartScreen({ exams, onStart, examResults, tab, onTabChange, onReviewRe
           </Box>
         </Box>
       </Box>
+
+      {/* 새 시험 시작 시 진행 상태 폐기 확인 모달 */}
+      {confirmNewStart && (
+        <Box className={styles.modalOverlay}>
+          <Box className={styles.modalBox}>
+            <Text fw={700} size="lg" mb={8}>진행 중인 기록이 사라집니다</Text>
+            <Text size="sm" c="#6b7280" mb={24} style={{ lineHeight: 1.6 }}>
+              진행 중인 「{progress?.examName}」 기록이 사라집니다. 계속할까요?
+            </Text>
+            <Group gap={10}>
+              <button
+                onClick={() => setConfirmNewStart(false)}
+                style={{ flex: 1, padding: '12px', borderRadius: 8, border: '2px solid #e5e7eb', background: 'white', color: '#4b5563', fontSize: 14, fontWeight: 700, cursor: 'pointer' }}
+              >
+                취소
+              </button>
+              <button
+                onClick={() => { setConfirmNewStart(false); onDiscardProgress(); onStart(selectedIdx) }}
+                style={{ flex: 1, padding: '12px', borderRadius: 8, border: 'none', background: '#2563eb', color: 'white', fontSize: 14, fontWeight: 700, cursor: 'pointer' }}
+              >
+                계속
+              </button>
+            </Group>
+          </Box>
+        </Box>
+      )}
+
+      {/* 진행 상태 삭제 확인 모달 */}
+      {confirmDelete && (
+        <Box className={styles.modalOverlay}>
+          <Box className={styles.modalBox}>
+            <Text fw={700} size="lg" mb={8}>진행 중인 기록을 삭제할까요?</Text>
+            <Text size="sm" c="#6b7280" mb={24} style={{ lineHeight: 1.6 }}>
+              「{progress?.examName}」의 저장된 진행 상태가 삭제됩니다. 이 작업은 되돌릴 수 없습니다.
+            </Text>
+            <Group gap={10}>
+              <button
+                onClick={() => setConfirmDelete(false)}
+                style={{ flex: 1, padding: '12px', borderRadius: 8, border: '2px solid #e5e7eb', background: 'white', color: '#4b5563', fontSize: 14, fontWeight: 700, cursor: 'pointer' }}
+              >
+                취소
+              </button>
+              <button
+                onClick={() => { setConfirmDelete(false); onDiscardProgress() }}
+                style={{ flex: 1, padding: '12px', borderRadius: 8, border: 'none', background: '#dc2626', color: 'white', fontSize: 14, fontWeight: 700, cursor: 'pointer' }}
+              >
+                삭제
+              </button>
+            </Group>
+          </Box>
+        </Box>
+      )}
     </Box>
   )
 }
 
 // ── 문제 화면 ────────────────────────────────────────────────
-function ExamScreen({ exam, onFinish, onBack, initialAnswers = {}, initialIdx = 0, reviewMode = false }) {
+function ExamScreen({ exam, onFinish, onBack, initialAnswers = {}, initialIdx = 0, initialFlags = [], initialTimeLeft = null, reviewMode = false, onProgress }) {
   const isCollection = exam.type === 'collection'
   const questions = exam.questions
 
   const [currentIdx, setCurrentIdx] = useState(initialIdx)
   const [userAnswers, setUserAnswers] = useState(initialAnswers)
-  const [flags, setFlags] = useState(new Set())
-  const [timeLeft, setTimeLeft] = useState(isCollection || reviewMode ? 0 : 150 * 60)
+  const [flags, setFlags] = useState(new Set(initialFlags))
+  const [timeLeft, setTimeLeft] = useState(isCollection || reviewMode ? 0 : (typeof initialTimeLeft === 'number' ? initialTimeLeft : 150 * 60))
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [showSubmitModal, setShowSubmitModal] = useState(false)
 
@@ -554,7 +674,63 @@ function ExamScreen({ exam, onFinish, onBack, initialAnswers = {}, initialIdx = 
     return () => { document.body.style.overflow = '' }
   }, [sidebarOpen])
 
+  // 매 렌더마다 최신 상태를 스냅샷으로 유지한다 — onProgress를 부르는 모든 경로(즉시저장/주기저장/이탈저장)가
+  // 이 ref를 통해 최신 값을 읽으므로 stale closure 없이 항상 최신 userAnswers/timeLeft가 저장된다.
+  const snapRef = useRef(null)
+  snapRef.current = {
+    examName: exam.name,
+    answers: userAnswers,
+    flags: [...flags],
+    currentIdx,
+    timeLeft,
+    total: questions.length,
+    updatedAt: new Date().toISOString(),
+  }
+
+  const canSaveProgress = !reviewMode && !!onProgress
+
+  // 저장 트리거 A: 답안/현재 문제/검토표시가 바뀌면 즉시 저장
+  useEffect(() => {
+    if (!canSaveProgress) return
+    onProgress(snapRef.current)
+  }, [userAnswers, currentIdx, flags, canSaveProgress])
+
+  // 저장 트리거 B: 10초 간격으로 저장 (타이머 값 반영용 — 매초 쓰기는 과함)
+  useEffect(() => {
+    if (!canSaveProgress) return
+    const id = setInterval(() => onProgress(snapRef.current), 10000)
+    return () => clearInterval(id)
+  }, [canSaveProgress])
+
+  // 제출 완료 여부. 제출 시 부모가 onFinish 안에서 setProgress(null)로 진행 상태를 지우는데,
+  // 그 직후 이 컴포넌트가 언마운트되면서 트리거 C의 "언마운트 시 마지막 저장"이 무조건 실행되면
+  // 방금 지운 진행 상태가 되살아난다. 이를 막기 위해 제출 여부를 기록해둔다.
+  const submittedRef = useRef(false)
+
+  // 저장 트리거 C: 앱 이탈/백그라운드 전환 시 저장 (모바일 PWA는 beforeunload가 안 불리는 경우가 많아 visibilitychange가 실질적 안전망)
+  useEffect(() => {
+    if (!canSaveProgress) return
+    const save = () => onProgress(snapRef.current)
+    const onVisibility = () => { if (document.visibilityState === 'hidden') save() }
+    window.addEventListener('beforeunload', save)
+    document.addEventListener('visibilitychange', onVisibility)
+    return () => {
+      window.removeEventListener('beforeunload', save)
+      document.removeEventListener('visibilitychange', onVisibility)
+      // 언마운트(다른 화면으로 이동) 시 마지막 상태를 한 번 더 저장. 단, 방금 제출된 경우는 예외 —
+      // 부모가 이미 진행 상태를 지웠으므로 여기서 다시 저장하면 안 된다.
+      if (!submittedRef.current) save()
+    }
+  }, [canSaveProgress])
+
   const timerRef = useRef(null)
+
+  // 인터벌 콜백이 첫 렌더의 handleSubmit을 그대로 캡처하면, 시간 만료로 자동 제출될 때
+  // userAnswers가 항상 빈 값(첫 렌더 값)으로 제출되는 버그가 있었다. ref로 최신 함수를 항상 참조하도록 고친다.
+  const submitRef = useRef(null)
+  useEffect(() => {
+    submitRef.current = handleSubmit
+  })
 
   useEffect(() => {
     if (isCollection || reviewMode || timeLeft === 0) return
@@ -562,7 +738,8 @@ function ExamScreen({ exam, onFinish, onBack, initialAnswers = {}, initialIdx = 
       setTimeLeft(t => {
         if (t <= 1) {
           clearInterval(timerRef.current)
-          handleSubmit()
+          // setState 업데이터 안에서 곧바로 handleSubmit(부모 setState 포함)을 부르면 렌더 중 업데이트가 되므로 다음 tick으로 미룬다
+          setTimeout(() => submitRef.current(), 0)
           return 0
         }
         return t - 1
@@ -572,6 +749,7 @@ function ExamScreen({ exam, onFinish, onBack, initialAnswers = {}, initialIdx = 
   }, [isCollection, reviewMode])
 
   function handleSubmit() {
+    submittedRef.current = true
     clearInterval(timerRef.current)
     onFinish({ questions, userAnswers, exam })
   }
@@ -617,12 +795,7 @@ function ExamScreen({ exam, onFinish, onBack, initialAnswers = {}, initialIdx = 
   const showAnswer = reviewMode || (isCollection && answered)
 
   // 타이머 포맷
-  const h = Math.floor(timeLeft / 3600)
-  const m = Math.floor((timeLeft % 3600) / 60)
-  const s = timeLeft % 60
-  const timerStr = h > 0
-    ? `${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`
-    : `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`
+  const timerStr = formatTimer(timeLeft)
   const timerColor = timeLeft <= 60 ? '#dc2626' : timeLeft <= 300 ? '#d97706' : '#1f2937'
 
   const unanswered = questions.length - Object.keys(userAnswers).length
@@ -1101,6 +1274,8 @@ export default function EngineerExamView({ onSaveResult, examResults }) {
   const [selectedExamIdx, setSelectedExamIdx] = useState(-1)
   const [examResult, setExamResult] = useState(null)
   const [reviewOrigin, setReviewOrigin] = useState('result') // 검토 화면에서 뒤로 갈 곳: 'result' | 'history'
+  const [progress, setProgress] = useExamProgress()
+  const [resuming, setResuming] = useState(false) // 'exam' 화면 진입이 이어서풀기인지(진행 상태를 초기값으로 쓸지)
 
   useEffect(() => {
     fetch(import.meta.env.BASE_URL + 'exam-questions.json')
@@ -1108,6 +1283,16 @@ export default function EngineerExamView({ onSaveResult, examResults }) {
       .then(data => setExams(data.exams))
       .catch(() => setExams([]))
   }, [])
+
+  // exam-questions.json은 계속 바뀌는 파일이라, 저장된 진행 상태가 가리키는 시험이 없어졌거나
+  // 문제 수가 달라졌으면(인덱스가 엉뚱한 문제를 가리킴) 복원하지 않고 폐기한다.
+  useEffect(() => {
+    if (!exams || !progress) return
+    const target = exams.find(e => e.name === progress.examName)
+    if (!target || target.questions.length !== progress.total) {
+      setProgress(null)
+    }
+  }, [exams, progress])
 
   if (!exams) {
     return <Center style={{ minHeight: 300 }}><Loader size="sm" /></Center>
@@ -1118,10 +1303,16 @@ export default function EngineerExamView({ onSaveResult, examResults }) {
   }
 
   if (screen === 'exam') {
+    const useResumedInit = resuming && progress
     return (
       <ExamScreen
         key="exam"
         exam={exams[selectedExamIdx]}
+        initialAnswers={useResumedInit ? normalizeAnswers(progress.answers) : {}}
+        initialIdx={useResumedInit ? progress.currentIdx : 0}
+        initialFlags={useResumedInit ? progress.flags : []}
+        initialTimeLeft={useResumedInit ? progress.timeLeft : null}
+        onProgress={setProgress}
         onFinish={result => {
           setExamResult(result)
           setScreen('result')
@@ -1135,6 +1326,7 @@ export default function EngineerExamView({ onSaveResult, examResults }) {
             updatedAt: new Date().toISOString(),
             answers: result.userAnswers,
           })
+          setProgress(null) // 제출 완료 — 더 이상 이어서 풀 대상이 아니므로 진행 상태를 지운다
         }}
         onBack={() => setScreen('start')}
       />
@@ -1185,7 +1377,7 @@ export default function EngineerExamView({ onSaveResult, examResults }) {
   return (
     <StartScreen
       exams={exams}
-      onStart={idx => { setSelectedExamIdx(idx); setScreen('exam') }}
+      onStart={idx => { setResuming(false); setSelectedExamIdx(idx); setScreen('exam') }}
       examResults={examResults}
       tab={tab}
       onTabChange={setTab}
@@ -1196,6 +1388,16 @@ export default function EngineerExamView({ onSaveResult, examResults }) {
         setReviewOrigin('history')
         setScreen('review')
       }}
+      progress={progress}
+      onResume={() => {
+        if (!progress) return
+        const idx = exams.findIndex(e => e.name === progress.examName)
+        if (idx < 0) { setProgress(null); return }
+        setResuming(true)
+        setSelectedExamIdx(idx)
+        setScreen('exam')
+      }}
+      onDiscardProgress={() => setProgress(null)}
     />
   )
 }
