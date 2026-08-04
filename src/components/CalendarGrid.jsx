@@ -89,7 +89,7 @@ export default function CalendarGrid({ current, today, onSelectDate, renderDayCo
                 </Flex>
 
                 {holidayName && (
-                  <Text c="red.4" ta="center" className={styles.holidayLabel} truncate>
+                  <Text c="red.4" ta="left" className={styles.holidayLabel} truncate style={{ marginLeft: isMobile ? 0 : 10 }}>
                     {holidayName}
                   </Text>
                 )}

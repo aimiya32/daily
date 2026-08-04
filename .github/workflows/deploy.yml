@@ -27,6 +27,7 @@ jobs:
       - run: npm run build
         env:
           VITE_GOOGLE_CLIENT_ID: ${{ secrets.VITE_GOOGLE_CLIENT_ID }}
+          VITE_HOLIDAY_API_KEY: ${{ secrets.VITE_HOLIDAY_API_KEY }}
       - uses: actions/upload-pages-artifact@v5
         with:
           path: dist
