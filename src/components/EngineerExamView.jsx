@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useRef, useCallback, useId } from 'react'
 import { useMediaQuery } from '@mantine/hooks'
 import { Box, Text, Stack, Group, Badge, ActionIcon, Loader, Center } from '@mantine/core'
 import { IconChevronLeft, IconChevronRight, IconFlag, IconList, IconCheck, IconX } from '@tabler/icons-react'
@@ -170,6 +170,171 @@ function TreeRenderer({ tree }) {
             </text>
           </g>
         ))}
+      </svg>
+    </Box>
+  )
+}
+
+// ── 그래프(노드-간선) 렌더러 ───────────────────────────────────
+function GraphRenderer({ graph }) {
+  const NODE_R = 15
+  const PAD = 18
+  const directed = !!graph.directed
+  const nodes = graph.nodes || []
+  const edges = graph.edges || []
+  const nodeMap = {}
+  nodes.forEach(n => { nodeMap[n.id] = n })
+
+  const rawId = useId()
+  const markerId = 'graph-arrow-' + rawId.replace(/[^a-zA-Z0-9]/g, '')
+
+  function nodeGeom(node) {
+    if (node.shape === 'rect') {
+      const label = String(node.label ?? node.id)
+      const w = Math.max(34, label.length * 9 + 16)
+      const h = 24
+      return { shape: 'rect', w, h, hw: w / 2, hh: h / 2 }
+    }
+    return { shape: 'circle', r: NODE_R }
+  }
+
+  // 중심 (cx,cy)에서 방향(ux,uy, 단위벡터) 쪽 도형 경계 위 점
+  function boundaryPoint(cx, cy, geom, ux, uy) {
+    if (geom.shape === 'circle') {
+      return { x: cx + ux * geom.r, y: cy + uy * geom.r }
+    }
+    const tx = ux !== 0 ? geom.hw / Math.abs(ux) : Infinity
+    const ty = uy !== 0 ? geom.hh / Math.abs(uy) : Infinity
+    const t = Math.min(tx, ty)
+    return { x: cx + ux * t, y: cy + uy * t }
+  }
+
+  function computeEdge(edge) {
+    const n1 = nodeMap[edge.from]
+    const n2 = nodeMap[edge.to]
+    const g1 = nodeGeom(n1)
+    const g2 = nodeGeom(n2)
+    const curve = edge.curve || 0
+    const isCurve = curve !== 0
+    const dx = n2.x - n1.x, dy = n2.y - n1.y
+    const L = Math.hypot(dx, dy) || 1
+    let dir0 = { x: dx / L, y: dy / L }
+    let dir1 = { x: -dx / L, y: -dy / L }
+    let cx, cy
+    if (isCurve) {
+      const nx = dy / L, ny = -dx / L
+      const mx = (n1.x + n2.x) / 2, my = (n1.y + n2.y) / 2
+      cx = mx + curve * L * nx
+      cy = my + curve * L * ny
+      const d0L = Math.hypot(cx - n1.x, cy - n1.y) || 1
+      dir0 = { x: (cx - n1.x) / d0L, y: (cy - n1.y) / d0L }
+      const d1L = Math.hypot(cx - n2.x, cy - n2.y) || 1
+      dir1 = { x: (cx - n2.x) / d1L, y: (cy - n2.y) / d1L }
+    }
+    const p1 = boundaryPoint(n1.x, n1.y, g1, dir0.x, dir0.y)
+    let p2 = boundaryPoint(n2.x, n2.y, g2, dir1.x, dir1.y)
+    if (directed) {
+      // 화살표 머리만큼 여유를 두고 노드 경계 앞에서 멈춘다
+      p2 = { x: p2.x - dir1.x * 3, y: p2.y - dir1.y * 3 }
+    }
+    let labelX, labelY
+    if (isCurve) {
+      labelX = 0.25 * p1.x + 0.5 * cx + 0.25 * p2.x
+      labelY = 0.25 * p1.y + 0.5 * cy + 0.25 * p2.y
+    } else {
+      labelX = (p1.x + p2.x) / 2
+      labelY = (p1.y + p2.y) / 2
+    }
+    return { x1: p1.x, y1: p1.y, x2: p2.x, y2: p2.y, cx, cy, isCurve, labelX, labelY }
+  }
+
+  let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity
+  nodes.forEach(n => {
+    const g = nodeGeom(n)
+    const rx = g.shape === 'circle' ? g.r : g.hw
+    const ry = g.shape === 'circle' ? g.r : g.hh
+    minX = Math.min(minX, n.x - rx); maxX = Math.max(maxX, n.x + rx)
+    minY = Math.min(minY, n.y - ry); maxY = Math.max(maxY, n.y + ry)
+  })
+  edges.forEach(e => {
+    const curve = e.curve || 0
+    if (curve === 0) return
+    const n1 = nodeMap[e.from], n2 = nodeMap[e.to]
+    const dx = n2.x - n1.x, dy = n2.y - n1.y
+    const L = Math.hypot(dx, dy) || 1
+    const nx = dy / L, ny = -dx / L
+    const mx = (n1.x + n2.x) / 2, my = (n1.y + n2.y) / 2
+    const cx = mx + curve * L * nx, cy = my + curve * L * ny
+    minX = Math.min(minX, cx - 10); maxX = Math.max(maxX, cx + 10)
+    minY = Math.min(minY, cy - 10); maxY = Math.max(maxY, cy + 10)
+  })
+  if (!nodes.length) return null
+
+  const svgW = (maxX - minX) + PAD * 2
+  const svgH = (maxY - minY) + PAD * 2
+  const ox = PAD - minX
+  const oy = PAD - minY
+
+  return (
+    <Box style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 8, padding: '14px 8px', overflowX: 'auto', marginBottom: 12 }}>
+      <svg width={svgW} height={svgH} style={{ display: 'block', margin: '0 auto', minWidth: svgW }}>
+        {directed && (
+          <defs>
+            <marker id={markerId} viewBox="0 0 10 10" refX="10" refY="5" markerWidth="7" markerHeight="7" markerUnits="userSpaceOnUse" orient="auto">
+              <path d="M0,0 L10,5 L0,10 Z" fill="#94a3b8" />
+            </marker>
+          </defs>
+        )}
+        <g transform={`translate(${ox},${oy})`}>
+          {edges.map((e, i) => {
+            const geo = computeEdge(e)
+            const labelW = e.label ? String(e.label).length * 7 + 6 : 0
+            return (
+              <g key={i}>
+                {geo.isCurve ? (
+                  <path
+                    d={`M ${geo.x1} ${geo.y1} Q ${geo.cx} ${geo.cy} ${geo.x2} ${geo.y2}`}
+                    fill="none"
+                    stroke="#94a3b8"
+                    strokeWidth={1.5}
+                    markerEnd={directed ? `url(#${markerId})` : undefined}
+                  />
+                ) : (
+                  <line
+                    x1={geo.x1} y1={geo.y1} x2={geo.x2} y2={geo.y2}
+                    stroke="#94a3b8"
+                    strokeWidth={1.5}
+                    markerEnd={directed ? `url(#${markerId})` : undefined}
+                  />
+                )}
+                {e.label && (
+                  <g>
+                    <rect x={geo.labelX - labelW / 2} y={geo.labelY - 7} width={labelW} height={14} fill="white" />
+                    <text x={geo.labelX} y={geo.labelY} textAnchor="middle" dominantBaseline="middle" fontSize={11} fill="#475569">
+                      {e.label}
+                    </text>
+                  </g>
+                )}
+              </g>
+            )
+          })}
+          {nodes.map((n, i) => {
+            const g = nodeGeom(n)
+            const label = n.label ?? n.id
+            return (
+              <g key={i}>
+                {g.shape === 'rect' ? (
+                  <rect x={n.x - g.hw} y={n.y - g.hh} width={g.w} height={g.h} rx={3} fill="white" stroke="#475569" strokeWidth={1.5} />
+                ) : (
+                  <circle cx={n.x} cy={n.y} r={g.r} fill="white" stroke="#475569" strokeWidth={1.5} />
+                )}
+                <text x={n.x} y={n.y + 1} textAnchor="middle" dominantBaseline="middle" fontSize={13} fontWeight={600} fill="#1e293b" style={{ fontFamily: 'inherit' }}>
+                  {label}
+                </text>
+              </g>
+            )
+          })}
+        </g>
       </svg>
     </Box>
   )
@@ -631,6 +796,7 @@ function ExamScreen({ exam, onFinish, onBack, initialAnswers = {}, initialIdx = 
                 )
               })()}
               {q.tree && <TreeRenderer tree={q.tree} />}
+              {q.graph && <GraphRenderer graph={q.graph} />}
 
               <Stack gap={8}>
                 {q.choices.map((c, i) => {
