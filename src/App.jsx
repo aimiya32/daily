@@ -44,6 +44,7 @@ import { setAccountPrefix, isInitialized, markInitialized, nk } from './lib/acco
 import { solarFromLunar } from './lib/lunar'
 import { deleteImages, getImage, putImage } from './lib/imageStore'
 import { setImageTokenProvider, uploadImageRecord } from './lib/driveImages'
+import { mergeById } from './lib/mergeById'
 
 // ── 로그인 게이트 ─────────────────────────────────────────
 // 로그인 전에는 데이터 훅을 마운트하지 않고, 로그인 후 계정별 네임스페이스를
@@ -117,15 +118,18 @@ function Workspace({ drive }) {
   function applyDriveData(data) {
     if (!data) return
     if (data.records) mergeRecords(data.records)
-    if (data.categories) setAllCategories(data.categories)
+    // 카테고리류는 여러 기기에서 불러오기를 반복해도 로컬 고유 항목이 사라지지
+    // 않도록 통째 교체 대신 id 기준 병합(mergeById)을 쓴다. updatedAt이 없는
+    // 항목은 LWW 비교(remote > local)가 항상 false가 되어 로컬이 유지된다.
+    if (data.categories) setAllCategories(mergeById(categories, data.categories))
     if (data.schedules) mergeSchedules(data.schedules)
-    if (data.scheduleCategories) setAllScatCategories(data.scheduleCategories)
-    if (data.routines) setAllRoutines(data.routines)
+    if (data.scheduleCategories) setAllScatCategories(mergeById(scheduleCategories, data.scheduleCategories))
+    if (data.routines) setAllRoutines(mergeById(routines, data.routines))
     if (data.routineChecks) mergeChecks(data.routineChecks)
-    if (data.trackerCategories) setAllTrackerCategories(data.trackerCategories)
+    if (data.trackerCategories) setAllTrackerCategories(mergeById(trackerCategories, data.trackerCategories))
     if (data.trackerLogs) mergeTrackerLogs(data.trackerLogs)
     if (data.ledger) mergeLedgerItems(data.ledger)
-    if (data.ledgerCategories) setAllLedgerCategories(data.ledgerCategories)
+    if (data.ledgerCategories) setAllLedgerCategories(mergeById(ledgerCategories, data.ledgerCategories))
     if (data.contacts) mergeContactItems(data.contacts)
     if (data.examResults) mergeExamResults(data.examResults)
     if (data.workTodos) mergeWorkTodos(data.workTodos)
