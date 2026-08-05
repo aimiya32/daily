@@ -9987,13 +9987,108 @@
           "subject": "데이터베이스 구축",
           "question": "테이블 R과 S에 대한 SQL문이 실행되었을 때, 실행결과로 옳은 것은?",
           "choices": [
-            "A: 1, 1",
-            "A: 1, 2, 3",
-            "A: 1, 2, 1, 3",
-            "A: 1, 3, 1, 2"
+            {
+              "table": {
+                "headers": [
+                  "A"
+                ],
+                "rows": [
+                  [
+                    "1"
+                  ]
+                ]
+              }
+            },
+            {
+              "table": {
+                "headers": [
+                  "A"
+                ],
+                "rows": [
+                  [
+                    "3"
+                  ],
+                  [
+                    "2"
+                  ]
+                ]
+              }
+            },
+            {
+              "table": {
+                "headers": [
+                  "A"
+                ],
+                "rows": [
+                  [
+                    "1"
+                  ],
+                  [
+                    "3"
+                  ]
+                ]
+              }
+            },
+            {
+              "table": {
+                "headers": [
+                  "A"
+                ],
+                "rows": [
+                  [
+                    "1"
+                  ],
+                  [
+                    "3"
+                  ],
+                  [
+                    "1"
+                  ],
+                  [
+                    "2"
+                  ]
+                ]
+              }
+            }
           ],
           "answer": 4,
-          "description": "(R: A={1,3}, S: A={1,2}\nSELECT A FROM R UNION ALL SELECT A FROM S)"
+          "sql": "SELECT A FROM R\nUNION ALL\nSELECT A FROM S;",
+          "tables": [
+            {
+              "label": "[R]",
+              "headers": [
+                "A",
+                "B"
+              ],
+              "rows": [
+                [
+                  "1",
+                  "A"
+                ],
+                [
+                  "3",
+                  "B"
+                ]
+              ]
+            },
+            {
+              "label": "[S]",
+              "headers": [
+                "A",
+                "B"
+              ],
+              "rows": [
+                [
+                  "1",
+                  "A"
+                ],
+                [
+                  "2",
+                  "B"
+                ]
+              ]
+            }
+          ]
         },
         {
           "number": 57,
