@@ -348,6 +348,31 @@ function normalizeAnswers(answers) {
   return result
 }
 
+// ── 과목별 채점. 기출은 5과목 × 20문항이고 컬렉션은 합성 과목 1개뿐이라
+// activeSubs.length > 1 로 기출만 과목별 표시를 켤 수 있다.
+function scoreBySubject(questions, userAnswers) {
+  let correct = 0, wrong = 0, unanswered = 0
+  const subjectStats = {}
+  SUBJECTS.forEach(s => { subjectStats[s] = { correct: 0, total: 0 } })
+
+  questions.forEach((q, i) => {
+    const subj = q.subject
+    if (!subjectStats[subj]) subjectStats[subj] = { correct: 0, total: 0 }
+    subjectStats[subj].total++
+    if (userAnswers[i] === undefined) unanswered++
+    else if (userAnswers[i] === q.answer) { correct++; subjectStats[subj].correct++ }
+    else wrong++
+  })
+
+  const subjectPass = SUBJECTS.every(s => {
+    const st = subjectStats[s]
+    return !st || st.total === 0 || (st.correct / st.total) >= 0.4
+  })
+  const activeSubs = SUBJECTS.filter(s => subjectStats[s]?.total > 0)
+
+  return { correct, wrong, unanswered, subjectStats, activeSubs, subjectPass }
+}
+
 // ── 타이머/저장시각 포맷 (ExamScreen 타이머, StartScreen 이어풀기 배너 공용) ──
 function formatTimer(totalSeconds) {
   const h = Math.floor(totalSeconds / 3600)
@@ -404,14 +429,21 @@ function StartScreen({ exams, onStart, examResults, tab, onTabChange, onReviewRe
               {examResults.map(r => {
                 // 정답 키가 바뀌었을 수 있으므로 저장된 점수 대신 현재 정답 키로 다시 채점한다
                 let correct = r.correct
+                let activeSubs = [], subjectStats = {}, subjectPass = true
                 const matchedExam = r.answers && exams.find(e => e.name === r.examName)
                 if (matchedExam && matchedExam.questions.length === r.total) {
                   const userAnswers = normalizeAnswers(r.answers)
-                  correct = matchedExam.questions.filter((q, i) => userAnswers[i] === q.answer).length
+                  const scored = scoreBySubject(matchedExam.questions, userAnswers)
+                  correct = scored.correct
+                  activeSubs = scored.activeSubs
+                  subjectStats = scored.subjectStats
+                  subjectPass = scored.subjectPass
                 }
                 const rescored = correct !== r.correct
                 const pct = Math.round((correct / r.total) * 100)
-                const passed = pct >= 60
+                const hasSubjectBreakdown = activeSubs.length > 1
+                const passed = hasSubjectBreakdown ? (subjectPass && pct >= 60) : pct >= 60
+                const failedBySubject = hasSubjectBreakdown && pct >= 60 && !subjectPass
                 const date = new Date(r.date)
                 const dateStr = `${date.getFullYear()}.${String(date.getMonth() + 1).padStart(2, '0')}.${String(date.getDate()).padStart(2, '0')}`
                 const reviewable = !!(r.answers && exams.some(e => e.name === r.examName))
@@ -432,9 +464,35 @@ function StartScreen({ exams, onStart, examResults, tab, onTabChange, onReviewRe
                         {correct}/{r.total}문제 정답 · {dateStr}
                         {rescored && <Text component="span" size="xs" c="#9ca3af"> · 정답 키 수정 반영 (기존 {r.correct}점)</Text>}
                       </Text>
+                      {hasSubjectBreakdown && (
+                        <Box className={styles.historySubjectRow}>
+                          {activeSubs.map((s, idx) => {
+                            const st = subjectStats[s]
+                            const subPct = Math.round((st.correct / st.total) * 100)
+                            const isFail = subPct < 40
+                            return (
+                              <Text
+                                key={s}
+                                component="span"
+                                size="xs"
+                                className={styles.historySubjectChip}
+                                style={{ color: isFail ? '#dc2626' : '#6b7280', fontWeight: isFail ? 700 : 400 }}
+                              >
+                                {SUBJECT_SHORT[s] || s} {subPct}점
+                                {idx < activeSubs.length - 1 && <span className={styles.historySubjectDot}>·</span>}
+                              </Text>
+                            )
+                          })}
+                        </Box>
+                      )}
                     </Box>
-                    <Box className={styles.passBadge} style={{ background: passed ? '#dcfce7' : '#fee2e2' }}>
-                      <Text size="xs" fw={700} c={passed ? '#16a34a' : '#dc2626'}>{passed ? '합격' : '불합격'}</Text>
+                    <Box style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4, flexShrink: 0 }}>
+                      <Box className={styles.passBadge} style={{ background: passed ? '#dcfce7' : '#fee2e2' }}>
+                        <Text size="xs" fw={700} c={passed ? '#16a34a' : '#dc2626'}>{passed ? '합격' : '불합격'}</Text>
+                      </Box>
+                      {failedBySubject && (
+                        <Text size="xs" fw={700} c="#dc2626">과락</Text>
+                      )}
                     </Box>
                     {!reviewable && (
                       <Text size="xs" c="#9ca3af" style={{ flexShrink: 0 }}>답안 기록 없음</Text>
@@ -1235,26 +1293,10 @@ function QDot({ i, q, currentIdx, userAnswers, flags, isCollection, onClick }) {
 function ResultScreen({ result, onReview, onRetry }) {
   const isNarrow = useIsNarrow()
   const { questions, userAnswers, exam } = result
-  let correct = 0, wrong = 0, unanswered = 0
-  const subjectStats = {}
-  SUBJECTS.forEach(s => { subjectStats[s] = { correct: 0, total: 0 } })
-
-  questions.forEach((q, i) => {
-    const subj = q.subject
-    if (!subjectStats[subj]) subjectStats[subj] = { correct: 0, total: 0 }
-    subjectStats[subj].total++
-    if (userAnswers[i] === undefined) unanswered++
-    else if (userAnswers[i] === q.answer) { correct++; subjectStats[subj].correct++ }
-    else wrong++
-  })
+  const { correct, wrong, unanswered, subjectStats, activeSubs, subjectPass } = scoreBySubject(questions, userAnswers)
 
   const scorePercent = Math.round((correct / questions.length) * 100)
-  const subjectPass = SUBJECTS.every(s => {
-    const st = subjectStats[s]
-    return !st || st.total === 0 || (st.correct / st.total) >= 0.4
-  })
   const passed = subjectPass && scorePercent >= 60
-  const activeSubs = SUBJECTS.filter(s => subjectStats[s]?.total > 0)
 
   return (
     <Box className={styles.resultWrap}>

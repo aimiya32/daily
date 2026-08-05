@@ -172,6 +172,22 @@
   text-overflow: ellipsis;
 }
 
+.historySubjectRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 6px;
+}
+
+.historySubjectChip {
+  white-space: nowrap;
+}
+
+.historySubjectDot {
+  margin: 0 4px;
+  color: #d1d5db;
+}
+
 .passBadge {
   padding: 4px 12px;
   border-radius: 99px;
