@@ -401,7 +401,15 @@ function StartScreen({ exams, onStart, examResults, tab, onTabChange, onReviewRe
           ) : (
             <Stack gap={10}>
               {examResults.map(r => {
-                const pct = Math.round((r.correct / r.total) * 100)
+                // 정답 키가 바뀌었을 수 있으므로 저장된 점수 대신 현재 정답 키로 다시 채점한다
+                let correct = r.correct
+                const matchedExam = r.answers && exams.find(e => e.name === r.examName)
+                if (matchedExam && matchedExam.questions.length === r.total) {
+                  const userAnswers = normalizeAnswers(r.answers)
+                  correct = matchedExam.questions.filter((q, i) => userAnswers[i] === q.answer).length
+                }
+                const rescored = correct !== r.correct
+                const pct = Math.round((correct / r.total) * 100)
                 const passed = pct >= 60
                 const date = new Date(r.date)
                 const dateStr = `${date.getFullYear()}.${String(date.getMonth() + 1).padStart(2, '0')}.${String(date.getDate()).padStart(2, '0')}`
@@ -419,7 +427,10 @@ function StartScreen({ exams, onStart, examResults, tab, onTabChange, onReviewRe
                       <Text fw={700} size="sm" c="#111827" className={styles.historyNameText}>
                         {r.examName}
                       </Text>
-                      <Text size="xs" c="#6b7280" mt={2}>{r.correct}/{r.total}문제 정답 · {dateStr}</Text>
+                      <Text size="xs" c="#6b7280" mt={2}>
+                        {correct}/{r.total}문제 정답 · {dateStr}
+                        {rescored && <Text component="span" size="xs" c="#9ca3af"> · 정답 키 수정 반영 (기존 {r.correct}점)</Text>}
+                      </Text>
                     </Box>
                     <Box className={styles.passBadge} style={{ background: passed ? '#dcfce7' : '#fee2e2' }}>
                       <Text size="xs" fw={700} c={passed ? '#16a34a' : '#dc2626'}>{passed ? '합격' : '불합격'}</Text>
