@@ -1,12 +1,13 @@
 import { Paper, Group, Box, ActionIcon, Text, Button, Popover } from '@mantine/core'
 import { MonthPicker } from '@mantine/dates'
-import { useMediaQuery, useDisclosure } from '@mantine/hooks'
+import { useDisclosure } from '@mantine/hooks'
 import { IconChevronLeft, IconChevronRight } from '@tabler/icons-react'
 import dayjs from 'dayjs'
 import styles from './CalendarNav.module.scss'
+import { useIsNarrow } from '../hooks/useBreakpoint'
 
 export default function CalendarNav({ title, onPrev, onNext, onToday, rightSection, monthValue, onMonthSelect, standalone = false }) {
-  const isNarrow = useMediaQuery('(max-width: 500px)')
+  const isNarrow = useIsNarrow()
   const radius = 14
   const [picker, { toggle: togglePicker, close: closePicker }] = useDisclosure(false)
   const isMonthPicker = !!onMonthSelect

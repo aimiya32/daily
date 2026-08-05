@@ -1,13 +1,14 @@
 import { useState, useEffect, useRef } from 'react'
 import { Stack, Group, Text, Paper, ActionIcon, Button, Checkbox, TextInput, Textarea, Center, Select, Modal, Tooltip } from '@mantine/core'
-import { useDisclosure, useClickOutside, useMediaQuery } from '@mantine/hooks'
+import { useDisclosure, useClickOutside } from '@mantine/hooks'
 import {
   IconChevronLeft, IconChevronRight, IconTrash, IconPlus,
   IconChecklist, IconClock, IconChevronDown, IconCheck,
 } from '@tabler/icons-react'
 import dayjs from 'dayjs'
 import 'dayjs/locale/ko'
-import { WEEKDAYS_KO } from '../lib/dates'
+import { WEEKDAYS_KO, DATE_FMT, todayStr } from '../lib/dates'
+import { useIsMobile } from '../hooks/useBreakpoint'
 import { getLunarLabel } from '../lib/lunar'
 import { useCalendarMaxItems } from '../hooks/useCalendarMaxItems'
 import { hexOf, DEFAULT_HEX } from '../lib/colors'
@@ -16,8 +17,6 @@ import { DayPill, OverflowCount } from './DayPill'
 import styles from './WorkDashboard.module.scss'
 
 dayjs.locale('ko')
-
-const FMT = 'YYYY-MM-DD'
 
 // 세로 휠을 가로 스크롤로 바꾼다. 단, 가로 끝에 닿으면 기본 동작으로 넘겨
 // 페이지 세로 스크롤을 막지 않는다. (React onWheel은 passive라 preventDefault가 안 먹어서 직접 등록)
@@ -127,7 +126,7 @@ function MonthPanel({ events, schedules, scheduleCategories, dateStr, onChangeDa
   }, [dateStr])
 
   const monthStart = dayjs(`${viewMonth}-01`)
-  const today = dayjs().format(FMT)
+  const today = todayStr()
 
   // 달력 셀당 표시할 일정 최대 개수 (개인 일정 달력과 동일한 반응형 기준)
   // wide 강제 시 그리드가 min-width 992px로 펴져 셀 폭이 992px 뷰포트와 같으므로,
@@ -136,7 +135,7 @@ function MonthPanel({ events, schedules, scheduleCategories, dateStr, onChangeDa
   const maxItems = forceWide ? 3 : responsiveMaxItems
 
   // 모바일에서는 카테고리 필터를 화면 중앙 모달 피커로 띄운다
-  const isMobile = useMediaQuery('(max-width: 690px)')
+  const isMobile = useIsMobile()
   const [filterModal, filterModalCtl] = useDisclosure(false)
   const filterLabel = filterCat == null ? '전체' : (scheduleCategories.find(c => c.id === filterCat)?.name ?? '전체')
   // 고정폭 대신 라벨 콘텐츠 폭에 맞춘다 (한글 ~13px, 그 외 ~8px 추정)
@@ -296,7 +295,7 @@ function WeekPanel({ events, schedules, scheduleCategories, weekly, dateStr, onC
   // 월요일 시작 주
   const weekStart = base.subtract((base.day() + 6) % 7, 'day')
   const days = Array.from({ length: 7 }, (_, i) => weekStart.add(i, 'day'))
-  const today = dayjs().format(FMT)
+  const today = todayStr()
 
   return (
     <Paper className={styles.panel} p="md">
@@ -306,7 +305,7 @@ function WeekPanel({ events, schedules, scheduleCategories, weekly, dateStr, onC
       </Group>
       <Stack gap={6}>
         {days.map(d => {
-          const ds = d.format(FMT)
+          const ds = d.format(DATE_FMT)
           const dayEvents = events
             .filter(e => e.date === ds)
             .sort((a, b) => a.time.localeCompare(b.time))

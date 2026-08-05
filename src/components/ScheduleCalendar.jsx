@@ -1,28 +1,27 @@
 import { useState } from 'react'
-import { useLocalStorageState } from '../hooks/useLocalStorageState'
 import { Stack, Chip, Group, Button, ScrollArea } from '@mantine/core'
 import { useDisclosure } from '@mantine/hooks'
 import { IconPlus } from '@tabler/icons-react'
 import { useCalendarMaxItems } from '../hooks/useCalendarMaxItems'
+import { useMonthCursor } from '../hooks/useCalendarCursor'
 import { hexOf, DEFAULT_HEX } from '../lib/colors'
 import CalendarGrid from './CalendarGrid'
 import CalendarNav from './CalendarNav'
 import { DayPill, OverflowCount } from './DayPill'
 import ScheduleDayDrawer from './ScheduleDayDrawer'
+import { todayStr } from '../lib/dates'
 import dayjs from 'dayjs'
 import './ScheduleCalendar.module.scss'
 
 export default function ScheduleCalendar({ schedules, categories, onView, onAdd, onManageCategories }) {
-  const [_monthStr, _setMonthStr] = useLocalStorageState('ui_schedule_month', dayjs().format('YYYY-MM'))
-  const current = dayjs(_monthStr).startOf('month')
-  const setCurrent = (d) => _setMonthStr(d.format('YYYY-MM'))
+  const [current, setCurrent] = useMonthCursor()
   const [filterCat, setFilterCat] = useState('all')
   const [selectedDate, setSelectedDate] = useState(null)
   const [drawerOpened, { open: openDrawer, close: closeDrawer }] = useDisclosure(false)
 
   const maxItems = useCalendarMaxItems()
 
-  const today = dayjs().format('YYYY-MM-DD')
+  const today = todayStr()
 
   const filteredSchedules = filterCat === 'all'
     ? schedules

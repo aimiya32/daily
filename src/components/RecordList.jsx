@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import { useLocalStorageState } from '../hooks/useLocalStorageState'
 import { Stack, Paper, Text, Group, ActionIcon, Center, Chip, Badge, Box, SegmentedControl, Button, SimpleGrid } from '@mantine/core'
 import { IconPencil, IconTrash, IconPencilPlus } from '@tabler/icons-react'
 import CalendarGrid from './CalendarGrid'
@@ -8,6 +7,8 @@ import CalendarNav from './CalendarNav'
 import StoredImage from './StoredImage'
 import { DayPill, OverflowCount } from './DayPill'
 import { useCalendarMaxItems } from '../hooks/useCalendarMaxItems'
+import { useMonthCursor, useWeekCursor } from '../hooks/useCalendarCursor'
+import { todayStr } from '../lib/dates'
 import { collectTags } from '../lib/tags'
 import dayjs from 'dayjs'
 import styles from './RecordList.module.scss'
@@ -16,16 +17,12 @@ export default function RecordList({ records, categories, onEdit, onDelete, onVi
   const maxItems = useCalendarMaxItems()
   const [filterCat, setFilterCat] = useState('all')
   const [calView, setCalView] = useState('month') // list | month | week
-  const [_monthStr, _setMonthStr] = useLocalStorageState('ui_record_month', dayjs().format('YYYY-MM'))
-  const current = dayjs(_monthStr).startOf('month')
-  const setCurrent = (d) => _setMonthStr(d.format('YYYY-MM'))
-  const [_weekStr, _setWeekStr] = useLocalStorageState('ui_record_week', dayjs().startOf('week').format('YYYY-MM-DD'))
-  const currentWeek = dayjs(_weekStr)
-  const setCurrentWeek = (d) => _setWeekStr(d.format('YYYY-MM-DD'))
+  const [current, setCurrent] = useMonthCursor()
+  const [currentWeek, setCurrentWeek] = useWeekCursor()
   const [selectedTag, setSelectedTag] = useState(null)
   const cardRadius = 14
 
-  const today = dayjs().format('YYYY-MM-DD')
+  const today = todayStr()
 
   // 사용된 모든 태그
   const allTags = collectTags(records)

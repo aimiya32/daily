@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react'
-import { useLocalStorageState } from '../hooks/useLocalStorageState'
 import {
   Stack, Group, Text, ActionIcon, Checkbox, TextInput,
   Switch, SegmentedControl, Badge, Drawer,
@@ -7,23 +6,23 @@ import {
 import { useDisclosure } from '@mantine/hooks'
 import { IconPlus, IconCheck } from '@tabler/icons-react'
 import { useCalendarMaxItems } from '../hooks/useCalendarMaxItems'
+import { useMonthCursor, useWeekCursor, useDayCursor } from '../hooks/useCalendarCursor'
 import CalendarGrid from './CalendarGrid'
 import WeekGrid from './WeekGrid'
 import CalendarNav from './CalendarNav'
 import DatePopoverTitle from './DatePopoverTitle'
 import { DayPill, OverflowCount } from './DayPill'
+import { todayStr } from '../lib/dates'
 import dayjs from 'dayjs'
 import styles from './RoutineView.module.scss'
 
 export default function RoutineView({ routines, isChecked, toggle, getCheckedRoutineIds, addRoutine, updateRoutine, toggleVisible, onExposeOpen }) {
   const [calView, setCalView] = useState('month') // month | week
-  const [_monthStr, _setMonthStr] = useLocalStorageState('ui_routine_month', dayjs().format('YYYY-MM'))
-  const current = dayjs(_monthStr).startOf('month')
-  const setCurrent = (d) => _setMonthStr(d.format('YYYY-MM'))
-  const [_weekStr, _setWeekStr] = useLocalStorageState('ui_routine_week', dayjs().startOf('week').format('YYYY-MM-DD'))
-  const currentWeek = dayjs(_weekStr)
-  const setCurrentWeek = (d) => _setWeekStr(d.format('YYYY-MM-DD'))
-  const [selectedDate, setSelectedDate] = useLocalStorageState('ui_routine_date', dayjs().format('YYYY-MM-DD'))
+  const [current, setCurrent] = useMonthCursor()
+  const [currentWeek, setCurrentWeek] = useWeekCursor()
+  const [selectedDay, setSelectedDay] = useDayCursor()
+  const selectedDate = selectedDay.format('YYYY-MM-DD')
+  const setSelectedDate = (s) => setSelectedDay(dayjs(s))
   const [mode, setMode] = useState('check')
   const [newName, setNewName] = useState('')
   const [editNames, setEditNames] = useState({})
@@ -35,7 +34,7 @@ export default function RoutineView({ routines, isChecked, toggle, getCheckedRou
 
   const maxItems = useCalendarMaxItems()
 
-  const today = dayjs().format('YYYY-MM-DD')
+  const today = todayStr()
   const visibleRoutines = routines.filter(r => r.visible)
 
   function handleEditSave(id) {

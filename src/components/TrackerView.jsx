@@ -1,17 +1,19 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import styles from './TrackerView.module.scss'
-import { useLocalStorageState } from '../hooks/useLocalStorageState'
 import {
   Stack, Group, Text, Box, Paper, NumberInput, Progress, Center,
   Popover, Button, Select, SegmentedControl, ActionIcon, Divider,
 } from '@mantine/core'
 import { DatePicker } from '@mantine/dates'
-import { useDisclosure, useMediaQuery } from '@mantine/hooks'
+import { useDisclosure } from '@mantine/hooks'
 import { IconChevronDown, IconCalendarPlus, IconPlus, IconX } from '@tabler/icons-react'
 import CalendarNav from './CalendarNav'
 import CalendarGrid from './CalendarGrid'
 import TrackerBulkPlan from './TrackerBulkPlan'
+import { useMonthCursor, useDayCursor } from '../hooks/useCalendarCursor'
 import { hexOf, DEFAULT_HEX } from '../lib/colors'
+import { todayStr } from '../lib/dates'
+import { useIsNarrow } from '../hooks/useBreakpoint'
 import dayjs from 'dayjs'
 import 'dayjs/locale/ko'
 
@@ -34,13 +36,8 @@ function fmt1(n) {
 
 export default function TrackerView({ categories, logs, getLog, setLog, bulkSetPlanned }) {
   const [mode, setMode] = useState('calendar') // calendar | summary
-  const [_dayStr, _setDayStr] = useLocalStorageState('ui_tracker_day', dayjs().format('YYYY-MM-DD'))
-  const day = dayjs(_dayStr)
-  const setDay = (d) => _setDayStr(d.format('YYYY-MM-DD'))
-  const [_monthStr, _setMonthStr] = useLocalStorageState('ui_tracker_month', dayjs().format('YYYY-MM'))
-  const month = dayjs(_monthStr).startOf('month')
-  const setMonth = (d) => _setMonthStr(d.format('YYYY-MM'))
-  useEffect(() => { setDay(dayjs()); setMonth(dayjs()) }, [])
+  const [day, setDay] = useDayCursor()
+  const [month, setMonth] = useMonthCursor()
 
   const [catId, setCatId] = useState(categories[0]?.id ?? null)
   const [calMode, setCalMode] = useState('all') // all | plan | actual (달력 표시 모드)
@@ -142,7 +139,7 @@ export default function TrackerView({ categories, logs, getLog, setLog, bulkSetP
 function DailyView({ categories, day, setDay, getLog, setLog, selectedId, setCatId }) {
   const dateStr = day.format('YYYY-MM-DD')
   const [picker, { toggle: togglePicker, close: closePicker }] = useDisclosure(false)
-  const isNarrow = useMediaQuery('(max-width: 500px)')
+  const isNarrow = useIsNarrow()
   const radius = 14
 
   const cat = categories.find(c => c.id === selectedId)
@@ -455,8 +452,7 @@ function RatePair({ todayPct, pct, color }) {
 function mtdPct(sumRange, categoryId, month) {
   if (!month.isSame(dayjs(), 'month')) return null
   const start = month.startOf('month').format('YYYY-MM-DD')
-  const todayStr = dayjs().format('YYYY-MM-DD')
-  const { planned, actual } = sumRange(categoryId, start, todayStr)
+  const { planned, actual } = sumRange(categoryId, start, todayStr())
   return planned > 0 ? Math.round(actual / planned * 100) : null
 }
 
@@ -483,8 +479,8 @@ function MonthTotals({ cat, month, sumRange }) {
 
 // ── 달력 보기 (선택 카테고리, 계획/실제를 칸으로) ──────────
 function CalendarView({ cat, logs, month, setMonth, calMode, onSelectDate }) {
-  const today = dayjs().format('YYYY-MM-DD')
-  const isNarrow = useMediaQuery('(max-width: 500px)')
+  const today = todayStr()
+  const isNarrow = useIsNarrow()
   const unit = (cat?.unit && !isNarrow) ? cat.unit : ''  // 500px 이하에선 달력 칸 단위 생략
   const showPlan = calMode === 'all' || calMode === 'plan'
   const showActual = calMode === 'all' || calMode === 'actual'

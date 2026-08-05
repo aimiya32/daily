@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import { useLocalStorageState } from '../hooks/useLocalStorageState'
 import {
   Stack, Paper, Group, Text, Button, NumberInput, TextInput,
   SegmentedControl, ActionIcon, Center, Divider, Select, Chip, Progress, Box,
@@ -7,6 +6,7 @@ import {
 import { DatePickerInput } from '@mantine/dates'
 import { IconPlus, IconTrash } from '@tabler/icons-react'
 import CalendarNav from './CalendarNav'
+import { useMonthCursor } from '../hooks/useCalendarCursor'
 import dayjs from 'dayjs'
 import 'dayjs/locale/ko'
 import styles from './LedgerView.module.scss'
@@ -26,9 +26,7 @@ function parseTags(str) {
 }
 
 export default function LedgerView({ items, categories = [], onAdd, onUpdate, onDelete }) {
-  const [_monthStr, _setMonthStr] = useLocalStorageState('ui_ledger_month', dayjs().format('YYYY-MM'))
-  const month = dayjs(_monthStr).startOf('month')
-  const setMonth = (d) => _setMonthStr(d.format('YYYY-MM'))
+  const [month, setMonth] = useMonthCursor()
   const [tab, setTab] = useState('list') // list | tag | stat
   const [editingId, setEditingId] = useState(null)
   const [type, setType] = useState('expense')

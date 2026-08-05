@@ -1,8 +1,8 @@
 import { useState, useEffect, useRef, useCallback, useId } from 'react'
-import { useMediaQuery } from '@mantine/hooks'
 import { Box, Text, Stack, Group, Badge, ActionIcon, Loader, Center } from '@mantine/core'
-import { IconChevronLeft, IconChevronRight, IconFlag, IconList, IconCheck, IconX } from '@tabler/icons-react'
+import { IconChevronLeft, IconChevronRight, IconFlag, IconList, IconCheck, IconX, IconTrash } from '@tabler/icons-react'
 import { useExamProgress } from '../hooks/useExamProgress'
+import { useIsNarrow } from '../hooks/useBreakpoint'
 import styles from './EngineerExamView.module.scss'
 
 const SUBJECTS = [
@@ -366,11 +366,12 @@ function formatSavedAt(iso) {
 }
 
 // ── 시작 화면 ───────────────────────────────────────────────
-function StartScreen({ exams, onStart, examResults, tab, onTabChange, onReviewRecord, progress, onResume, onDiscardProgress }) {
+function StartScreen({ exams, onStart, examResults, tab, onTabChange, onReviewRecord, progress, onResume, onDiscardProgress, onDeleteResult }) {
   const [selectedIdx, setSelectedIdx] = useState(-1)
   const [confirmNewStart, setConfirmNewStart] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(false)
-  const isNarrow = useMediaQuery('(max-width: 500px)')
+  const [deleteTarget, setDeleteTarget] = useState(null) // 삭제 확인 대상 응시 기록
+  const isNarrow = useIsNarrow()
 
   const examList = exams.filter(e => e.type !== 'collection')
   const collections = exams.filter(e => e.type === 'collection')
@@ -438,12 +439,46 @@ function StartScreen({ exams, onStart, examResults, tab, onTabChange, onReviewRe
                     {!reviewable && (
                       <Text size="xs" c="#9ca3af" style={{ flexShrink: 0 }}>답안 기록 없음</Text>
                     )}
+                    <button
+                      // historyItem 전체에 클릭(검토 화면 이동) 핸들러가 걸려 있어 전파를 막아야 한다
+                      onClick={e => { e.stopPropagation(); setDeleteTarget(r) }}
+                      className={styles.historyDeleteBtn}
+                      aria-label="응시 기록 삭제"
+                    >
+                      <IconTrash size={16} />
+                    </button>
                   </Box>
                 )
               })}
             </Stack>
           )}
         </Box>
+
+        {/* 응시 기록 삭제 확인 모달 */}
+        {deleteTarget && (
+          <Box className={styles.modalOverlay}>
+            <Box className={styles.modalBox}>
+              <Text fw={700} size="lg" mb={8}>이 응시 기록을 삭제할까요?</Text>
+              <Text size="sm" c="#6b7280" mb={24} style={{ lineHeight: 1.6 }}>
+                「{deleteTarget?.examName}」 기록이 삭제됩니다. 이 작업은 되돌릴 수 없습니다.
+              </Text>
+              <Group gap={10}>
+                <button
+                  onClick={() => setDeleteTarget(null)}
+                  style={{ flex: 1, padding: '12px', borderRadius: 8, border: '2px solid #e5e7eb', background: 'white', color: '#4b5563', fontSize: 14, fontWeight: 700, cursor: 'pointer' }}
+                >
+                  취소
+                </button>
+                <button
+                  onClick={() => { onDeleteResult(deleteTarget.id); setDeleteTarget(null) }}
+                  style={{ flex: 1, padding: '12px', borderRadius: 8, border: 'none', background: '#dc2626', color: 'white', fontSize: 14, fontWeight: 700, cursor: 'pointer' }}
+                >
+                  삭제
+                </button>
+              </Group>
+            </Box>
+          </Box>
+        )}
       </Box>
     )
   }
@@ -1179,7 +1214,7 @@ function QDot({ i, q, currentIdx, userAnswers, flags, isCollection, onClick }) {
 
 // ── 결과 화면 ────────────────────────────────────────────────
 function ResultScreen({ result, onReview, onRetry }) {
-  const isNarrow = useMediaQuery('(max-width: 500px)')
+  const isNarrow = useIsNarrow()
   const { questions, userAnswers, exam } = result
   let correct = 0, wrong = 0, unanswered = 0
   const subjectStats = {}
@@ -1278,7 +1313,7 @@ function ResultScreen({ result, onReview, onRetry }) {
 }
 
 // ── 메인 ─────────────────────────────────────────────────────
-export default function EngineerExamView({ onSaveResult, examResults }) {
+export default function EngineerExamView({ onSaveResult, onDeleteResult, examResults }) {
   const [exams, setExams] = useState(null)
   const [screen, setScreen] = useState('start') // 'start' | 'exam' | 'result' | 'review'
   const [tab, setTab] = useState('exam') // 'exam' | 'history'
@@ -1409,6 +1444,7 @@ export default function EngineerExamView({ onSaveResult, examResults }) {
         setScreen('exam')
       }}
       onDiscardProgress={() => setProgress(null)}
+      onDeleteResult={onDeleteResult}
     />
   )
 }

@@ -1,8 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { AppShell, Group, Text, Button, ActionIcon, SegmentedControl } from '@mantine/core'
-import { useDisclosure, useMediaQuery } from '@mantine/hooks'
+import { useDisclosure } from '@mantine/hooks'
 import { IconCategory, IconHome, IconList, IconCalendar, IconChartBar, IconPencil, IconCheck, IconArrowsHorizontal } from '@tabler/icons-react'
-import dayjs from 'dayjs'
 import RecordEditor from './components/RecordEditor'
 import RecordList from './components/RecordList'
 import RecordDetail from './components/RecordDetail'
@@ -45,6 +44,9 @@ import { solarFromLunar } from './lib/lunar'
 import { deleteImages, getImage, putImage } from './lib/imageStore'
 import { setImageTokenProvider, uploadImageRecord } from './lib/driveImages'
 import { mergeById } from './lib/mergeById'
+import { tombstone } from './lib/tombstone'
+import { todayStr } from './lib/dates'
+import { useIsNarrow, useIsMobile } from './hooks/useBreakpoint'
 
 // ── 로그인 게이트 ─────────────────────────────────────────
 // 로그인 전에는 데이터 훅을 마운트하지 않고, 로그인 후 계정별 네임스페이스를
@@ -97,7 +99,7 @@ function Workspace({ drive }) {
 
   // 업무 모드
   const [mode, setMode] = useState('work')
-  const [workDateStr, setWorkDateStr] = useState(dayjs().format('YYYY-MM-DD'))
+  const [workDateStr, setWorkDateStr] = useState(todayStr())
 
   const { records, allRecords, saveRecord, deleteRecord, mergeRecords } = useRecords()
   const { categories, addCategory, updateCategory, deleteCategory, setAll: setAllCategories } = useCategories()
@@ -110,7 +112,7 @@ function Workspace({ drive }) {
   const { items: ledgerItems, allItems: allLedgerItems, addItem: addLedgerItem, updateItem: updateLedgerItem, deleteItem: deleteLedgerItem, mergeItems: mergeLedgerItems } = useLedger()
   const { categories: ledgerCategories, addCategory: addLedgerCategory, deleteCategory: deleteLedgerCategory, setAll: setAllLedgerCategories } = useLedgerCategories()
   const { items: contactItems, allItems: allContactItems, addItem: addContactItem, updateItem: updateContactItem, deleteItem: deleteContactItem, mergeItems: mergeContactItems } = useContacts()
-  const { items: examResults, allItems: allExamResults, addItem: addExamResult, mergeItems: mergeExamResults } = useExamResults()
+  const { items: examResults, allItems: allExamResults, addItem: addExamResult, deleteItem: deleteExamResult, mergeItems: mergeExamResults } = useExamResults()
   const { items: workTodos, allItems: allWorkTodos, addItem: addTodoRaw, updateItem: updateTodo, deleteItem: deleteTodo, mergeItems: mergeWorkTodos } = useWorkTodos()
   const { items: workEvents, allItems: allWorkEvents, updateItem: updateEvent, deleteItem: deleteEvent, mergeItems: mergeWorkEvents } = useWorkEvents()
   const { items: workWeekly, allItems: allWorkWeekly, updateItem: updateWeekly, deleteItem: deleteWeekly, mergeItems: mergeWorkWeekly } = useWorkWeekly()
@@ -153,14 +155,33 @@ function Workspace({ drive }) {
     }
   }
 
+  // Drive에 올리는 전체 스냅샷. 필드가 하나라도 빠지면 그 컬렉션이 Drive에서 사라지므로
+  // push는 반드시 이 함수를 거친다. 일부만 갱신할 때는 overrides로 넘긴다.
+  function syncPayload(overrides) {
+    return {
+      records: allRecords, categories, schedules: allSchedules, scheduleCategories,
+      routines, routineChecks: allRoutineChecks, trackerCategories, trackerLogs: allTrackerLogs,
+      ledger: allLedgerItems, ledgerCategories, contacts: allContactItems,
+      examResults: allExamResults, workTodos: allWorkTodos, workEvents: allWorkEvents,
+      workWeekly: allWorkWeekly,
+      ...overrides,
+    }
+  }
+
   async function handleDrivePush() {
-    await push({ records: allRecords, categories, schedules: allSchedules, scheduleCategories, routines, routineChecks: allRoutineChecks, trackerCategories, trackerLogs: allTrackerLogs, ledger: allLedgerItems, ledgerCategories, contacts: allContactItems, examResults: allExamResults, workTodos: allWorkTodos, workEvents: allWorkEvents, workWeekly: allWorkWeekly })
+    await push(syncPayload())
     await syncImagesToDrive()
   }
 
   async function handleSaveExamResult(entry) {
     addExamResult(entry)
-    await push({ records: allRecords, categories, schedules: allSchedules, scheduleCategories, routines, routineChecks: allRoutineChecks, trackerCategories, trackerLogs: allTrackerLogs, ledger: allLedgerItems, ledgerCategories, contacts: allContactItems, examResults: [entry, ...allExamResults], workTodos: allWorkTodos, workEvents: allWorkEvents, workWeekly: allWorkWeekly })
+    await push(syncPayload({ examResults: [entry, ...allExamResults] }))
+  }
+
+  async function handleDeleteExamResult(id) {
+    deleteExamResult(id)
+    const nextExamResults = allExamResults.map(i => (i.id === id ? tombstone(i) : i))
+    await push(syncPayload({ examResults: nextExamResults }))
   }
 
   // 이 계정/브라우저에서 처음이면 Drive에서 1회 자동 로드
@@ -301,9 +322,9 @@ function Workspace({ drive }) {
     engineer: '정보처리기사 필기',
   }[view] ?? ''
 
-  const isNarrow = useMediaQuery('(max-width: 500px)')
+  const isNarrow = useIsNarrow()
   // 모바일(<690px) 대시보드를 태블릿처럼 3열 가로스크롤로 강제 표시하는 토글
-  const isMobileDash = useMediaQuery('(max-width: 689px)')
+  const isMobileDash = useIsMobile()
   const [wideDashboard, setWideDashboard] = useState(false)
 
   return (
@@ -436,7 +457,7 @@ function Workspace({ drive }) {
 
           {view === 'application' && <ApplicationView onOpen={(id) => setView(id)} />}
 
-          {view === 'engineer' && <EngineerExamView onSaveResult={handleSaveExamResult} examResults={examResults} />}
+          {view === 'engineer' && <EngineerExamView onSaveResult={handleSaveExamResult} onDeleteResult={handleDeleteExamResult} examResults={examResults} />}
 
           {/* 기록 */}
           {view === 'list' && (
