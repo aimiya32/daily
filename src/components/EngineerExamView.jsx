@@ -1069,26 +1069,45 @@ function ExamScreen({ exam, onFinish, onBack, initialAnswers = {}, initialIdx = 
               </Stack>
             </Box>
 
-            {/* 해설 */}
             {showAnswer && (
-              <Box
-                style={{
-                  borderRadius: 8, padding: '12px 16px', fontSize: 13, fontWeight: 600,
-                  ...(isCollection
-                    ? { background: '#fefce8', border: '1px solid #fde68a', color: '#92400e' }
-                    : userAnswers[currentIdx] === q.answer
-                      ? { background: '#f0fdf4', border: '1px solid #bbf7d0', color: '#16a34a' }
-                      : { background: '#fef2f2', border: '1px solid #fecaca', color: '#dc2626' }
-                  ),
-                }}
-              >
-                {isCollection
-                  ? (q.answer > 0 ? `정답: ${q.answer}번${q.explanation ? ' — ' + q.explanation : ''}` : q.explanation || '(해설 없음)')
-                  : userAnswers[currentIdx] === q.answer
-                    ? `✓ 정답! (${q.answer}번)${q.explanation ? ' — ' + q.explanation : ''}`
-                    : `✗ 오답 — 정답: ${q.answer}번 / 내 답: ${userAnswers[currentIdx] ? userAnswers[currentIdx] + '번' : '미응답'}${q.explanation ? ' — ' + q.explanation : ''}`
-                }
-              </Box>
+              <>
+                {/* 정답 결과 */}
+                {(!isCollection || q.answer > 0) && (
+                  <Box
+                    style={{
+                      borderRadius: 8, padding: '12px 16px', fontSize: 13, fontWeight: 600,
+                      ...(isCollection
+                        ? { background: '#fefce8', border: '1px solid #fde68a', color: '#92400e' }
+                        : userAnswers[currentIdx] === q.answer
+                          ? { background: '#f0fdf4', border: '1px solid #bbf7d0', color: '#16a34a' }
+                          : { background: '#fef2f2', border: '1px solid #fecaca', color: '#dc2626' }
+                      ),
+                    }}
+                  >
+                    {isCollection
+                      ? `정답: ${q.answer}번`
+                      : userAnswers[currentIdx] === q.answer
+                        ? `✓ 정답! (${q.answer}번)`
+                        : `✗ 오답 — 정답: ${q.answer}번 / 내 답: ${userAnswers[currentIdx] ? userAnswers[currentIdx] + '번' : '미응답'}`
+                    }
+                  </Box>
+                )}
+
+                {/* 해설 */}
+                {q.explanation && (
+                  <Box
+                    style={{
+                      marginTop: 10, borderRadius: 8, padding: '12px 16px',
+                      background: '#f9fafb', border: '1px solid #e5e7eb', color: '#374151',
+                    }}
+                  >
+                    <Text size="xs" fw={700} c="#6b7280" mb={6}>해설</Text>
+                    <Text style={{ fontSize: 13, fontWeight: 400, lineHeight: 1.7, whiteSpace: 'pre-line', wordBreak: 'keep-all' }}>
+                      {q.explanation}
+                    </Text>
+                  </Box>
+                )}
+              </>
             )}
 
           </Box>
