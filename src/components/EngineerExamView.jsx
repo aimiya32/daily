@@ -1083,8 +1083,11 @@ function ExamScreen({ exam, onFinish, onBack, initialAnswers = {}, initialIdx = 
 
                   if (showAnswer && q.answer > 0) {
                     if (num === q.answer) {
-                      bg = '#f0fdf4'; border = '#16a34a'; color = '#16a34a'
-                      numBg = '#16a34a'; numBorder = '#16a34a'; numColor = 'white'
+                      // 답을 고르지 않은 문제는 맞춘 게 아니므로 초록(정답) 대신 파랑으로 정답만 알려준다
+                      const unanswered = userAnswers[currentIdx] === undefined
+                      const hl = unanswered ? '#2563eb' : '#16a34a'
+                      bg = unanswered ? '#eff6ff' : '#f0fdf4'; border = hl; color = hl
+                      numBg = hl; numBorder = hl; numColor = 'white'
                     } else if (selected) {
                       bg = '#fef2f2'; border = '#dc2626'; color = '#dc2626'
                       numBg = '#dc2626'; numBorder = '#dc2626'; numColor = 'white'
