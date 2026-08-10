@@ -19,6 +19,7 @@ import TrackerCategoryManager from './components/TrackerCategoryManager'
 import HomeScreen from './components/HomeScreen'
 import ApplicationView from './components/ApplicationView'
 import EngineerExamView from './components/EngineerExamView'
+import EngineerSummaryView from './components/EngineerSummaryView'
 import LoginScreen from './components/LoginScreen'
 import DriveSync from './components/DriveSync'
 import CategoryManager from './components/CategoryManager'
@@ -319,7 +320,8 @@ function Workspace({ drive }) {
     ledger: '가계부',
     contacts: '연락처',
     application: 'Etc.',
-    engineer: '정보처리기사 필기',
+    engineer: '정보처리기사 필기 모의시험',
+    'engineer-summary': '정보처리기사 요약정리',
   }[view] ?? ''
 
   const isNarrow = useIsNarrow()
@@ -458,6 +460,8 @@ function Workspace({ drive }) {
           {view === 'application' && <ApplicationView onOpen={(id) => setView(id)} />}
 
           {view === 'engineer' && <EngineerExamView onSaveResult={handleSaveExamResult} onDeleteResult={handleDeleteExamResult} examResults={examResults} />}
+
+          {view === 'engineer-summary' && <EngineerSummaryView />}
 
           {/* 기록 */}
           {view === 'list' && (

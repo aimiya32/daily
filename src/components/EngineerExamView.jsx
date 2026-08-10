@@ -188,11 +188,21 @@ function GraphRenderer({ graph }) {
 
   const rawId = useId()
   const markerId = 'graph-arrow-' + rawId.replace(/[^a-zA-Z0-9]/g, '')
+  const hollowMarkerId = 'graph-arrow-hollow-' + rawId.replace(/[^a-zA-Z0-9]/g, '')
 
   function nodeGeom(node) {
+    if (node.shape === 'point') {
+      return { shape: 'circle', r: 3, point: true }
+    }
+    if (node.shape === 'class') {
+      const label = String(node.label ?? node.id)
+      const w = node.w ?? Math.max(70, label.length * 14 + 20)
+      const h = 54
+      return { shape: 'rect', w, h, hw: w / 2, hh: h / 2, isClass: true }
+    }
     if (node.shape === 'rect') {
       const label = String(node.label ?? node.id)
-      const w = Math.max(34, label.length * 9 + 16)
+      const w = node.w ?? Math.max(34, label.length * 9 + 16)
       const h = 24
       return { shape: 'rect', w, h, hw: w / 2, hh: h / 2 }
     }
@@ -234,7 +244,8 @@ function GraphRenderer({ graph }) {
     }
     const p1 = boundaryPoint(n1.x, n1.y, g1, dir0.x, dir0.y)
     let p2 = boundaryPoint(n2.x, n2.y, g2, dir1.x, dir1.y)
-    if (directed) {
+    const hasArrow = directed || !!edge.arrow
+    if (hasArrow) {
       // 화살표 머리만큼 여유를 두고 노드 경계 앞에서 멈춘다
       p2 = { x: p2.x - dir1.x * 3, y: p2.y - dir1.y * 3 }
     }
@@ -246,7 +257,7 @@ function GraphRenderer({ graph }) {
       labelX = (p1.x + p2.x) / 2
       labelY = (p1.y + p2.y) / 2
     }
-    return { x1: p1.x, y1: p1.y, x2: p2.x, y2: p2.y, cx, cy, isCurve, labelX, labelY }
+    return { x1: p1.x, y1: p1.y, x2: p2.x, y2: p2.y, cx, cy, isCurve, labelX, labelY, hasArrow }
   }
 
   let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity
@@ -276,20 +287,31 @@ function GraphRenderer({ graph }) {
   const ox = PAD - minX
   const oy = PAD - minY
 
+  const needSolidMarker = edges.some(e => (directed || !!e.arrow) && e.arrow !== 'hollow')
+  const needHollowMarker = edges.some(e => e.arrow === 'hollow')
+
   return (
     <Box style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 8, padding: '14px 8px', overflowX: 'auto', marginBottom: 12 }}>
       <svg width={svgW} height={svgH} style={{ display: 'block', margin: '0 auto', minWidth: svgW }}>
-        {directed && (
+        {(needSolidMarker || needHollowMarker) && (
           <defs>
-            <marker id={markerId} viewBox="0 0 10 10" refX="10" refY="5" markerWidth="7" markerHeight="7" markerUnits="userSpaceOnUse" orient="auto">
-              <path d="M0,0 L10,5 L0,10 Z" fill="#94a3b8" />
-            </marker>
+            {needSolidMarker && (
+              <marker id={markerId} viewBox="0 0 10 10" refX="10" refY="5" markerWidth="7" markerHeight="7" markerUnits="userSpaceOnUse" orient="auto">
+                <path d="M0,0 L10,5 L0,10 Z" fill="#94a3b8" />
+              </marker>
+            )}
+            {needHollowMarker && (
+              <marker id={hollowMarkerId} viewBox="0 0 10 10" refX="10" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto">
+                <path d="M0,0 L10,5 L0,10 Z" fill="white" stroke="#475569" strokeWidth="1" />
+              </marker>
+            )}
           </defs>
         )}
         <g transform={`translate(${ox},${oy})`}>
           {edges.map((e, i) => {
             const geo = computeEdge(e)
             const labelW = e.label ? String(e.label).length * 7 + 6 : 0
+            const markerUrl = geo.hasArrow ? `url(#${e.arrow === 'hollow' ? hollowMarkerId : markerId})` : undefined
             return (
               <g key={i}>
                 {geo.isCurve ? (
@@ -298,14 +320,14 @@ function GraphRenderer({ graph }) {
                     fill="none"
                     stroke="#94a3b8"
                     strokeWidth={1.5}
-                    markerEnd={directed ? `url(#${markerId})` : undefined}
+                    markerEnd={markerUrl}
                   />
                 ) : (
                   <line
                     x1={geo.x1} y1={geo.y1} x2={geo.x2} y2={geo.y2}
                     stroke="#94a3b8"
                     strokeWidth={1.5}
-                    markerEnd={directed ? `url(#${markerId})` : undefined}
+                    markerEnd={markerUrl}
                   />
                 )}
                 {e.label && (
@@ -321,6 +343,9 @@ function GraphRenderer({ graph }) {
           })}
           {nodes.map((n, i) => {
             const g = nodeGeom(n)
+            if (g.point) {
+              return <circle key={i} cx={n.x} cy={n.y} r={g.r} fill="#475569" />
+            }
             const label = n.label ?? n.id
             return (
               <g key={i}>
@@ -329,9 +354,19 @@ function GraphRenderer({ graph }) {
                 ) : (
                   <circle cx={n.x} cy={n.y} r={g.r} fill="white" stroke="#475569" strokeWidth={1.5} />
                 )}
-                <text x={n.x} y={n.y + 1} textAnchor="middle" dominantBaseline="middle" fontSize={13} fontWeight={600} fill="#1e293b" style={{ fontFamily: 'inherit' }}>
-                  {label}
-                </text>
+                {g.isClass ? (
+                  <>
+                    <line x1={n.x - g.hw} y1={n.y - g.hh + 22} x2={n.x + g.hw} y2={n.y - g.hh + 22} stroke="#475569" strokeWidth={1} />
+                    <line x1={n.x - g.hw} y1={n.y - g.hh + 38} x2={n.x + g.hw} y2={n.y - g.hh + 38} stroke="#475569" strokeWidth={1} />
+                    <text x={n.x} y={n.y - g.hh + 11} textAnchor="middle" dominantBaseline="middle" fontSize={13} fontWeight={600} fill="#1e293b" style={{ fontFamily: 'inherit' }}>
+                      {label}
+                    </text>
+                  </>
+                ) : (
+                  <text x={n.x} y={n.y + 1} textAnchor="middle" dominantBaseline="middle" fontSize={13} fontWeight={600} fill="#1e293b" style={{ fontFamily: 'inherit' }}>
+                    {label}
+                  </text>
+                )}
               </g>
             )
           })}

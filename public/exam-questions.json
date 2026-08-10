@@ -2821,6 +2821,96 @@
             "fan-in : 1, fan-out : 2",
             "fan-in : 2, fan-out : 1"
           ],
+          "graph": {
+            "nodes": [
+              {
+                "id": "A",
+                "x": 115,
+                "y": 0,
+                "shape": "rect"
+              },
+              {
+                "id": "B",
+                "x": 45,
+                "y": 60,
+                "shape": "rect"
+              },
+              {
+                "id": "C",
+                "x": 115,
+                "y": 60,
+                "shape": "rect"
+              },
+              {
+                "id": "D",
+                "x": 185,
+                "y": 60,
+                "shape": "rect"
+              },
+              {
+                "id": "E",
+                "x": 10,
+                "y": 120,
+                "shape": "rect"
+              },
+              {
+                "id": "F",
+                "x": 80,
+                "y": 120,
+                "shape": "rect"
+              },
+              {
+                "id": "G",
+                "x": 45,
+                "y": 180,
+                "shape": "rect"
+              },
+              {
+                "id": "H",
+                "x": 115,
+                "y": 180,
+                "shape": "rect"
+              }
+            ],
+            "edges": [
+              {
+                "from": "A",
+                "to": "B"
+              },
+              {
+                "from": "A",
+                "to": "C"
+              },
+              {
+                "from": "A",
+                "to": "D"
+              },
+              {
+                "from": "B",
+                "to": "E"
+              },
+              {
+                "from": "B",
+                "to": "F"
+              },
+              {
+                "from": "C",
+                "to": "F"
+              },
+              {
+                "from": "D",
+                "to": "F"
+              },
+              {
+                "from": "F",
+                "to": "G"
+              },
+              {
+                "from": "F",
+                "to": "H"
+              }
+            ]
+          },
           "answer": 2
         },
         {
@@ -6254,6 +6344,96 @@
             "Fan-In : 1, Fan-Out : 2",
             "Fan-In : 2, Fan-Out : 1"
           ],
+          "graph": {
+            "nodes": [
+              {
+                "id": "A",
+                "x": 115,
+                "y": 0,
+                "shape": "rect"
+              },
+              {
+                "id": "B",
+                "x": 45,
+                "y": 60,
+                "shape": "rect"
+              },
+              {
+                "id": "C",
+                "x": 115,
+                "y": 60,
+                "shape": "rect"
+              },
+              {
+                "id": "D",
+                "x": 185,
+                "y": 60,
+                "shape": "rect"
+              },
+              {
+                "id": "E",
+                "x": 10,
+                "y": 120,
+                "shape": "rect"
+              },
+              {
+                "id": "F",
+                "x": 80,
+                "y": 120,
+                "shape": "rect"
+              },
+              {
+                "id": "G",
+                "x": 45,
+                "y": 180,
+                "shape": "rect"
+              },
+              {
+                "id": "H",
+                "x": 115,
+                "y": 180,
+                "shape": "rect"
+              }
+            ],
+            "edges": [
+              {
+                "from": "A",
+                "to": "B"
+              },
+              {
+                "from": "A",
+                "to": "C"
+              },
+              {
+                "from": "A",
+                "to": "D"
+              },
+              {
+                "from": "B",
+                "to": "E"
+              },
+              {
+                "from": "B",
+                "to": "F"
+              },
+              {
+                "from": "C",
+                "to": "F"
+              },
+              {
+                "from": "D",
+                "to": "F"
+              },
+              {
+                "from": "F",
+                "to": "G"
+              },
+              {
+                "from": "F",
+                "to": "H"
+              }
+            ]
+          },
           "answer": 2
         },
         {
@@ -6729,7 +6909,7 @@
           "question": "애자일(Agile) 프로세스 모델에 대한 설명으로 틀린 것은?",
           "choices": [
             "변화에 대한 대응보다는 자세한 계획을 중심으로 소프트웨어를 개발한다.",
-            "프로세스와 도구 중심이 아닌 개개인과의 상호소통을 통해 의 견을 수렴한다.",
+            "프로세스와 도구 중심이 아닌 개개인과의 상호소통을 통해 의견을 수렴한다.",
             "협상과 계약보다는 고객과의 협력을 중시한다.",
             "문서 중심이 아닌, 실행 가능한 소프트웨어를 중시한다."
           ],
@@ -6807,6 +6987,96 @@
             "fan-in : 1, fan-out : 2",
             "fan-in : 2, fan-out : 1"
           ],
+          "graph": {
+            "nodes": [
+              {
+                "id": "A",
+                "x": 115,
+                "y": 0,
+                "shape": "rect"
+              },
+              {
+                "id": "B",
+                "x": 45,
+                "y": 60,
+                "shape": "rect"
+              },
+              {
+                "id": "C",
+                "x": 115,
+                "y": 60,
+                "shape": "rect"
+              },
+              {
+                "id": "D",
+                "x": 185,
+                "y": 60,
+                "shape": "rect"
+              },
+              {
+                "id": "E",
+                "x": 10,
+                "y": 120,
+                "shape": "rect"
+              },
+              {
+                "id": "F",
+                "x": 80,
+                "y": 120,
+                "shape": "rect"
+              },
+              {
+                "id": "G",
+                "x": 45,
+                "y": 180,
+                "shape": "rect"
+              },
+              {
+                "id": "H",
+                "x": 115,
+                "y": 180,
+                "shape": "rect"
+              }
+            ],
+            "edges": [
+              {
+                "from": "A",
+                "to": "B"
+              },
+              {
+                "from": "A",
+                "to": "C"
+              },
+              {
+                "from": "A",
+                "to": "D"
+              },
+              {
+                "from": "B",
+                "to": "E"
+              },
+              {
+                "from": "B",
+                "to": "F"
+              },
+              {
+                "from": "C",
+                "to": "F"
+              },
+              {
+                "from": "D",
+                "to": "F"
+              },
+              {
+                "from": "F",
+                "to": "G"
+              },
+              {
+                "from": "F",
+                "to": "H"
+              }
+            ]
+          },
           "answer": 2
         },
         {
@@ -7070,7 +7340,7 @@
             "형상 식별은 형상 관리 계획을 근거로 형상 관리의 대상이 무엇인지 식별하는 과정이다.",
             "형상 관리를 통해 가시성과 추적성을 보장함으로써 소프트웨어의 생산성과 품질을 높일 수 있다.",
             "형상 통제 과정에서는 형상 목록의 변경 요구를 즉시 수용 및 반영해야한다.",
-            "형상 감사는 형상 관리 계획대로 형상 관리가 진행되고 있는지, 형상 항목의 변경이 요구사항에 맞도록 제대로 이뤄졌는지 등 을 살펴보는 활동이다."
+            "형상 감사는 형상 관리 계획대로 형상 관리가 진행되고 있는지, 형상 항목의 변경이 요구사항에 맞도록 제대로 이뤄졌는지 등을 살펴보는 활동이다."
           ],
           "answer": 3
         },
@@ -12824,6 +13094,96 @@
             "fan-in : 1, fan-out : 2",
             "fan-in : 2, fan-out : 1"
           ],
+          "graph": {
+            "nodes": [
+              {
+                "id": "A",
+                "x": 115,
+                "y": 0,
+                "shape": "rect"
+              },
+              {
+                "id": "B",
+                "x": 45,
+                "y": 60,
+                "shape": "rect"
+              },
+              {
+                "id": "C",
+                "x": 115,
+                "y": 60,
+                "shape": "rect"
+              },
+              {
+                "id": "D",
+                "x": 185,
+                "y": 60,
+                "shape": "rect"
+              },
+              {
+                "id": "E",
+                "x": 10,
+                "y": 120,
+                "shape": "rect"
+              },
+              {
+                "id": "F",
+                "x": 80,
+                "y": 120,
+                "shape": "rect"
+              },
+              {
+                "id": "G",
+                "x": 45,
+                "y": 180,
+                "shape": "rect"
+              },
+              {
+                "id": "H",
+                "x": 115,
+                "y": 180,
+                "shape": "rect"
+              }
+            ],
+            "edges": [
+              {
+                "from": "A",
+                "to": "B"
+              },
+              {
+                "from": "A",
+                "to": "C"
+              },
+              {
+                "from": "A",
+                "to": "D"
+              },
+              {
+                "from": "B",
+                "to": "E"
+              },
+              {
+                "from": "B",
+                "to": "F"
+              },
+              {
+                "from": "C",
+                "to": "F"
+              },
+              {
+                "from": "D",
+                "to": "F"
+              },
+              {
+                "from": "F",
+                "to": "G"
+              },
+              {
+                "from": "F",
+                "to": "H"
+              }
+            ]
+          },
           "answer": 2,
           "explanation": "• 모듈에 들어오면(in) 팬인(fan-in), 모듈에서 나가면(out) 팬아웃(fan-out)입니다. • F에 들어오는 선은 3개, 나가는 선은 2개이므로, 팬인과 팬아웃은 각각 3과 2입니다."
         },
@@ -18083,6 +18443,55 @@
             "일반화 관계",
             "그룹 관계"
           ],
+          "graph": {
+            "nodes": [
+              {
+                "id": "car",
+                "label": "차",
+                "x": 115,
+                "y": 0,
+                "shape": "class"
+              },
+              {
+                "id": "bus",
+                "label": "버스",
+                "x": 0,
+                "y": 110,
+                "shape": "class"
+              },
+              {
+                "id": "truck",
+                "label": "트럭",
+                "x": 115,
+                "y": 110,
+                "shape": "class"
+              },
+              {
+                "id": "taxi",
+                "label": "택시",
+                "x": 230,
+                "y": 110,
+                "shape": "class"
+              }
+            ],
+            "edges": [
+              {
+                "from": "bus",
+                "to": "car",
+                "arrow": "hollow"
+              },
+              {
+                "from": "truck",
+                "to": "car",
+                "arrow": "hollow"
+              },
+              {
+                "from": "taxi",
+                "to": "car",
+                "arrow": "hollow"
+              }
+            ]
+          },
           "answer": 3,
           "explanation": ""
         },
@@ -20541,6 +20950,138 @@
             "링형",
             "그물형"
           ],
+          "graph": {
+            "nodes": [
+              {
+                "id": "t0",
+                "x": -30,
+                "y": 0,
+                "shape": "point"
+              },
+              {
+                "id": "t1",
+                "x": 0,
+                "y": 0,
+                "shape": "point"
+              },
+              {
+                "id": "t2",
+                "x": 85,
+                "y": 0,
+                "shape": "point"
+              },
+              {
+                "id": "t3",
+                "x": 170,
+                "y": 0,
+                "shape": "point"
+              },
+              {
+                "id": "t4",
+                "x": 255,
+                "y": 0,
+                "shape": "point"
+              },
+              {
+                "id": "t5",
+                "x": 340,
+                "y": 0,
+                "shape": "point"
+              },
+              {
+                "id": "t6",
+                "x": 370,
+                "y": 0,
+                "shape": "point"
+              },
+              {
+                "id": "s1",
+                "label": "스테이션1",
+                "x": 0,
+                "y": 62,
+                "shape": "rect",
+                "w": 72
+              },
+              {
+                "id": "s2",
+                "label": "스테이션2",
+                "x": 85,
+                "y": 62,
+                "shape": "rect",
+                "w": 72
+              },
+              {
+                "id": "s3",
+                "label": "스테이션3",
+                "x": 170,
+                "y": 62,
+                "shape": "rect",
+                "w": 72
+              },
+              {
+                "id": "s4",
+                "label": "스테이션4",
+                "x": 255,
+                "y": 62,
+                "shape": "rect",
+                "w": 72
+              },
+              {
+                "id": "s5",
+                "label": "스테이션5",
+                "x": 340,
+                "y": 62,
+                "shape": "rect",
+                "w": 72
+              }
+            ],
+            "edges": [
+              {
+                "from": "t0",
+                "to": "t1"
+              },
+              {
+                "from": "t1",
+                "to": "t2"
+              },
+              {
+                "from": "t2",
+                "to": "t3"
+              },
+              {
+                "from": "t3",
+                "to": "t4"
+              },
+              {
+                "from": "t4",
+                "to": "t5"
+              },
+              {
+                "from": "t5",
+                "to": "t6"
+              },
+              {
+                "from": "t1",
+                "to": "s1"
+              },
+              {
+                "from": "t2",
+                "to": "s2"
+              },
+              {
+                "from": "t3",
+                "to": "s3"
+              },
+              {
+                "from": "t4",
+                "to": "s4"
+              },
+              {
+                "from": "t5",
+                "to": "s5"
+              }
+            ]
+          },
           "answer": 1,
           "explanation": ""
         },
@@ -20660,6 +21201,268 @@
             "Screened Subnet",
             "Ring Homed"
           ],
+          "graph": {
+            "nodes": [
+              {
+                "id": "inet",
+                "label": "Internet",
+                "x": 0,
+                "y": 0,
+                "shape": "rect",
+                "w": 76
+              },
+              {
+                "id": "r1",
+                "label": "Router",
+                "x": 130,
+                "y": 0,
+                "shape": "rect",
+                "w": 64
+              },
+              {
+                "id": "bh",
+                "label": "Bastion Host",
+                "x": 290,
+                "y": 0,
+                "shape": "rect",
+                "w": 104
+              },
+              {
+                "id": "a0",
+                "x": -30,
+                "y": 70,
+                "shape": "point"
+              },
+              {
+                "id": "a1",
+                "x": 30,
+                "y": 70,
+                "shape": "point"
+              },
+              {
+                "id": "a2",
+                "x": 130,
+                "y": 70,
+                "shape": "point"
+              },
+              {
+                "id": "a3",
+                "x": 170,
+                "y": 70,
+                "shape": "point"
+              },
+              {
+                "id": "a4",
+                "x": 290,
+                "y": 70,
+                "shape": "point"
+              },
+              {
+                "id": "a5",
+                "x": 325,
+                "y": 70,
+                "shape": "point"
+              },
+              {
+                "id": "a6",
+                "x": 410,
+                "y": 70,
+                "shape": "point"
+              },
+              {
+                "id": "a7",
+                "x": 450,
+                "y": 70,
+                "shape": "point"
+              },
+              {
+                "id": "sv1",
+                "label": "서버",
+                "x": 30,
+                "y": 140,
+                "shape": "rect",
+                "w": 56
+              },
+              {
+                "id": "sv2",
+                "label": "서버",
+                "x": 170,
+                "y": 140,
+                "shape": "rect",
+                "w": 56
+              },
+              {
+                "id": "sv3",
+                "label": "서버",
+                "x": 325,
+                "y": 140,
+                "shape": "rect",
+                "w": 56
+              },
+              {
+                "id": "r2",
+                "label": "Router",
+                "x": 410,
+                "y": 140,
+                "shape": "rect",
+                "w": 64
+              },
+              {
+                "id": "b0",
+                "x": -30,
+                "y": 210,
+                "shape": "point"
+              },
+              {
+                "id": "b1",
+                "x": 40,
+                "y": 210,
+                "shape": "point"
+              },
+              {
+                "id": "b2",
+                "x": 130,
+                "y": 210,
+                "shape": "point"
+              },
+              {
+                "id": "b3",
+                "x": 220,
+                "y": 210,
+                "shape": "point"
+              },
+              {
+                "id": "b4",
+                "x": 410,
+                "y": 210,
+                "shape": "point"
+              },
+              {
+                "id": "b5",
+                "x": 450,
+                "y": 210,
+                "shape": "point"
+              },
+              {
+                "id": "pc1",
+                "label": "PC",
+                "x": 40,
+                "y": 270,
+                "shape": "rect",
+                "w": 44
+              },
+              {
+                "id": "pc2",
+                "label": "PC",
+                "x": 130,
+                "y": 270,
+                "shape": "rect",
+                "w": 44
+              },
+              {
+                "id": "pc3",
+                "label": "PC",
+                "x": 220,
+                "y": 270,
+                "shape": "rect",
+                "w": 44
+              }
+            ],
+            "edges": [
+              {
+                "from": "inet",
+                "to": "r1"
+              },
+              {
+                "from": "r1",
+                "to": "a2"
+              },
+              {
+                "from": "bh",
+                "to": "a4"
+              },
+              {
+                "from": "a0",
+                "to": "a1"
+              },
+              {
+                "from": "a1",
+                "to": "a2"
+              },
+              {
+                "from": "a2",
+                "to": "a3"
+              },
+              {
+                "from": "a3",
+                "to": "a4"
+              },
+              {
+                "from": "a4",
+                "to": "a5"
+              },
+              {
+                "from": "a5",
+                "to": "a6"
+              },
+              {
+                "from": "a6",
+                "to": "a7"
+              },
+              {
+                "from": "a1",
+                "to": "sv1"
+              },
+              {
+                "from": "a3",
+                "to": "sv2"
+              },
+              {
+                "from": "a5",
+                "to": "sv3"
+              },
+              {
+                "from": "a6",
+                "to": "r2"
+              },
+              {
+                "from": "r2",
+                "to": "b4"
+              },
+              {
+                "from": "b0",
+                "to": "b1"
+              },
+              {
+                "from": "b1",
+                "to": "b2"
+              },
+              {
+                "from": "b2",
+                "to": "b3"
+              },
+              {
+                "from": "b3",
+                "to": "b4"
+              },
+              {
+                "from": "b4",
+                "to": "b5"
+              },
+              {
+                "from": "b1",
+                "to": "pc1"
+              },
+              {
+                "from": "b2",
+                "to": "pc2"
+              },
+              {
+                "from": "b3",
+                "to": "pc3"
+              }
+            ]
+          },
           "answer": 3,
           "explanation": ""
         },

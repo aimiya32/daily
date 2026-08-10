@@ -1,9 +1,10 @@
 import { Stack, Text, Box, UnstyledButton, Center } from '@mantine/core'
-import { IconFileText } from '@tabler/icons-react'
+import { IconFileText, IconNotebook } from '@tabler/icons-react'
 import styles from './ApplicationView.module.scss'
 
 const APPS = [
-  { id: 'engineer', label: '정보처리기사 필기', icon: IconFileText, color: '#F59E0B' },
+  { id: 'engineer', label: '정보처리기사 필기 모의시험', icon: IconFileText, color: '#F59E0B' },
+  { id: 'engineer-summary', label: '정보처리기사 요약정리', icon: IconNotebook, color: '#6366F1' },
 ]
 
 export default function ApplicationView({ onOpen }) {

@@ -1,0 +1,499 @@
+// ── 레이아웃 ────────────────────────────────────────
+.pageWrap {
+  min-height: 100%;
+  background: #F4F6FB;
+  padding: 24px 16px;
+  word-break: keep-all;
+
+  @media (max-width: 689px) {
+    padding: 16px 10px;
+  }
+}
+
+.inner800 {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+// ── 과목 탭 ────────────────────────────────────────
+// AppShell 헤더(60px) 바로 아래에 고정된다. 좌우 여백까지 배경으로 덮어야
+// 스크롤되는 카드가 탭 옆으로 비쳐 보이지 않는다.
+.tabsRow {
+  position: sticky;
+  top: 60px;
+  z-index: 5;
+  display: flex;
+  gap: 6px;
+  background: #F4F6FB;
+  padding: 10px 16px 12px;
+  margin: -10px -16px 4px;
+
+  @media (max-width: 689px) {
+    gap: 3px;
+    padding: 8px 10px 10px;
+    margin: -8px -10px 4px;
+  }
+}
+
+.tab,
+.tabActive {
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+  padding: 7px 6px;
+  border-radius: 14px;
+  border: none;
+  cursor: pointer;
+  white-space: nowrap;
+  line-height: 1.25;
+  text-align: center;
+  transition: background 0.12s, color 0.12s;
+
+  @media (max-width: 689px) {
+    padding: 6px 2px;
+  }
+}
+
+.tab {
+  background: white;
+  color: #475569;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+}
+
+.tabActive {
+  background: #6366F1;
+  color: white;
+  box-shadow: 0 2px 6px rgba(99, 102, 241, 0.35);
+}
+
+.tabNo {
+  font-size: 11.5px;
+  font-weight: 600;
+  opacity: 0.75;
+
+  @media (max-width: 689px) {
+    font-size: 10px;
+  }
+}
+
+.tabTitle {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 13px;
+  font-weight: 700;
+
+  @media (max-width: 689px) {
+    font-size: 10.5px;
+  }
+}
+
+// ── 검색 ───────────────────────────────────────────
+.searchInput {
+  margin-bottom: 14px;
+}
+
+.toggleAllRow {
+  margin-bottom: 10px;
+}
+
+.toggleAllBtn {
+  border: none;
+  background: transparent;
+  color: #6366F1;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 4px 8px;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+.emptyBox {
+  background: white;
+  border-radius: 12px;
+  padding: 40px 20px;
+  text-align: center;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+}
+
+// ── 카드 ───────────────────────────────────────────
+.card {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+  overflow: hidden;
+}
+
+.cardHeader {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 16px 18px;
+  cursor: pointer;
+  text-align: left;
+
+  @media (max-width: 689px) {
+    padding: 13px 14px;
+  }
+}
+
+.cardIndex {
+  font-weight: 700;
+  color: #94A3B8;
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.cardTitle {
+  font-weight: 700;
+  font-size: 15px;
+  color: #1E293B;
+  word-break: keep-all;
+
+  @media (max-width: 689px) {
+    font-size: 14px;
+  }
+}
+
+.tagBadge {
+  flex-shrink: 0;
+}
+
+.subjectBadge {
+  flex-shrink: 0;
+}
+
+.chevron {
+  color: #94A3B8;
+  flex-shrink: 0;
+}
+
+.cardBody {
+  padding: 0 18px 18px;
+
+  @media (max-width: 689px) {
+    padding: 0 14px 14px;
+  }
+}
+
+// ── 블록: 본문 텍스트 ───────────────────────────────
+.textBlock {
+  font-size: 13.5px;
+  line-height: 1.65;
+  color: #334155;
+  word-break: keep-all;
+
+  @media (max-width: 689px) {
+    font-size: 13px;
+  }
+}
+
+// ── 블록: 목록 ─────────────────────────────────────
+.listBlock {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+
+  li {
+    position: relative;
+    padding-left: 14px;
+    font-size: 13.5px;
+    line-height: 1.6;
+    color: #334155;
+    word-break: keep-all;
+
+    @media (max-width: 689px) {
+      font-size: 13px;
+    }
+
+    &::before {
+      content: '';
+      position: absolute;
+      left: 2px;
+      top: 8px;
+      width: 4px;
+      height: 4px;
+      border-radius: 50%;
+      background: #94A3B8;
+    }
+  }
+}
+
+// ── 블록: 테이블 ───────────────────────────────────
+.tableWrap {
+  overflow-x: auto;
+}
+
+.table {
+  border-collapse: collapse;
+  width: 100%;
+  min-width: 320px;
+
+  th,
+  td {
+    border: 1px solid #E2E8F0;
+    padding: 6px 10px;
+    font-size: 12.5px;
+    text-align: left;
+  }
+
+  th {
+    background: #EEF2FF;
+    white-space: nowrap;
+    color: #334155;
+    font-weight: 700;
+  }
+
+  td {
+    color: #334155;
+    word-break: keep-all;
+  }
+}
+
+// ── 블록: 순서(칩) ─────────────────────────────────
+.orderLabel {
+  font-size: 12px;
+  color: #94A3B8;
+  margin-bottom: 6px;
+}
+
+.orderChips {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+}
+
+.orderChipGroup {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.orderChip {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 999px;
+  background: #EEF2FF;
+  color: #4338CA;
+  font-size: 12.5px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.orderSep {
+  color: #C7D2FE;
+  font-size: 13px;
+}
+
+// ── 블록: 트리 그림 ─────────────────────────────────
+.treeBlock {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 12px 8px;
+  background: #F8FAFF;
+  border: 1px solid #E2E8F0;
+  border-radius: 10px;
+  overflow-x: auto;
+}
+
+.treeSvg {
+  flex-shrink: 0;
+  max-width: 100%;
+  height: auto;
+}
+
+.treeCaption {
+  font-size: 12px;
+  color: #64748B;
+  text-align: center;
+}
+
+// ── 블록: 셀(배열/스택/큐) 그림 ───────────────────────
+// 바깥 톤은 .treeBlock 을 그대로 재사용한다(#F8FAFF 배경 / #E2E8F0 테두리 / 10px 라운드).
+.cellsScroll {
+  overflow-x: auto;
+  max-width: 100%;
+}
+
+.cellsRows {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.cellsRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.cellsRowLabel {
+  flex-shrink: 0;
+  min-width: 40px;
+  font-size: 12px;
+  color: #94A3B8;
+  text-align: right;
+}
+
+.cellsBoxesRow {
+  display: flex;
+  gap: 6px;
+}
+
+.cellBox {
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  border: 1.5px solid #CBD5E1;
+  background: white;
+  color: #334155;
+  font-size: 13px;
+  font-weight: 700;
+
+  @media (max-width: 689px) {
+    width: 34px;
+    height: 34px;
+    font-size: 12px;
+  }
+}
+
+.cellBoxMarked {
+  background: #EEF2FF;
+  border-color: #6366F1;
+  color: #4338CA;
+  font-weight: 800;
+}
+
+.cellsPointerCell {
+  flex-shrink: 0;
+  width: 36px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+
+  @media (max-width: 689px) {
+    width: 34px;
+  }
+}
+
+.cellsPointerArrow {
+  font-size: 11px;
+  color: #6366F1;
+  line-height: 1;
+}
+
+.cellsPointerLabel {
+  font-size: 11px;
+  color: #6366F1;
+  white-space: nowrap;
+  margin-top: 2px;
+}
+
+// 세로 배치(스택용): 배열의 마지막 원소가 맨 위(top)로 오도록 쌓는다.
+.cellsVerticalWrap {
+  display: flex;
+  align-items: flex-end;
+  gap: 24px;
+}
+
+.cellsVerticalRow {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.cellsVerticalStack {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.cellsVerticalItem {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.cellsPointerInline {
+  font-size: 11px;
+  color: #6366F1;
+  white-space: nowrap;
+}
+
+// ── 블록: 팁 ───────────────────────────────────────
+.tipBlock {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  background: #FFFBEB;
+  border-left: 4px solid #F59E0B;
+  border-radius: 6px;
+  padding: 10px 12px;
+}
+
+.tipIcon {
+  color: #F59E0B;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.tipText {
+  font-size: 13px;
+  line-height: 1.6;
+  color: #92400E;
+  word-break: keep-all;
+}
+
+// ── 블록: 코드 ─────────────────────────────────────
+.codeBlock {
+  position: relative;
+}
+
+.codeLang {
+  position: absolute;
+  top: 8px;
+  right: 10px;
+  font-size: 10.5px;
+  color: #94A3B8;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.pre {
+  background: #1E293B;
+  color: white;
+  font-family: 'SFMono-Regular', Consolas, Menlo, monospace;
+  font-size: 12.5px;
+  line-height: 1.6;
+  padding: 12px 14px;
+  border-radius: 8px;
+  overflow-x: auto;
+  white-space: pre;
+  margin: 0;
+}
+
+.codeNote {
+  font-size: 12px;
+  color: #16A34A;
+  margin-top: 4px;
+}
