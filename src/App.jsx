@@ -320,8 +320,8 @@ function Workspace({ drive }) {
     ledger: '가계부',
     contacts: '연락처',
     application: 'Etc.',
-    engineer: '정보처리기사 필기 모의시험',
-    'engineer-summary': '정보처리기사 요약정리',
+    engineer: '모의시험',
+    'engineer-summary': '요약정리',
   }[view] ?? ''
 
   const isNarrow = useIsNarrow()

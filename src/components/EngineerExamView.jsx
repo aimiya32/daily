@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback, useId } from 'react'
+import { useState, useEffect, useMemo, useRef, useCallback, useId } from 'react'
 import { Box, Text, Stack, Group, Badge, ActionIcon, Loader, Center } from '@mantine/core'
 import { IconChevronLeft, IconChevronRight, IconFlag, IconList, IconCheck, IconX, IconTrash } from '@tabler/icons-react'
 import { useExamProgress } from '../hooks/useExamProgress'
@@ -383,6 +383,83 @@ function normalizeAnswers(answers) {
   return result
 }
 
+// ── 문제 지문 정규화 키 (공백 제거) — 회차가 달라도 같은 문제가 재출제되므로
+// 이 키로 중복을 합친다 ──
+function normalizeQuestionKey(question) {
+  return (question || '').replace(/\s+/g, '')
+}
+
+// ── "내 오답 모음" 가상 컬렉션 생성 ────────────────────────────
+// 기출 회차 응시 기록(컬렉션 응시 기록은 제외 — 되먹임 방지)을 훑어서
+// 한 번도 정답을 맞히지 못한 문항(미응답 포함)만 모은다.
+function buildMistakeCollection(exams, examResults) {
+  if (!exams || !examResults || examResults.length === 0) return null
+
+  // 기출 회차만 이름으로 조회. exams 배열 내 등장 순서를 정렬 기준(회차 순)으로 재사용한다.
+  const examByName = {}
+  const examOrder = {}
+  exams.forEach((e, idx) => {
+    if (e.type !== 'collection') { examByName[e.name] = e; examOrder[e.name] = idx }
+  })
+
+  // 문항 지문 정규화 키 → 집계 상태
+  const stats = new Map()
+
+  examResults.forEach(r => {
+    if (!r.answers || Object.keys(r.answers).length === 0) return
+    const exam = examByName[r.examName]
+    if (!exam) return // 컬렉션 응시 기록이거나, 삭제된 회차
+    const userAnswers = normalizeAnswers(r.answers)
+    exam.questions.forEach((q, i) => {
+      const key = normalizeQuestionKey(q.question)
+      if (!stats.has(key)) {
+        stats.set(key, {
+          q,
+          everCorrect: false,
+          source: `${exam.name} ${q.number}번`,
+          examOrder: examOrder[exam.name] ?? 0,
+        })
+      }
+      // 미응답은 userAnswers[i]가 undefined라 자연히 q.answer와 달라 오답으로 집계된다
+      if (userAnswers[i] === q.answer) stats.get(key).everCorrect = true
+    })
+  })
+
+  const mistakes = [...stats.values()].filter(e => !e.everCorrect)
+  if (mistakes.length === 0) return null
+
+  // 해설 보강용 맵: 학습용 컬렉션(정적) 문항 중 해설이 있는 것만 모은다
+  const explanationMap = new Map()
+  exams.forEach(e => {
+    if (e.type !== 'collection') return
+    e.questions.forEach(q => {
+      if (q.explanation) explanationMap.set(normalizeQuestionKey(q.question), q.explanation)
+    })
+  })
+
+  // 과목 순서 → 회차 → 원래 번호 순 정렬
+  mistakes.sort((a, b) => {
+    const sa = SUBJECTS.indexOf(a.q.subject)
+    const sb = SUBJECTS.indexOf(b.q.subject)
+    if (sa !== sb) return sa - sb
+    if (a.examOrder !== b.examOrder) return a.examOrder - b.examOrder
+    return (a.q.number ?? 0) - (b.q.number ?? 0)
+  })
+
+  let num = 1
+  const questions = mistakes.map(({ q, source }) => {
+    const explanation = explanationMap.get(normalizeQuestionKey(q.question))
+    return {
+      ...q, // description/code/table/tables/tree/graph 등 렌더링용 필드를 전부 보존
+      number: num++,
+      source,
+      ...(explanation ? { explanation } : {}),
+    }
+  })
+
+  return { name: '내 오답 모음', type: 'collection', virtual: true, questions }
+}
+
 // ── 과목별 채점. 기출은 5과목 × 20문항이고 컬렉션은 합성 과목 1개뿐이라
 // activeSubs.length > 1 로 기출만 과목별 표시를 켤 수 있다.
 function scoreBySubject(questions, userAnswers) {
@@ -434,7 +511,10 @@ function StartScreen({ exams, onStart, examResults, tab, onTabChange, onReviewRe
   const isNarrow = useIsNarrow()
 
   const examList = exams.filter(e => e.type !== 'collection')
+  // '내 오답 모음'(virtual)이 맨 위에 오도록 정렬. exams 배열 자체 순서는 그대로 두고
+  // (인덱스를 들고 있는 selectedIdx 등이 깨지지 않도록) 렌더링용 사본만 정렬한다.
   const collections = exams.filter(e => e.type === 'collection')
+    .sort((a, b) => (a.virtual ? 0 : 1) - (b.virtual ? 0 : 1))
   const selected = selectedIdx >= 0 ? exams[selectedIdx] : null
   const isCol = selected?.type === 'collection'
 
@@ -1053,6 +1133,12 @@ function ExamScreen({ exam, onFinish, onBack, initialAnswers = {}, initialIdx = 
                   {q.question}
                 </Text>
               </Group>
+              {/* 가상 컬렉션('내 오답 모음') 문항에만 붙는 출처(원래 회차·번호) 표시 */}
+              {q.source && (
+                <Text size="xs" c="#9ca3af" mb={10} style={{ marginTop: -6, marginLeft: 42 }}>
+                  {q.source}
+                </Text>
+              )}
               {q.sql && (
                 <Box style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 8, padding: '10px 14px', overflowX: 'auto', marginBottom: 12 }}>
                   <Text size="xs" c="#374151" style={{ lineHeight: 1.6, whiteSpace: 'pre-wrap', fontFamily: '"Consolas", "Menlo", monospace' }}>{q.sql}</Text>
@@ -1335,6 +1421,10 @@ function ResultScreen({ result, onReview, onRetry }) {
 
   const scorePercent = Math.round((correct / questions.length) * 100)
   const passed = subjectPass && scorePercent >= 60
+  // '내 오답 모음'은 5과목이 다 섞여 있어 컬렉션 가드(activeSubs.length > 1)를 통과하지만,
+  // 과목별 문항 수가 응시 기록에 따라 들쭉날쭉해서 과락·합격 판정은 의미가 없다.
+  // 과목별 정답률(= 약점 분포)은 그대로 보여주고 합격 배지만 감춘다.
+  const showVerdict = !exam.virtual
 
   return (
     <Box className={styles.resultWrap}>
@@ -1346,15 +1436,17 @@ function ResultScreen({ result, onReview, onRetry }) {
           <Text style={{ fontSize: 56, fontWeight: 800, lineHeight: 1, marginTop: 16 }}>
             {scorePercent}<Text span style={{ fontSize: 20, fontWeight: 600, opacity: 0.8 }}>점</Text>
           </Text>
-          <Box
-            style={{
-              display: 'inline-block', marginTop: 12, padding: '4px 16px',
-              borderRadius: 99, fontWeight: 700, fontSize: 14,
-              background: passed ? 'rgba(255,255,255,0.25)' : 'rgba(0,0,0,0.2)',
-            }}
-          >
-            {passed ? '합격' : '불합격'}
-          </Box>
+          {showVerdict && (
+            <Box
+              style={{
+                display: 'inline-block', marginTop: 12, padding: '4px 16px',
+                borderRadius: 99, fontWeight: 700, fontSize: 14,
+                background: passed ? 'rgba(255,255,255,0.25)' : 'rgba(0,0,0,0.2)',
+              }}
+            >
+              {passed ? '합격' : '불합격'}
+            </Box>
+          )}
         </Box>
 
         {/* 통계 */}
@@ -1429,15 +1521,25 @@ export default function EngineerExamView({ onSaveResult, onDeleteResult, examRes
       .catch(() => setExams([]))
   }, [])
 
+  // '내 오답 모음' 가상 컬렉션을 exams 뒤에 append. 앞/중간에 끼우면 selectedExamIdx 등
+  // 인덱스를 들고 있는 state가 깨지므로 반드시 맨 뒤에 붙인다. 원본 exams는 건드리지 않는다.
+  const allExams = useMemo(() => {
+    if (!exams) return exams
+    const mistakeCollection = buildMistakeCollection(exams, examResults)
+    return mistakeCollection ? [...exams, mistakeCollection] : exams
+  }, [exams, examResults])
+
   // exam-questions.json은 계속 바뀌는 파일이라, 저장된 진행 상태가 가리키는 시험이 없어졌거나
   // 문제 수가 달라졌으면(인덱스가 엉뚱한 문제를 가리킴) 복원하지 않고 폐기한다.
+  // 가상 컬렉션은 문항 수가 응시 기록에 따라 계속 바뀔 수 있는데, 그 경우도 이 effect가
+  // 자연스럽게 진행 상태를 폐기해주므로 allExams를 보게만 하면 된다.
   useEffect(() => {
-    if (!exams || !progress) return
-    const target = exams.find(e => e.name === progress.examName)
+    if (!allExams || !progress) return
+    const target = allExams.find(e => e.name === progress.examName)
     if (!target || target.questions.length !== progress.total) {
       setProgress(null)
     }
-  }, [exams, progress])
+  }, [allExams, progress])
 
   if (!exams) {
     return <Center style={{ minHeight: 300 }}><Loader size="sm" /></Center>
@@ -1452,7 +1554,7 @@ export default function EngineerExamView({ onSaveResult, onDeleteResult, examRes
     return (
       <ExamScreen
         key="exam"
-        exam={exams[selectedExamIdx]}
+        exam={allExams[selectedExamIdx]}
         initialAnswers={useResumedInit ? normalizeAnswers(progress.answers) : {}}
         initialIdx={useResumedInit ? progress.currentIdx : 0}
         initialFlags={useResumedInit ? progress.flags : []}
@@ -1461,16 +1563,21 @@ export default function EngineerExamView({ onSaveResult, onDeleteResult, examRes
         onFinish={result => {
           setExamResult(result)
           setScreen('result')
-          const correct = result.questions.filter((q, i) => result.userAnswers[i] === q.answer).length
-          onSaveResult?.({
-            id: crypto.randomUUID(),
-            examName: result.exam.name,
-            correct,
-            total: result.questions.length,
-            date: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-            answers: result.userAnswers,
-          })
+          // 가상 컬렉션('내 오답 모음')은 성적 기록에 저장하지 않는다. 문항 구성이 응시할
+          // 때마다 계속 바뀌어서 합격 판정·과목별 통계가 오염되고, 나중에 기록에서 "검토"를
+          // 누르면 저장된 답안 인덱스가 그때와 다른 문제에 매핑되어 버린다.
+          if (!result.exam.virtual) {
+            const correct = result.questions.filter((q, i) => result.userAnswers[i] === q.answer).length
+            onSaveResult?.({
+              id: crypto.randomUUID(),
+              examName: result.exam.name,
+              correct,
+              total: result.questions.length,
+              date: new Date().toISOString(),
+              updatedAt: new Date().toISOString(),
+              answers: result.userAnswers,
+            })
+          }
           setProgress(null) // 제출 완료 — 더 이상 이어서 풀 대상이 아니므로 진행 상태를 지운다
         }}
         onBack={() => setScreen('start')}
@@ -1521,13 +1628,13 @@ export default function EngineerExamView({ onSaveResult, onDeleteResult, examRes
 
   return (
     <StartScreen
-      exams={exams}
+      exams={allExams}
       onStart={idx => { setResuming(false); setSelectedExamIdx(idx); setScreen('exam') }}
       examResults={examResults}
       tab={tab}
       onTabChange={setTab}
       onReviewRecord={record => {
-        const exam = exams.find(e => e.name === record.examName)
+        const exam = allExams.find(e => e.name === record.examName)
         if (!exam || !record.answers) return
         setExamResult({ questions: exam.questions, userAnswers: normalizeAnswers(record.answers), exam })
         setReviewOrigin('history')
@@ -1536,7 +1643,7 @@ export default function EngineerExamView({ onSaveResult, onDeleteResult, examRes
       progress={progress}
       onResume={() => {
         if (!progress) return
-        const idx = exams.findIndex(e => e.name === progress.examName)
+        const idx = allExams.findIndex(e => e.name === progress.examName)
         if (idx < 0) { setProgress(null); return }
         setResuming(true)
         setSelectedExamIdx(idx)
