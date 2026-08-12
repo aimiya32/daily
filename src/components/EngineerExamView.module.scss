@@ -194,6 +194,14 @@
   flex-shrink: 0;
 }
 
+// 학습(컬렉션) 기록임을 나타내는 작은 회색 pill 배지
+.studyBadge {
+  padding: 1px 8px;
+  border-radius: 99px;
+  background: #f3f4f6;
+  flex-shrink: 0;
+}
+
 .historyDeleteBtn {
   flex-shrink: 0;
   display: flex;

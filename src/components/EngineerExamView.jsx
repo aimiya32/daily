@@ -485,6 +485,48 @@ function scoreBySubject(questions, userAnswers) {
   return { correct, wrong, unanswered, subjectStats, activeSubs, subjectPass }
 }
 
+// ── 기록 재채점/검토용 헬퍼 ───────────────────────────────────
+// 문항 동일성 키. 정답 조회에는 지문만으로 만든 normalizeQuestionKey를 쓸 수 없다 —
+// '다음 C언어 프로그램이 실행되었을 때의 결과는?'처럼 지문은 같고 보기만 다른 문항이 많아서,
+// 전수 확인 결과 지문만으로는 37개 키에서 정답이 서로 충돌한다(보기까지 합치면 0).
+// 보기 중 일부는 문자열이 아니라 표 객체({table:{...}})라서 JSON으로 직렬화해야 구분된다.
+function questionIdentityKey(q) {
+  const choiceKey = (q.choices || [])
+    .map(c => (typeof c === 'string' ? c : JSON.stringify(c)))
+    .join('|')
+  return `${normalizeQuestionKey(q.question)}|${normalizeQuestionKey(choiceKey)}`
+}
+
+// 문항 → 최신 정답 번호 맵. 정답 키가 나중에 수정되더라도 스냅샷 기록의 정답을
+// 현재 기준으로 다시 맞출 수 있게 exams 전체를 훑어 만든다.
+function buildAnswerKeyMap(exams) {
+  const map = new Map()
+  exams.forEach(e => {
+    e.questions.forEach(q => {
+      map.set(questionIdentityKey(q), q.answer)
+    })
+  })
+  return map
+}
+
+// 응시 기록 하나를 채점/검토할 때 쓸 문항 배열을 돌려준다. null이면 재채점·검토 불가.
+// - 스냅샷이 있는 기록('내 오답 모음' 등 가상 컬렉션): 문항 구성 자체는 응시 당시 그대로
+//   박제해 쓰되(가상 컬렉션은 매번 문항이 바뀌므로), 정답 번호만 최신 키로 덮어써서
+//   "정답 키 수정 반영"이 스냅샷 기록에도 동작하게 한다.
+// - 스냅샷이 없는 기록(기출·정적 컬렉션): 이름으로 현재 exams에서 찾고, 문항 수가 그때와
+//   같을 때만(회차 문제가 개편되지 않았을 때만) 사용한다.
+function questionsForRecord(record, exams, answerKeyMap) {
+  if (record.questionsSnapshot) {
+    return record.questionsSnapshot.map(q => {
+      const latest = answerKeyMap.get(questionIdentityKey(q))
+      return latest === undefined ? q : { ...q, answer: latest }
+    })
+  }
+  const matched = exams.find(e => e.name === record.examName)
+  if (matched && matched.questions.length === record.total) return matched.questions
+  return null
+}
+
 // ── 타이머/저장시각 포맷 (ExamScreen 타이머, StartScreen 이어풀기 배너 공용) ──
 function formatTimer(totalSeconds) {
   const h = Math.floor(totalSeconds / 3600)
@@ -503,7 +545,7 @@ function formatSavedAt(iso) {
 }
 
 // ── 시작 화면 ───────────────────────────────────────────────
-function StartScreen({ exams, onStart, examResults, tab, onTabChange, onReviewRecord, progress, onResume, onDiscardProgress, onDeleteResult }) {
+function StartScreen({ exams, onStart, examResults, tab, onTabChange, onReviewRecord, progress, onResume, onDiscardProgress, onDeleteResult, answerKeyMap }) {
   const [selectedIdx, setSelectedIdx] = useState(-1)
   const [confirmNewStart, setConfirmNewStart] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(false)
@@ -519,13 +561,21 @@ function StartScreen({ exams, onStart, examResults, tab, onTabChange, onReviewRe
   const isCol = selected?.type === 'collection'
 
   if (tab === 'history') {
+    // 기출/학습 응시 횟수를 나눠 표기한다. 구버전 기록은 mode 필드가 없으므로
+    // 매칭된 exam의 type도 함께 본다(fallback).
+    const studyCount = examResults?.filter(r => r.mode === 'study' || exams.find(e => e.name === r.examName)?.type === 'collection').length ?? 0
+    const pastCount = (examResults?.length ?? 0) - studyCount
+    const countParts = []
+    if (pastCount > 0) countParts.push(`기출 ${pastCount}회`)
+    if (studyCount > 0) countParts.push(`학습 ${studyCount}회`)
+    const countLabel = countParts.length ? countParts.join(' · ') : '0회 응시'
     return (
       <Box className={styles.pageWrap}>
         <Box className={styles.inner800}>
           <Box className={styles.pageHeaderRow} style={{ marginBottom: 20 }}>
             <Box>
               <Text fw={800} size="xl" c="#111827" mb={2}>성적 기록</Text>
-              <Text size="sm" c="#6b7280">{examResults?.length ?? 0}회 응시</Text>
+              <Text size="sm" c="#6b7280">{countLabel}</Text>
             </Box>
             <button
               onClick={() => onTabChange('exam')}
@@ -542,13 +592,15 @@ function StartScreen({ exams, onStart, examResults, tab, onTabChange, onReviewRe
           ) : (
             <Stack gap={10}>
               {examResults.map(r => {
-                // 정답 키가 바뀌었을 수 있으므로 저장된 점수 대신 현재 정답 키로 다시 채점한다
+                // 정답 키가 바뀌었을 수 있으므로 저장된 점수 대신 현재 정답 키로 다시 채점한다.
+                // '내 오답 모음' 같은 스냅샷 기록은 questionsForRecord가 응시 당시 문항을 그대로
+                // 돌려주므로(가상 컬렉션 문항 구성이 지금과 달라도) 안전하게 재채점된다.
                 let correct = r.correct
                 let activeSubs = [], subjectStats = {}, subjectPass = true
-                const matchedExam = r.answers && exams.find(e => e.name === r.examName)
-                if (matchedExam && matchedExam.questions.length === r.total) {
+                const recordQuestions = r.answers && questionsForRecord(r, exams, answerKeyMap)
+                if (recordQuestions) {
                   const userAnswers = normalizeAnswers(r.answers)
-                  const scored = scoreBySubject(matchedExam.questions, userAnswers)
+                  const scored = scoreBySubject(recordQuestions, userAnswers)
                   correct = scored.correct
                   activeSubs = scored.activeSubs
                   subjectStats = scored.subjectStats
@@ -561,23 +613,33 @@ function StartScreen({ exams, onStart, examResults, tab, onTabChange, onReviewRe
                 const failedBySubject = hasSubjectBreakdown && pct >= 60 && !subjectPass
                 const date = new Date(r.date)
                 const dateStr = `${date.getFullYear()}.${String(date.getMonth() + 1).padStart(2, '0')}.${String(date.getDate()).padStart(2, '0')}`
-                const reviewable = !!(r.answers && exams.some(e => e.name === r.examName))
+                const reviewable = !!(r.answers && recordQuestions)
+                // 학습 기록(컬렉션 응시)인지 판정. 구버전 기록은 mode 필드가 없으므로 매칭된
+                // exam의 type도 함께 본다(fallback).
+                const isStudy = r.mode === 'study' || exams.find(e => e.name === r.examName)?.type === 'collection'
                 return (
                   <Box
                     key={r.id}
                     className={reviewable ? `${styles.historyItem} ${styles.historyItemClickable}` : styles.historyItem}
                     onClick={reviewable ? () => onReviewRecord(r) : undefined}
                   >
-                    <Box className={styles.historyScore} style={{ background: passed ? '#eff6ff' : '#fef2f2' }}>
-                      <Text fw={800} size="lg" c={passed ? '#2563eb' : '#dc2626'}>{pct}</Text>
+                    <Box className={styles.historyScore} style={{ background: isStudy ? '#f9fafb' : (passed ? '#eff6ff' : '#fef2f2') }}>
+                      <Text fw={800} size="lg" c={isStudy ? '#374151' : (passed ? '#2563eb' : '#dc2626')}>{pct}</Text>
                     </Box>
                     <Box className={styles.historyMeta}>
-                      <Text fw={700} size="sm" c="#111827" className={styles.historyNameText}>
-                        {r.examName}
-                      </Text>
+                      <Group gap={6} wrap="nowrap">
+                        <Text fw={700} size="sm" c="#111827" className={styles.historyNameText} style={{ flex: 1, minWidth: 0 }}>
+                          {r.examName}
+                        </Text>
+                        {isStudy && (
+                          <Text component="span" size="xs" fw={700} c="#6b7280" className={styles.studyBadge}>
+                            학습
+                          </Text>
+                        )}
+                      </Group>
                       <Text size="xs" c="#6b7280" mt={2}>
                         {correct}/{r.total}문제 정답 · {dateStr}
-                        {rescored && <Text component="span" size="xs" c="#9ca3af"> · 정답 키 수정 반영 (기존 {r.correct}점)</Text>}
+                        {rescored && <Text component="span" size="xs" c="#9ca3af"> · 정답 키 수정 반영 (기존 {r.correct}문제)</Text>}
                       </Text>
                       {hasSubjectBreakdown && (
                         <Box className={styles.historySubjectRow}>
@@ -602,11 +664,20 @@ function StartScreen({ exams, onStart, examResults, tab, onTabChange, onReviewRe
                       )}
                     </Box>
                     <Box style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4, flexShrink: 0 }}>
-                      <Box className={styles.passBadge} style={{ background: passed ? '#dcfce7' : '#fee2e2' }}>
-                        <Text size="xs" fw={700} c={passed ? '#16a34a' : '#dc2626'}>{passed ? '합격' : '불합격'}</Text>
-                      </Box>
-                      {failedBySubject && (
-                        <Text size="xs" fw={700} c="#dc2626">과락</Text>
+                      {isStudy ? (
+                        // 학습 기록은 과락 기준이 의미 없으므로 합격/불합격 대신 정답 수만 보여준다
+                        <Box className={styles.passBadge} style={{ background: '#f3f4f6' }}>
+                          <Text size="xs" fw={700} c="#374151">{correct}/{r.total}</Text>
+                        </Box>
+                      ) : (
+                        <>
+                          <Box className={styles.passBadge} style={{ background: passed ? '#dcfce7' : '#fee2e2' }}>
+                            <Text size="xs" fw={700} c={passed ? '#16a34a' : '#dc2626'}>{passed ? '합격' : '불합격'}</Text>
+                          </Box>
+                          {failedBySubject && (
+                            <Text size="xs" fw={700} c="#dc2626">과락</Text>
+                          )}
+                        </>
                       )}
                     </Box>
                     {!reviewable && (
@@ -1029,12 +1100,12 @@ function ExamScreen({ exam, onFinish, onBack, initialAnswers = {}, initialIdx = 
         >
           <IconList size={13} /> 목록
         </button>
-        {!isCollection && !reviewMode && (
+        {!reviewMode && (
           <button
             onClick={() => setShowSubmitModal(true)}
             style={{ background: '#2563eb', border: 'none', borderRadius: 8, padding: '4px 12px', cursor: 'pointer', fontSize: 12, fontWeight: 700, color: 'white', boxShadow: '0 1px 3px rgba(37,99,235,0.25)' }}
           >
-            제출
+            {isCollection ? '채점' : '제출'}
           </button>
         )}
       </Box>
@@ -1361,11 +1432,11 @@ function ExamScreen({ exam, onFinish, onBack, initialAnswers = {}, initialIdx = 
       {showSubmitModal && (
         <Box className={styles.modalOverlay}>
           <Box className={styles.modalBox}>
-            <Text fw={700} size="lg" mb={8}>시험을 제출하시겠습니까?</Text>
+            <Text fw={700} size="lg" mb={8}>{isCollection ? '학습을 종료하고 채점할까요?' : '시험을 제출하시겠습니까?'}</Text>
             <Text size="sm" c="#6b7280" mb={24} style={{ lineHeight: 1.6 }}>
               {unanswered > 0 ? `미응답 문제 ${unanswered}개가 있습니다. ` : ''}
               {flags.size > 0 ? `검토 표시 ${flags.size}개가 있습니다. ` : ''}
-              제출 후에는 수정할 수 없습니다.
+              {isCollection ? '채점 결과가 성적 기록에 저장됩니다.' : '제출 후에는 수정할 수 없습니다.'}
             </Text>
             <Group gap={10}>
               <button
@@ -1378,7 +1449,7 @@ function ExamScreen({ exam, onFinish, onBack, initialAnswers = {}, initialIdx = 
                 onClick={handleSubmit}
                 style={{ flex: 1, padding: '12px', borderRadius: 8, border: 'none', background: '#2563eb', color: 'white', fontSize: 14, fontWeight: 700, cursor: 'pointer' }}
               >
-                제출
+                {isCollection ? '채점' : '제출'}
               </button>
             </Group>
           </Box>
@@ -1417,14 +1488,15 @@ function QDot({ i, q, currentIdx, userAnswers, flags, isCollection, onClick }) {
 function ResultScreen({ result, onReview, onRetry }) {
   const isNarrow = useIsNarrow()
   const { questions, userAnswers, exam } = result
+  const isCollection = exam.type === 'collection'
   const { correct, wrong, unanswered, subjectStats, activeSubs, subjectPass } = scoreBySubject(questions, userAnswers)
 
   const scorePercent = Math.round((correct / questions.length) * 100)
   const passed = subjectPass && scorePercent >= 60
-  // '내 오답 모음'은 5과목이 다 섞여 있어 컬렉션 가드(activeSubs.length > 1)를 통과하지만,
-  // 과목별 문항 수가 응시 기록에 따라 들쭉날쭉해서 과락·합격 판정은 의미가 없다.
-  // 과목별 정답률(= 약점 분포)은 그대로 보여주고 합격 배지만 감춘다.
-  const showVerdict = !exam.virtual
+  // 학습 모드(컬렉션)는 과락 기준 자체가 의미 없다 — 정적 컬렉션은 애초에 5과목이 고르게
+  // 섞여있지 않고, '내 오답 모음'은 응시 기록마다 과목별 문항 수가 들쭉날쭉하다.
+  // 과목별 정답률(= 약점 분포)은 그대로 보여주고 합격/불합격 배지만 감춘다.
+  const showVerdict = !isCollection
 
   return (
     <Box className={styles.resultWrap}>
@@ -1432,7 +1504,7 @@ function ResultScreen({ result, onReview, onRetry }) {
         {/* 헤더 */}
         <Box className={styles.resultHero}>
           <Text size="sm" style={{ opacity: 0.85 }} mb={4}>{exam.name}</Text>
-          <Text fw={700} size="xl">시험 결과</Text>
+          <Text fw={700} size="xl">{isCollection ? '학습 결과' : '시험 결과'}</Text>
           <Text style={{ fontSize: 56, fontWeight: 800, lineHeight: 1, marginTop: 16 }}>
             {scorePercent}<Text span style={{ fontSize: 20, fontWeight: 600, opacity: 0.8 }}>점</Text>
           </Text>
@@ -1529,6 +1601,10 @@ export default function EngineerExamView({ onSaveResult, onDeleteResult, examRes
     return mistakeCollection ? [...exams, mistakeCollection] : exams
   }, [exams, examResults])
 
+  // 문항 지문 → 최신 정답 번호 맵. 성적 기록 재채점(StartScreen)과 검토 화면 합성
+  // (onReviewRecord)에서 공통으로 쓰므로 여기서 한 번만 만들어 아래로 내려준다.
+  const answerKeyMap = useMemo(() => buildAnswerKeyMap(allExams || []), [allExams])
+
   // exam-questions.json은 계속 바뀌는 파일이라, 저장된 진행 상태가 가리키는 시험이 없어졌거나
   // 문제 수가 달라졌으면(인덱스가 엉뚱한 문제를 가리킴) 복원하지 않고 폐기한다.
   // 가상 컬렉션은 문항 수가 응시 기록에 따라 계속 바뀔 수 있는데, 그 경우도 이 effect가
@@ -1563,21 +1639,24 @@ export default function EngineerExamView({ onSaveResult, onDeleteResult, examRes
         onFinish={result => {
           setExamResult(result)
           setScreen('result')
-          // 가상 컬렉션('내 오답 모음')은 성적 기록에 저장하지 않는다. 문항 구성이 응시할
-          // 때마다 계속 바뀌어서 합격 판정·과목별 통계가 오염되고, 나중에 기록에서 "검토"를
-          // 누르면 저장된 답안 인덱스가 그때와 다른 문제에 매핑되어 버린다.
-          if (!result.exam.virtual) {
-            const correct = result.questions.filter((q, i) => result.userAnswers[i] === q.answer).length
-            onSaveResult?.({
-              id: crypto.randomUUID(),
-              examName: result.exam.name,
-              correct,
-              total: result.questions.length,
-              date: new Date().toISOString(),
-              updatedAt: new Date().toISOString(),
-              answers: result.userAnswers,
-            })
-          }
+          // 학습 모드(컬렉션)도 채점해서 성적 기록에 남긴다. '내 오답 모음'처럼 문항 구성이
+          // 응시마다 바뀌는 가상 컬렉션은 questionsSnapshot으로 응시 당시 문항을 그대로
+          // 박제해두어, 나중에 기록에서 "검토"를 눌러도 저장된 답안 인덱스가 그때와 다른
+          // 문제에 매핑되는 문제가 생기지 않는다.
+          const correct = result.questions.filter((q, i) => result.userAnswers[i] === q.answer).length
+          onSaveResult?.({
+            id: crypto.randomUUID(),
+            examName: result.exam.name,
+            correct,
+            total: result.questions.length,
+            date: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+            answers: result.userAnswers,
+            // mode: 기출은 필드를 넣지 않아 기존 기록과 하위호환(= mode 없음 → 기출)을 유지한다
+            ...(result.exam.type === 'collection' ? { mode: 'study' } : {}),
+            // 정적 컬렉션은 이름으로 문항을 다시 찾을 수 있으므로 스냅샷을 붙이지 않는다(용량 절감)
+            ...(result.exam.virtual ? { questionsSnapshot: result.questions } : {}),
+          })
           setProgress(null) // 제출 완료 — 더 이상 이어서 풀 대상이 아니므로 진행 상태를 지운다
         }}
         onBack={() => setScreen('start')}
@@ -1634,9 +1713,16 @@ export default function EngineerExamView({ onSaveResult, onDeleteResult, examRes
       tab={tab}
       onTabChange={setTab}
       onReviewRecord={record => {
-        const exam = allExams.find(e => e.name === record.examName)
-        if (!exam || !record.answers) return
-        setExamResult({ questions: exam.questions, userAnswers: normalizeAnswers(record.answers), exam })
+        if (!record.answers) return
+        const recordQuestions = questionsForRecord(record, allExams, answerKeyMap)
+        if (!recordQuestions) return
+        // 스냅샷 기록('내 오답 모음')은 현재 가상 컬렉션과 문항 구성이 다를 수 있으므로,
+        // 검토 화면이 쓸 exam 객체를 응시 당시 스냅샷 문항으로 합성한다.
+        const exam = record.questionsSnapshot
+          ? { name: record.examName, type: 'collection', virtual: true, questions: recordQuestions }
+          : allExams.find(e => e.name === record.examName)
+        if (!exam) return
+        setExamResult({ questions: recordQuestions, userAnswers: normalizeAnswers(record.answers), exam })
         setReviewOrigin('history')
         setScreen('review')
       }}
@@ -1651,6 +1737,7 @@ export default function EngineerExamView({ onSaveResult, onDeleteResult, examRes
       }}
       onDiscardProgress={() => setProgress(null)}
       onDeleteResult={onDeleteResult}
+      answerKeyMap={answerKeyMap}
     />
   )
 }
