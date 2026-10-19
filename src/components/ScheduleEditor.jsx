@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Stack, TextInput, Textarea, Button, Group, Select, NumberInput, Text, Collapse, Box, Checkbox, SegmentedControl } from '@mantine/core'
-import { DatePickerInput, TimeInput } from '@mantine/dates'
+import { DatePickerInput } from '@mantine/dates'
 import ContentCard from './ContentCard'
 import dayjs from 'dayjs'
 import KoreanLunarCalendar from 'korean-lunar-calendar'
@@ -8,6 +8,25 @@ import { getLunarLabel } from '../lib/lunar'
 import styles from './ScheduleEditor.module.scss'
 
 const _cal = new KoreanLunarCalendar()
+
+const TIME_RE = /^([01]\d|2[0-3]):[0-5]\d$/
+
+// 숫자만 받아 입력 중 HH:MM 형태로 표시
+function formatTimeTyping(raw) {
+  const digits = raw.replace(/\D/g, '').slice(0, 4)
+  return digits.length <= 2 ? digits : `${digits.slice(0, 2)}:${digits.slice(2)}`
+}
+
+// 입력 종료 시 정규화: "9" → "09:00", "930" → "09:30", "1430" → "14:30"
+function normalizeTime(value) {
+  const digits = value.replace(/\D/g, '')
+  if (!digits) return ''
+  let h, m
+  if (digits.length <= 2) { h = digits; m = '00' }
+  else if (digits.length === 3) { h = digits.slice(0, 1); m = digits.slice(1) }
+  else { h = digits.slice(0, 2); m = digits.slice(2, 4) }
+  return `${h.padStart(2, '0')}:${m}`
+}
 
 export default function ScheduleEditor({ schedule, categories, initialDate, onSave, onCancel }) {
   const [date, setDate] = useState(
@@ -47,13 +66,18 @@ export default function ScheduleEditor({ schedule, categories, initialDate, onSa
     setLunarInputOpen(false)
   }
 
+  const [timeTouched, setTimeTouched] = useState(false)
+  const timeValid = !time || TIME_RE.test(normalizeTime(time))
+  const timeError = timeTouched && !timeValid ? '00:00 ~ 23:59 형식으로 입력하세요' : null
+
   function handleSave() {
     if (!title.trim()) return
+    if (!timeValid) { setTimeTouched(true); return }
     onSave({
       id: schedule?.id ?? crypto.randomUUID(),
       recurrenceId: schedule?.recurrenceId,
       date: dayjs(date).format('YYYY-MM-DD'),
-      time: time || null,
+      time: normalizeTime(time) || null,
       title: title.trim(),
       description: description.trim() || null,
       categoryId: categoryId ?? null,
@@ -122,10 +146,16 @@ export default function ScheduleEditor({ schedule, categories, initialDate, onSa
             </Box>
           </Collapse>
         </div>
-        <TimeInput
+        <TextInput
           label="시간"
+          placeholder="예: 1430 → 14:30"
+          inputMode="numeric"
+          autoComplete="off"
+          maxLength={5}
           value={time}
-          onChange={e => setTime(e.currentTarget.value)}
+          onChange={e => { setTime(formatTimeTyping(e.currentTarget.value)); setTimeTouched(false) }}
+          onBlur={() => { setTime(normalizeTime(time)); setTimeTouched(true) }}
+          error={timeError}
         />
 
         <TextInput
