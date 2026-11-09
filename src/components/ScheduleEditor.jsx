@@ -6,6 +6,7 @@ import dayjs from 'dayjs'
 import KoreanLunarCalendar from 'korean-lunar-calendar'
 import { getLunarLabel } from '../lib/lunar'
 import styles from './ScheduleEditor.module.scss'
+import { getScheduleVisibility } from '../lib/scheduleVisibility'
 
 const _cal = new KoreanLunarCalendar()
 
@@ -34,6 +35,7 @@ export default function ScheduleEditor({ schedule, categories, initialDate, onSa
     : initialDate ? dayjs(initialDate).toDate()
     : new Date()
   )
+  const [visibility, setVisibility] = useState(schedule ? getScheduleVisibility(schedule) : 'monthly')
   const [time, setTime] = useState(schedule?.time ?? '')
   const [title, setTitle] = useState(schedule?.title ?? '')
   const [description, setDescription] = useState(schedule?.description ?? '')
@@ -78,6 +80,7 @@ export default function ScheduleEditor({ schedule, categories, initialDate, onSa
       recurrenceId: schedule?.recurrenceId,
       date: dayjs(date).format('YYYY-MM-DD'),
       time: normalizeTime(time) || null,
+      visibility,
       title: title.trim(),
       description: description.trim() || null,
       categoryId: categoryId ?? null,
@@ -146,6 +149,20 @@ export default function ScheduleEditor({ schedule, categories, initialDate, onSa
             </Box>
           </Collapse>
         </div>
+        <Select
+          label="표시 위치"
+          description="시간 입력 여부와 관계없이 선택한 곳에 표시됩니다."
+          data={[
+            { value: 'weekly', label: '주간' },
+            { value: 'monthly', label: '월간' },
+            { value: 'both', label: '둘 다' },
+          ]}
+          value={visibility}
+          onChange={setVisibility}
+          allowDeselect={false}
+          required
+        />
+
         <TextInput
           label="시간"
           placeholder="예: 1430 → 14:30"
@@ -222,7 +239,7 @@ export default function ScheduleEditor({ schedule, categories, initialDate, onSa
 
         {schedule && schedule.recurrenceId && (
           <Checkbox
-            label="반복 일정 전체에 적용 (제목·시간·분류·내용)"
+            label="반복 일정 전체에 적용 (제목·시간·표시 위치·분류·내용)"
             checked={applyToAll}
             onChange={e => setApplyToAll(e.currentTarget.checked)}
           />

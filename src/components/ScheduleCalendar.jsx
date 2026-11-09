@@ -11,6 +11,7 @@ import { DayPill, OverflowCount } from './DayPill'
 import ScheduleDayDrawer from './ScheduleDayDrawer'
 import { todayStr } from '../lib/dates'
 import dayjs from 'dayjs'
+import { isScheduleVisible } from '../lib/scheduleVisibility'
 import './ScheduleCalendar.module.scss'
 
 export default function ScheduleCalendar({ schedules, categories, onView, onAdd, onManageCategories }) {
@@ -23,9 +24,10 @@ export default function ScheduleCalendar({ schedules, categories, onView, onAdd,
 
   const today = todayStr()
 
+  const monthlySchedules = schedules.filter(s => !s.visibility || isScheduleVisible(s, 'monthly'))
   const filteredSchedules = filterCat === 'all'
-    ? schedules
-    : schedules.filter(s => s.categoryId === filterCat)
+    ? monthlySchedules
+    : monthlySchedules.filter(s => s.categoryId === filterCat)
 
   const byDate = {}
   for (const s of filteredSchedules) {
@@ -98,7 +100,7 @@ export default function ScheduleCalendar({ schedules, categories, onView, onAdd,
         opened={drawerOpened}
         onClose={closeDrawer}
         date={selectedDate}
-        schedules={schedules}
+        schedules={monthlySchedules}
         categories={categories}
         onView={onView}
         onAdd={onAdd}

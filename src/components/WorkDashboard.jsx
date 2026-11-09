@@ -15,6 +15,7 @@ import { hexOf, DEFAULT_HEX } from '../lib/colors'
 import CalendarGrid from './CalendarGrid'
 import { DayPill, OverflowCount } from './DayPill'
 import styles from './WorkDashboard.module.scss'
+import { isScheduleVisible } from '../lib/scheduleVisibility'
 
 dayjs.locale('ko')
 
@@ -157,8 +158,8 @@ function MonthPanel({ events, schedules, scheduleCategories, dateStr, onChangeDa
   // 카테고리 id → 색 이름 맵
   const catColor = new Map(scheduleCategories.map(c => [c.id, c.color]))
 
-  // 필터 적용된 일정만 (시간 없는 일정만 — 시간 있는 일정은 DayPanel에서 표시)
-  const filtered = schedules.filter(s => !s.time && (filterCat == null || s.categoryId === filterCat))
+  // 월간 표시 위치와 카테고리 필터 적용
+  const filtered = schedules.filter(s => isScheduleVisible(s, 'monthly') && (filterCat == null || s.categoryId === filterCat))
 
   // 날짜별 일정 맵 (셀 안 텍스트 표시용) — 시간순 정렬
   const scheduleByDate = new Map()
@@ -313,7 +314,7 @@ function WeekPanel({ events, schedules, scheduleCategories, weekly, dateStr, onC
           const dayWeekly = weekly.filter(w => w.date === ds).slice().reverse()
           // 개인 일정(읽기 전용, 시간 표기 없이 도트+제목만) — 카테고리 필터 적용, 시간 있는 것 먼저 시간순 정렬
           const daySchedules = schedules
-            .filter(s => s.date === ds && (filterCat == null || s.categoryId === filterCat))
+            .filter(s => s.date === ds && isScheduleVisible(s, 'weekly') && (filterCat == null || s.categoryId === filterCat))
             .slice()
             .sort(compareSchedule)
           const isToday = ds === today
@@ -394,8 +395,8 @@ function DayPanel({ todos, events, schedules, scheduleCategories, dateStr, filte
     .filter(e => e.date === dateStr)
     .map(e => ({ kind: 'event', time: e.time, data: e }))
   const personalItems = schedules
-    .filter(s => s.date === dateStr && s.time && (filterCat == null || s.categoryId === filterCat))
-    .map(s => ({ kind: 'schedule', time: s.time, data: s }))
+    .filter(s => s.date === dateStr && isScheduleVisible(s, 'weekly') && (filterCat == null || s.categoryId === filterCat))
+    .map(s => ({ kind: 'schedule', time: s.time || '', data: s }))
   const dayItems = [...workItems, ...personalItems].sort((a, b) => a.time.localeCompare(b.time))
 
   // Todo 모달 열기: 입력값 초기화
@@ -573,7 +574,7 @@ function ScheduleRow({ item, catColor, opened, onToggle }) {
       onClick={() => desc && onToggle()}
       style={desc ? { cursor: 'pointer' } : undefined}>
       <span className={`${styles.catDot} ${styles.eventRowDot}`} style={{ background: hexOf(catColor.get(item.categoryId)) ?? DEFAULT_HEX }} />
-      <Text size="sm" fw={700} c="indigo" w={42} className={styles.eventRowTime}>{item.time}</Text>
+      <Text size="sm" fw={700} c="indigo" w={42} className={styles.eventRowTime}>{item.time || '종일'}</Text>
       <Text size="sm" className={styles.eventRowText}>{item.title}</Text>
     </Group>
   )

@@ -294,6 +294,7 @@ function Workspace({ drive }) {
       updateByRecurrenceId(base.recurrenceId, {
         title: base.title,
         time: base.time,
+        visibility: base.visibility,
         description: base.description,
         categoryId: base.categoryId,
       })
